@@ -1,0 +1,22 @@
+{
+  "name": "hrtools",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "keywords": ["hr", "tools", "tamu"],
+  "author": "TAMU School of Law",
+  "license": "ISC",
+  "description": "A suite of internal tools for HR operations at TAMU School of Law",
+  "dependencies": {
+    "@astrojs/tailwind": "^6.0.2",
+    "astro": "^5.15.5",
+    "tailwindcss": "^3.4.18",
+    "typescript": "^5.9.3"
+  }
+}

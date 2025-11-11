@@ -1,0 +1,60 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Onboarding Tracker - HR Tools">
+  <div class="container max-w-[1120px] mx-auto px-4 py-12">
+    <!-- Page Header -->
+    <div class="mb-8">
+      <a 
+        href="/" 
+        class="inline-flex items-center text-[var(--text-secondary)] hover:text-tamu-maroon mb-4 transition-colors"
+      >
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Back to Tools
+      </a>
+      <h1 class="text-4xl font-bold text-[var(--text-primary)] mb-2">Onboarding Tracker</h1>
+      <p class="text-lg text-[var(--text-secondary)]">
+        Track onboarding tasks and progress for new hires.
+      </p>
+    </div>
+
+    <!-- Onboarding Tracker App Container -->
+    <div id="onboarding-root" class="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg p-6 shadow-sm">
+      <div class="text-center py-12">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-tamu-maroon mb-4"></div>
+        <p class="text-[var(--text-secondary)]">Loading Onboarding Tracker...</p>
+      </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+      <h2 class="text-xl font-bold text-blue-900 dark:text-blue-100 mb-3">How to Use</h2>
+      <ul class="list-disc list-inside space-y-2 text-blue-800 dark:text-blue-200">
+        <li>View dashboard with active, completed, and overdue onboardings</li>
+        <li>Create new onboarding records for employees</li>
+        <li>Track HR tasks and completion dates</li>
+        <li>Generate onboarding emails and documentation</li>
+        <li>Monitor analytics by hire type and category</li>
+      </ul>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  // Track tool usage in localStorage
+  function trackToolUsage() {
+    const recentTools = JSON.parse(localStorage.getItem('recentTools') || '[]');
+    const toolSlug = 'onboarding-tracker';
+    
+    const filtered = recentTools.filter((slug: string) => slug !== toolSlug);
+    filtered.unshift(toolSlug);
+    const updated = filtered.slice(0, 5);
+    
+    localStorage.setItem('recentTools', JSON.stringify(updated));
+  }
+
+  trackToolUsage();
+</script>
