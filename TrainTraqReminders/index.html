@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overdue TrainTraq Reminders Processor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+	<link rel="stylesheet" href="./styles.css?v=20251014" />  
+</head>
+<body>
+<!-- === Global Header (TAMU Tools) === -->
+	<header class="tlw-header">
+	  <div class="tlw-brandbar"></div>
+
+	  <div class="container">
+		<div class="tlw-nav">
+		  <!-- Brand: always returns to Tools Portal -->
+		  <a href="https://paytonbaldridge777.github.io/LawSchoolTools/" class="tlw-brand" aria-label="Return to Tools Portal">
+			<span class="tlw-badge">TAMU</span>
+			<div class="tlw-brand-text">
+			  <div class="tlw-kicker">TAMU School of Law</div>
+			  <div class="tlw-title">Tools Portal</div>
+			</div>
+		  </a>
+
+		  <!-- Desktop links (works from any repo because URLs are absolute) -->
+		  <nav class="tlw-links" aria-label="Primary">
+			<a class="tlw-link" href="https://paytonbaldridge777.github.io/LawSchoolTools/">Home</a>
+			<a class="tlw-link" href="https://paytonbaldridge777.github.io/HRDashboard/">HR Onboarding Dashboard</a>
+			<a class="tlw-link" href="https://paytonbaldridge777.github.io/TrainTraqReminders/">TrainTraq Reminders</a>
+		  </nav>
+
+		  <!-- Mobile menu button -->
+		  <button id="menuBtn" class="tlw-menu-btn" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">☰</button>
+		</div>
+	  </div>
+
+	  <!-- Mobile menu -->
+	  <nav id="mobileMenu" class="tlw-mobile hidden" aria-label="Mobile">
+		<a class="tlw-mobile-link" href="https://paytonbaldridge777.github.io/LawSchoolTools/">Home</a>
+		<a class="tlw-mobile-link" href="https://paytonbaldridge777.github.io/HRDashboard/">HR Onboarding Dashboard</a>
+		<a class="tlw-mobile-link" href="https://paytonbaldridge777.github.io/TrainTraqReminders/">TrainTraq Reminders</a>
+	  </nav>
+	</header>
+	<!-- === /Global Header === -->
+		<div class="container">
+			<h1>📊 TrainTraq Overdue Reminders</h1>
+			<p class="subtitle">Upload your Excel file to separate records into Followups and Removals based on work period validity</p>
+			
+			<div class="instructions">
+				<h3>📝 What this tool does:</h3>
+				<ol>
+					<li>Reads your Excel file with "OverdueCourses" and "EmployeeAWPs" tabs</li>
+					<li>Note* get the EmployeeAWPs file from the Employee Details report in Tableau: <a href="https://tableau.tamu.edu/t/HROE/views/CurrentActiveEmployeeStaffingDetail/EmployeeDetailInformation">Employee Detail</a></li>
+					<li>Cross-references UINs from column A in both tabs</li>
+					<li>Checks if <strong>today's date</strong> (the date you run the report) falls within work period dates</li>
+					<li>Creates "Followups" tab: UINs WITHIN their current work period (keep these)</li>
+					<li>Creates "Removals" tab: UINs OUTSIDE their current work period (consider removing)</li>
+					<li>Adds date range columns to both new tabs for easy reference</li>
+					<li><strong>NEW:</strong> Creates "Addendum A" document from Removals tab for official documentation</li>
+				</ol>
+				<p><strong>Result:</strong> Clean separation of records based on work period validity, plus professional addendum document for removal justification.</p>		
+					<div class="instructions">
+						<li>Upload File should contain two tabs: OverdueCourses and EmployeeAWPs</li>
+						<li>OverdueCourses - run from TrainTraq</li>
+						<li>EmployeeAWPs - Download Tableau Employee Details Report</li>				
+					</div>
+				</p>
+			</div>
+			
+			<div class="upload-section">
+				<div id="upload-area">
+					<h3>📁 Upload Your Excel File</h3>
+					<p>Select your .xlsx file to create Followups and Removals tabs based on work period analysis</p>
+					<input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls">
+					<button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+						Choose File
+					</button>
+					<p id="fileName" style="margin-top: 15px; font-weight: 600; color: #28a745;"></p>
+				</div>
+			</div>
+			
+			<button id="processBtn" class="process-btn" onclick="processFile()" disabled>
+				🔄 Create Followups & Removals Tabs
+			</button>
+			
+			<div id="status" class="status hidden"></div>
+			<div id="loading" class="spinner hidden"></div>
+			
+			<div id="results" class="results hidden">
+				<h3>📋 Analysis Results</h3>
+				<div class="stat-grid">
+					<div class="stat-card">
+						<div id="totalUINs" class="stat-number">-</div>
+						<div class="stat-label">Total UINs</div>
+					</div>
+					<div class="stat-card">
+						<div id="highlightedUINs" class="stat-number">-</div>
+						<div class="stat-label">Removals Tab</div>
+					</div>
+					<div class="stat-card">
+						<div id="currentPeriod" class="stat-number">-</div>
+						<div class="stat-label">Followups Tab</div>
+					</div>
+				</div>
+				
+				<h4>🔍 Records going to Removals tab (outside work period):</h4>
+				<div id="highlightPreview" class="highlight-preview"></div>
+			</div>
+			
+			<a id="downloadBtn" class="download-btn hidden" download="CrossReference_Followups_and_Removals.xlsx">
+				⬇️ Download Excel with Followups & Removals
+			</a>
+			
+			<!-- ADDENDUM BUTTON - ALWAYS VISIBLE -->
+			<button id="addendumBtn" class="addendum-btn" onclick="createAddendum()" disabled>
+				📄 Create Addendum A from Removals
+			</button>
+			<p id="addendumStatus" style="text-align: center; color: #666; font-size: 14px;">
+				Process your Excel file first to enable addendum creation
+			</p>
+			
+			<button id="emailBtn" class="addendum-btn" onclick="generateEmails()" disabled style="background: linear-gradient(45deg, #17a2b8, #138496) !important;">
+				✉️ Generate Followup Emails
+			</button>
+			<p id="emailStatus" style="text-align: center; color: #666; font-size: 14px;">
+				Process your Excel file first to enable email generation
+			</p>
+			
+			<div id="addendumPreview" class="hidden" style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0; max-height: 500px; overflow-y: auto;">
+				<div style="text-align: right; margin-bottom: 10px;">
+					<button onclick="downloadAsHTML()" class="action-btn primary">📄 Download HTML</button>
+					<button onclick="printAddendum()" class="action-btn success">🖨️ Print</button>
+					<button onclick="copyToClipboard()" class="action-btn">📋 Copy Text</button>
+				</div>
+				<div id="addendumContent"></div>
+			</div>
+			
+			<!-- Email Viewer -->
+			<div id="emailViewer" class="hidden" style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0;">
+				<h3 style="text-align: center; color: #2c3e50;">📧 Followup Email Generator</h3>
+				<div style="text-align: center; margin: 15px 0;">
+					<span id="emailCounter" style="font-weight: 600; color: #666;"></span>
+				</div>
+				<div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
+					<button onclick="previousEmail()" id="prevEmailBtn" class="action-btn">⬅️ Previous</button>
+					<button onclick="openInOutlook()" class="action-btn success">📧 Open in Outlook</button>
+					<button onclick="copyEmailText()" class="action-btn primary">📋 Copy Email</button>
+					<button onclick="nextEmail()" id="nextEmailBtn" class="action-btn">Next ➡️</button>
+				</div>
+				<div style="text-align: center; margin-bottom: 15px;">
+					<button onclick="openAllInOutlook()" class="action-btn" style="background: #6f42c1; color: white; padding: 10px 20px;">📬 Open All Emails in Outlook</button>
+					<p style="font-size: 12px; color: #666; margin-top: 5px;">Opens all emails one by one in your default email client</p>
+				</div>
+				<div id="emailContent" style="background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; padding: 20px; font-family: Arial, sans-serif; line-height: 1.6; max-height: 600px; overflow-y: auto;"></div>
+			</div>
+		</div>
+    <script>
+        let workbookData = null;
+        let analysisResults = null;
+        let generatedEmails = [];
+        let currentEmailIndex = 0;
+        
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('fileName').textContent = `Selected: ${file.name}`;
+                document.getElementById('processBtn').disabled = false;
+                
+                // Read the file
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        workbookData = XLSX.read(e.target.result, {
+                            cellStyles: true,
+                            cellFormulas: true,
+                            cellDates: true,
+                            cellNF: true,
+                            sheetStubs: true
+                        });
+                        showStatus('File loaded successfully!', 'success');
+                    } catch (error) {
+                        showStatus('Error reading file: ' + error.message, 'error');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+        
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.classList.remove('hidden');
+        }
+        
+        function processFile() {
+            if (!workbookData) {
+                showStatus('Please select a file first!', 'error');
+                return;
+            }
+            
+            document.getElementById('loading').classList.remove('hidden');
+            showStatus('Processing file...', 'info');
+            
+            // Add a small delay to show loading animation
+            setTimeout(() => {
+                try {
+                    analysisResults = analyzeWorkbook(workbookData);
+                    displayResults(analysisResults);
+                    createHighlightedFile(workbookData, analysisResults);
+                    
+                    document.getElementById('loading').classList.add('hidden');
+                    showStatus('Analysis complete! Download your Excel file and create Addendum A below.', 'success');
+                } catch (error) {
+                    document.getElementById('loading').classList.add('hidden');
+                    showStatus('Error processing file: ' + error.message, 'error');
+                }
+            }, 500);
+        }
+        
+        function analyzeWorkbook(workbook) {
+            const today = new Date(); // Use actual current date
+            const todayStr = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            
+            console.log(`Using today's date: ${todayStr}`);
+            
+            // Check if required sheets exist
+            if (!workbook.Sheets['OverdueCourses'] || !workbook.Sheets['EmployeeAWPs']) {
+                throw new Error('Required sheets not found. Please ensure your file has "OverdueCourses" and "EmployeeAWPs" tabs.');
+            }
+            
+            const overdueSheet = workbook.Sheets['OverdueCourses'];
+            const employeeSheet = workbook.Sheets['EmployeeAWPs'];
+            
+            // Extract UINs from OverdueCourses
+            const overdueRange = XLSX.utils.decode_range(overdueSheet['!ref']);
+            const overdueUINs = [];
+            
+            console.log("Processing OverdueCourses sheet...");
+            
+            for (let row = 1; row <= overdueRange.e.r; row++) {
+                const uinCell = overdueSheet[`A${row + 1}`];
+                const nameCell = overdueSheet[`B${row + 1}`];
+                const emailCell = overdueSheet[`C${row + 1}`];
+                if (uinCell && uinCell.v) {
+                    const uin = uinCell.v.toString().trim();
+                    
+                    // Skip header rows
+                    if (uin.toLowerCase() === 'uin' || uin.toLowerCase() === 'employee id') {
+                        console.log(`Skipping header row at row ${row + 1}`);
+                        continue;
+                    }
+                    
+                    // Skip non-numeric UINs
+                    if (isNaN(uin) || uin === '') {
+                        console.log(`Skipping non-numeric UIN "${uin}" at row ${row + 1}`);
+                        continue;
+                    }
+                    
+                    overdueUINs.push({
+                        uin: uin,
+                        name: nameCell ? nameCell.v : '',
+                        email: emailCell ? emailCell.v : '',
+                        row: row + 1
+                    });
+                }
+            }
+            
+            console.log(`Found ${overdueUINs.length} valid UINs in OverdueCourses`);
+            
+            // Extract employee data with date ranges
+            const employeeRange = XLSX.utils.decode_range(employeeSheet['!ref']);
+            const employeeData = {};
+            
+            console.log("Processing EmployeeAWPs sheet...");
+            console.log(`EmployeeAWPs range: ${employeeSheet['!ref']}`);
+            
+            // Debug: Check first row to find correct columns
+            console.log("=== Finding correct columns ===");
+            let employeeIdCol = null;
+            let startDateCol = null;
+            let endDateCol = null;
+            
+            // Check all columns in header row to find the right ones
+            for (let col = 0; col <= employeeRange.e.c; col++) {
+                const headerCell = employeeSheet[XLSX.utils.encode_cell({r: 0, c: col})];
+                if (headerCell && headerCell.v) {
+                    const headerValue = headerCell.v.toString().toLowerCase();
+                    const colLetter = XLSX.utils.encode_col(col);
+                    
+                    if (headerValue.includes('employee id') || headerValue.includes('uin')) {
+                        employeeIdCol = col;
+                        console.log(`Found Employee ID in column ${colLetter}: "${headerCell.v}"`);
+                    }
+                    if (headerValue.includes('work period start')) {
+                        startDateCol = col;
+                        console.log(`Found Start Date in column ${colLetter}: "${headerCell.v}"`);
+                    }
+                    if (headerValue.includes('work period end')) {
+                        endDateCol = col;
+                        console.log(`Found End Date in column ${colLetter}: "${headerCell.v}"`);
+                    }
+                }
+            }
+            
+            if (employeeIdCol === null || startDateCol === null || endDateCol === null) {
+                console.error("ERROR: Could not find required columns!");
+                console.error(`Employee ID column: ${employeeIdCol !== null ? XLSX.utils.encode_col(employeeIdCol) : 'NOT FOUND'}`);
+                console.error(`Start Date column: ${startDateCol !== null ? XLSX.utils.encode_col(startDateCol) : 'NOT FOUND'}`);
+                console.error(`End Date column: ${endDateCol !== null ? XLSX.utils.encode_col(endDateCol) : 'NOT FOUND'}`);
+                
+                // Show first 20 column headers to help identify
+                console.log("=== All column headers ===");
+                for (let col = 0; col <= Math.min(29, employeeRange.e.c); col++) {
+                    const headerCell = employeeSheet[XLSX.utils.encode_cell({r: 0, c: col})];
+                    const colLetter = XLSX.utils.encode_col(col);
+                    console.log(`Column ${colLetter}: ${headerCell ? headerCell.v : 'empty'}`);
+                }
+            }
+            
+            // Debug: Check first few data rows with correct columns
+            if (employeeIdCol !== null && startDateCol !== null && endDateCol !== null) {
+                console.log("=== Sample data from correct columns ===");
+                for (let row = 1; row <= Math.min(3, employeeRange.e.r); row++) {
+                    const idCell = employeeSheet[XLSX.utils.encode_cell({r: row, c: employeeIdCol})];
+                    const startCell = employeeSheet[XLSX.utils.encode_cell({r: row, c: startDateCol})];
+                    const endCell = employeeSheet[XLSX.utils.encode_cell({r: row, c: endDateCol})];
+                    console.log(`Row ${row + 1}:`);
+                    console.log(`  Employee ID: ${idCell ? idCell.v : 'empty'}`);
+                    console.log(`  Start Date: ${startCell ? startCell.v : 'empty'}`);
+                    console.log(`  End Date: ${endCell ? endCell.v : 'empty'}`);
+                }
+            }
+            
+            // Only proceed if we found the correct columns
+            if (employeeIdCol === null || startDateCol === null || endDateCol === null) {
+                console.log(`Loaded 0 employee records from EmployeeAWPs (missing required columns)`);
+                return {
+                    totalUINs: overdueUINs.length,
+                    uinsToHighlight: overdueUINs,
+                    analysis: overdueUINs.map(entry => ({
+                        uin: entry.uin,
+                        name: entry.name,
+                        email: entry.email,
+                        row: entry.row,
+                        startDate: 'COLUMN NOT FOUND',
+                        endDate: 'COLUMN NOT FOUND',
+                        isInRange: false,
+                        needsHighlight: true
+                    })),
+                    inCurrentPeriod: 0
+                };
+            }
+            
+            // Process employee data with correct columns
+            for (let row = 1; row <= employeeRange.e.r; row++) {
+                const uinCell = employeeSheet[XLSX.utils.encode_cell({r: row, c: employeeIdCol})];
+                const startDateCell = employeeSheet[XLSX.utils.encode_cell({r: row, c: startDateCol})];
+                const endDateCell = employeeSheet[XLSX.utils.encode_cell({r: row, c: endDateCol})];
+                
+                if (uinCell && uinCell.v && startDateCell && startDateCell.v && endDateCell && endDateCell.v) {
+                    // Normalize UIN
+                    let uin = uinCell.v.toString().trim();
+                    
+                    // Skip invalid UINs
+                    if (!uin || uin === '' || 
+                        uin.toLowerCase() === 'yes' || 
+                        uin.toLowerCase() === 'no' || 
+                        uin.toLowerCase() === 'uin' ||
+                        uin.toLowerCase() === 'employee id' ||
+                        isNaN(uin)) {
+                        continue;
+                    }
+                    
+                    // Parse dates
+                    let startDate, endDate;
+                    
+                    try {
+                        if (startDateCell.v instanceof Date) {
+                            startDate = startDateCell.v;
+                        } 
+                        else if (typeof startDateCell.v === 'number') {
+                            startDate = XLSX.SSF.parse_date_code(startDateCell.v);
+                            startDate = new Date(startDate.y, startDate.m - 1, startDate.d);
+                        }
+                        else if (typeof startDateCell.v === 'string') {
+                            startDate = new Date(startDateCell.v);
+                        }
+                        
+                        if (endDateCell.v instanceof Date) {
+                            endDate = endDateCell.v;
+                        }
+                        else if (typeof endDateCell.v === 'number') {
+                            endDate = XLSX.SSF.parse_date_code(endDateCell.v);
+                            endDate = new Date(endDate.y, endDate.m - 1, endDate.d);
+                        }
+                        else if (typeof endDateCell.v === 'string') {
+                            endDate = new Date(endDateCell.v);
+                        }
+                        
+                        if (startDate && !isNaN(startDate.getTime()) && endDate && !isNaN(endDate.getTime())) {
+                            employeeData[uin] = {
+                                startDate: startDate,
+                                endDate: endDate,
+                                startDateStr: startDate.toISOString().split('T')[0],
+                                endDateStr: endDate.toISOString().split('T')[0]
+                            };
+                            const uinNoZeros = parseInt(uin, 10).toString();
+                            if (uinNoZeros !== uin) {
+                                employeeData[uinNoZeros] = employeeData[uin];
+                            }
+                        }
+                    } catch (error) {
+                        console.warn(`Skipping UIN ${uin} at row ${row + 1}: ${error.message}`);
+                    }
+                }
+            }
+            
+            console.log(`Loaded ${Object.keys(employeeData).length} employee records from EmployeeAWPs`);
+            if (Object.keys(employeeData).length > 0) {
+                console.log("Sample UINs from EmployeeAWPs:", Object.keys(employeeData).slice(0, 5));
+            } else {
+                console.error("WARNING: No employee records loaded! Check if columns L and M contain valid dates.");
+            }
+            
+            // Cross-reference and find UINs that need highlighting
+            const uinsToHighlight = [];
+            const analysis = [];
+            
+            console.log(`Processing ${overdueUINs.length} UINs from OverdueCourses...`);
+            if (overdueUINs.length > 0) {
+                console.log("Sample UINs from OverdueCourses:", overdueUINs.slice(0, 5).map(u => u.uin));
+            }
+            
+            for (const overdueEntry of overdueUINs) {
+                let uin = overdueEntry.uin;
+                
+                // Try multiple lookup strategies
+                let employee = employeeData[uin];
+                
+                // If not found, try without leading zeros
+                if (!employee) {
+                    const uinNoZeros = parseInt(uin, 10).toString();
+                    employee = employeeData[uinNoZeros];
+                }
+                
+                // If still not found, try adding leading zeros up to common lengths
+                if (!employee) {
+                    for (let len of [8, 9, 10]) {
+                        const paddedUin = uin.padStart(len, '0');
+                        if (employeeData[paddedUin]) {
+                            employee = employeeData[paddedUin];
+                            break;
+                        }
+                    }
+                }
+                
+                if (employee) {
+                    const isInRange = today >= employee.startDate && today <= employee.endDate;
+                    
+                    analysis.push({
+                        uin: uin,
+                        name: overdueEntry.name,
+                        email: overdueEntry.email,
+                        row: overdueEntry.row,
+                        startDate: employee.startDateStr,
+                        endDate: employee.endDateStr,
+                        isInRange: isInRange,
+                        needsHighlight: !isInRange
+                    });
+                    
+                    if (!isInRange) {
+                        uinsToHighlight.push(overdueEntry);
+                    }
+                } else {
+                    analysis.push({
+                        uin: uin,
+                        name: overdueEntry.name,
+                        email: overdueEntry.email,
+                        row: overdueEntry.row,
+                        startDate: 'NOT FOUND',
+                        endDate: 'NOT FOUND',
+                        isInRange: false,
+                        needsHighlight: true
+                    });
+                    
+                    uinsToHighlight.push(overdueEntry);
+                }
+            }
+            
+            console.log(`Found ${uinsToHighlight.length} UINs outside work period or not found`);
+            console.log(`Found ${analysis.filter(a => a.isInRange).length} UINs within work period`);
+            
+            return {
+                totalUINs: overdueUINs.length,
+                uinsToHighlight: uinsToHighlight,
+                analysis: analysis,
+                inCurrentPeriod: analysis.filter(a => a.isInRange).length,
+                columnIndices: {
+                    employeeId: employeeIdCol,
+                    startDate: startDateCol,
+                    endDate: endDateCol
+                }
+            };
+        }
+        
+        function displayResults(results) {
+            document.getElementById('totalUINs').textContent = results.totalUINs;
+            document.getElementById('highlightedUINs').textContent = results.uinsToHighlight.length;
+            document.getElementById('currentPeriod').textContent = results.inCurrentPeriod;
+            
+            // Show preview of records going to Removals tab
+            const preview = document.getElementById('highlightPreview');
+            let previewHTML = '';
+            
+            results.uinsToHighlight.slice(0, 20).forEach(entry => {
+                const analysisEntry = results.analysis.find(a => a.uin === entry.uin && a.row === entry.row);
+                previewHTML += `<div class="highlight-row">UIN ${entry.uin} - ${entry.name}<br>
+                    <small>Work Period: ${analysisEntry.startDate} to ${analysisEntry.endDate}</small></div>`;
+            });
+            
+            if (results.uinsToHighlight.length > 20) {
+                previewHTML += `<div style="text-align: center; color: #6c757d; padding: 10px;">
+                    ... and ${results.uinsToHighlight.length - 20} more records going to Removals tab</div>`;
+            }
+            
+            preview.innerHTML = previewHTML;
+            document.getElementById('results').classList.remove('hidden');
+        }
+        
+        function createHighlightedFile(workbook, results) {
+            // Create a new workbook
+            const newWorkbook = XLSX.utils.book_new();
+            
+            // Get original data
+            const overdueSheet = workbook.Sheets['OverdueCourses'];
+            const employeeSheet = workbook.Sheets['EmployeeAWPs'];
+            
+            // Convert to arrays for easier processing
+            const overdueData = XLSX.utils.sheet_to_json(overdueSheet, {header: 1});
+            const employeeData = XLSX.utils.sheet_to_json(employeeSheet, {header: 1});
+            
+            // Get the column indices we found during analysis
+            const colIndices = results.columnIndices;
+            
+            console.log("Creating Excel file with columns:", colIndices);
+            
+            // Create employee lookup for date ranges using correct column indices
+            const employeeLookup = {};
+            for (let i = 1; i < employeeData.length; i++) {
+                const row = employeeData[i];
+                const uin = row[colIndices.employeeId]; // Use dynamic column
+                const startDate = row[colIndices.startDate]; // Use dynamic column
+                const endDate = row[colIndices.endDate]; // Use dynamic column
+                
+                if (!uin || !startDate || !endDate) continue;
+                
+                const uinStr = uin.toString().trim();
+                
+                // Skip invalid UINs
+                if (uinStr === '' || 
+                    uinStr.toLowerCase() === 'yes' || 
+                    uinStr.toLowerCase() === 'no' || 
+                    uinStr.toLowerCase() === 'uin' ||
+                    uinStr.toLowerCase() === 'employee id' ||
+                    isNaN(uinStr)) {
+                    continue;
+                }
+                
+                let startDateStr, endDateStr;
+                
+                try {
+                    // Parse start date
+                    if (startDate instanceof Date) {
+                        startDateStr = startDate.toISOString().split('T')[0];
+                    } else if (typeof startDate === 'number') {
+                        const parsed = XLSX.SSF.parse_date_code(startDate);
+                        const dateObj = new Date(parsed.y, parsed.m - 1, parsed.d);
+                        startDateStr = dateObj.toISOString().split('T')[0];
+                    } else if (typeof startDate === 'string') {
+                        const dateObj = new Date(startDate);
+                        if (!isNaN(dateObj.getTime())) {
+                            startDateStr = dateObj.toISOString().split('T')[0];
+                        }
+                    }
+                    
+                    // Parse end date
+                    if (endDate instanceof Date) {
+                        endDateStr = endDate.toISOString().split('T')[0];
+                    } else if (typeof endDate === 'number') {
+                        const parsed = XLSX.SSF.parse_date_code(endDate);
+                        const dateObj = new Date(parsed.y, parsed.m - 1, parsed.d);
+                        endDateStr = dateObj.toISOString().split('T')[0];
+                    } else if (typeof endDate === 'string') {
+                        const dateObj = new Date(endDate);
+                        if (!isNaN(dateObj.getTime())) {
+                            endDateStr = dateObj.toISOString().split('T')[0];
+                        }
+                    }
+                    
+                    if (startDateStr && endDateStr) {
+                        employeeLookup[uinStr] = {
+                            startDateStr: startDateStr,
+                            endDateStr: endDateStr
+                        };
+                        // Also add without leading zeros
+                        const uinNoZeros = parseInt(uinStr, 10).toString();
+                        if (uinNoZeros !== uinStr) {
+                            employeeLookup[uinNoZeros] = employeeLookup[uinStr];
+                        }
+                    }
+                } catch (error) {
+                    // Skip this UIN if dates can't be parsed
+                    continue;
+                }
+            }
+            
+            console.log(`Created lookup with ${Object.keys(employeeLookup).length} entries`);
+            
+            // Find UIN column in OverdueCourses sheet and detect header row
+            let overdueUinCol = 0; // Default to column A
+            let overdueHeaderRow = 0; // Default to row 0
+            const overdueRange = XLSX.utils.decode_range(overdueSheet['!ref']);
+            
+            // Find the row that contains "UIN" - that's the header row
+            for (let row = 0; row <= Math.min(5, overdueRange.e.r); row++) {
+                for (let col = 0; col <= overdueRange.e.c; col++) {
+                    const cell = overdueSheet[XLSX.utils.encode_cell({r: row, c: col})];
+                    if (cell && cell.v) {
+                        const cellValue = cell.v.toString().toLowerCase().trim();
+                        if (cellValue === 'uin' || cellValue === 'employee id') {
+                            overdueHeaderRow = row;
+                            overdueUinCol = col;
+                            console.log(`Found header row at row ${row + 1}, UIN at column ${XLSX.utils.encode_col(col)}`);
+                            break;
+                        }
+                    }
+                }
+                if (overdueHeaderRow > 0 || overdueUinCol > 0) break;
+            }
+            
+            // Extract headers from the correct row
+            const actualHeaders = [];
+            for (let col = 0; col <= overdueRange.e.c; col++) {
+                const headerCell = overdueSheet[XLSX.utils.encode_cell({r: overdueHeaderRow, c: col})];
+                actualHeaders.push(headerCell ? headerCell.v : '');
+            }
+            
+            console.log(`Using row ${overdueHeaderRow + 1} as header row with ${actualHeaders.length} columns`);
+            
+            // Create headers with date columns appended
+            const newHeaders = [...actualHeaders, 'Annual Work Period Start Date', 'Annual Work Period End Date'];
+            
+            // Initialize tab data with headers
+            const followupsData = [newHeaders];
+            const removalsData = [newHeaders];
+            
+            // Create sets for quick lookup
+            const removalRowNumbers = new Set(results.uinsToHighlight.map(entry => entry.row));
+            
+            // Process each row from OverdueCourses (skip rows up to and including header)
+            for (let i = overdueHeaderRow + 1; i < overdueData.length; i++) {
+                const row = overdueData[i];
+                const uin = row[overdueUinCol] ? row[overdueUinCol].toString().trim() : '';
+                const excelRowNumber = i + 1; // Convert to Excel row number
+                
+                // Skip if no UIN or if it's a header-like value
+                if (!uin || uin.toLowerCase() === 'uin' || uin.toLowerCase() === 'employee id') {
+                    continue;
+                }
+                
+                // Get employee date info using multiple lookup strategies
+                let employee = employeeLookup[uin];
+                if (!employee && uin) {
+                    const uinNoZeros = parseInt(uin, 10).toString();
+                    employee = employeeLookup[uinNoZeros];
+                }
+                
+                const startDateStr = employee ? employee.startDateStr : 'NOT FOUND';
+                const endDateStr = employee ? employee.endDateStr : 'NOT FOUND';
+                
+                // Create new row with date columns
+                const newRow = [...row, startDateStr, endDateStr];
+                
+                // Check if this row should be in removals
+                if (removalRowNumbers.has(excelRowNumber)) {
+                    removalsData.push(newRow);
+                } else {
+                    followupsData.push(newRow);
+                }
+            }
+            
+            console.log(`Created Followups with ${followupsData.length - 1} rows`);
+            console.log(`Created Removals with ${removalsData.length - 1} rows`);
+            
+            // Create sheets
+            const followupsSheet = XLSX.utils.aoa_to_sheet(followupsData);
+            const removalsSheet = XLSX.utils.aoa_to_sheet(removalsData);
+            
+            // Add sheets to workbook
+            XLSX.utils.book_append_sheet(newWorkbook, followupsSheet, "Followups");
+            XLSX.utils.book_append_sheet(newWorkbook, removalsSheet, "Removals");
+            
+            // Copy original sheets for reference
+            XLSX.utils.book_append_sheet(newWorkbook, overdueSheet, "OverdueCourses_Original");
+            XLSX.utils.book_append_sheet(newWorkbook, employeeSheet, "EmployeeAWPs_Original");
+            
+            // Create summary sheet
+            const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            const summaryData = [
+                ['Excel Cross-Reference Analysis Summary'],
+                [`Analysis Date: ${currentDate}`],
+                [''],
+                ['Tab Descriptions:'],
+                ['Followups: Records with UINs WITHIN their current work period (follow up on these)'],
+                ['Removals: Records with UINs OUTSIDE their current work period (consider removing)'],
+                [''],
+                ['Statistics:'],
+                [`Total records processed: ${overdueData.length - 1}`],
+                [`Records in Followups tab: ${followupsData.length - 1}`],
+                [`Records in Removals tab: ${removalsData.length - 1}`],
+                [''],
+                ['Column Information:'],
+                ['All original columns from OverdueCourses are preserved'],
+                ['Two additional columns added at the end:'],
+                ['  - Annual Work Period Start Date (from EmployeeAWPs)'],
+                ['  - Annual Work Period End Date (from EmployeeAWPs)'],
+                [''],
+                ['Business Logic:'],
+                [`- If today (${currentDate}) falls WITHIN work period = Followups`],
+                [`- If today (${currentDate}) falls OUTSIDE work period = Removals`],
+                ['- If UIN not found in EmployeeAWPs = Removals']
+            ];
+            
+            const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+            XLSX.utils.book_append_sheet(newWorkbook, summarySheet, "Analysis_Summary");
+            
+            // Generate the file
+            const fileBuffer = XLSX.write(newWorkbook, { 
+                bookType: 'xlsx', 
+                type: 'array'
+            });
+            
+            // Create download link
+            const blob = new Blob([fileBuffer], { 
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+            });
+            const url = URL.createObjectURL(blob);
+            
+            const downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.href = url;
+            downloadBtn.download = 'CrossReference_Followups_and_Removals.xlsx';
+            downloadBtn.classList.remove('hidden');
+            
+            // Enable addendum button
+            const addendumBtn = document.getElementById('addendumBtn');
+            addendumBtn.disabled = false;
+            document.getElementById('addendumStatus').textContent = 'Ready! Click button above to create Addendum A';
+            document.getElementById('addendumStatus').style.color = '#28a745';
+            
+            // Enable email button
+            const emailBtn = document.getElementById('emailBtn');
+            emailBtn.disabled = false;
+            document.getElementById('emailStatus').textContent = 'Ready! Click button above to generate followup emails';
+            document.getElementById('emailStatus').style.color = '#28a745';
+        }
+        
+        function createAddendum() {
+            if (!analysisResults) {
+                showStatus('No analysis results available. Please process a file first.', 'error');
+                return;
+            }
+            
+            const removalsData = analysisResults.uinsToHighlight;
+            const analysisData = analysisResults.analysis;
+            
+            if (removalsData.length === 0) {
+                showStatus('No records found for Removals tab.', 'info');
+                return;
+            }
+            
+            // Deduplicate by UIN - keep only unique employees
+            const uniqueEmployees = {};
+            removalsData.forEach(entry => {
+                const uin = entry.uin;
+                if (!uniqueEmployees[uin]) {
+                    // First occurrence of this UIN
+                    const analysisEntry = analysisData.find(a => a.uin === uin && a.row === entry.row);
+                    uniqueEmployees[uin] = {
+                        uin: uin,
+                        name: entry.name,
+                        email: entry.email || 'N/A',
+                        startDate: analysisEntry ? analysisEntry.startDate : 'NOT FOUND',
+                        endDate: analysisEntry ? analysisEntry.endDate : 'NOT FOUND',
+                        courseCount: 1
+                    };
+                } else {
+                    // UIN already exists, just increment course count
+                    uniqueEmployees[uin].courseCount++;
+                }
+            });
+            
+            const uniqueEmployeesList = Object.values(uniqueEmployees);
+            const totalOriginalRecords = removalsData.length;
+            
+            // Create addendum content
+            const todayStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            
+            let addendumHTML = `
+                <div style="font-family: 'Times New Roman', serif; line-height: 1.6;">
+                    <h2 style="text-align: center; margin-bottom: 30px; color: #2c3e50;">ADDENDUM A</h2>
+                    <h3 style="text-align: center; margin-bottom: 30px; color: #2c3e50;">Employees with Overdue Courses Outside Current Work Period</h3>
+                    
+                    <p style="margin-bottom: 20px;"><strong>Analysis Date:</strong> ${todayStr}</p>
+                    <p style="margin-bottom: 20px;"><strong>Unique Employees:</strong> ${uniqueEmployeesList.length}</p>
+                    <p style="margin-bottom: 20px;"><strong>Total Course Records:</strong> ${totalOriginalRecords}</p>
+                    <p style="margin-bottom: 30px;"><strong>Criteria:</strong> UINs with overdue courses that fall outside their current annual work period dates.</p>
+                    
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px;">
+                        <thead>
+                            <tr style="background-color: #f8f9fa;">
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">UIN</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">Employee Name</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">Email</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">Overdue Courses</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">Work Period Start</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">Work Period End</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            // Add each unique employee
+            const todayForComparison = new Date();
+            uniqueEmployeesList.forEach((employee, index) => {
+                const rowClass = index % 2 === 0 ? '' : 'background-color: #f9f9f9;';
+                
+                let reason = 'UIN not found in EmployeeAWPs';
+                if (employee.startDate !== 'NOT FOUND') {
+                    const startDate = new Date(employee.startDate);
+                    reason = startDate > todayForComparison ? 'Future work period' : 'Past work period';
+                }
+                
+                addendumHTML += `
+                    <tr style="${rowClass}">
+                        <td style="border: 1px solid #ddd; padding: 6px;">${employee.uin}</td>
+                        <td style="border: 1px solid #ddd; padding: 6px;">${employee.name}</td>
+                        <td style="border: 1px solid #ddd; padding: 6px; font-size: 10px;">${employee.email}</td>
+                        <td style="border: 1px solid #ddd; padding: 6px; text-align: center; font-weight: bold;">${employee.courseCount}</td>
+                        <td style="border: 1px solid #ddd; padding: 6px;">${employee.startDate}</td>
+                        <td style="border: 1px solid #ddd; padding: 6px;">${employee.endDate}</td>
+                        <td style="border: 1px solid #ddd; padding: 6px;">${reason}</td>
+                    </tr>
+                `;
+            });
+            
+            addendumHTML += `
+                        </tbody>
+                    </table>
+                    
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                        <p><strong>Summary:</strong></p>
+                        <ul>
+                            <li>Unique employees listed: ${uniqueEmployeesList.length}</li>
+                            <li>Total overdue course records: ${totalOriginalRecords}</li>
+                            <li>These employees have overdue courses that fall outside their current annual work period</li>
+                            <li>Recommended action: Review for potential removal from overdue course tracking</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="margin-top: 30px; text-align: center; font-size: 10px; color: #666;">
+                        Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('addendumContent').innerHTML = addendumHTML;
+            document.getElementById('addendumPreview').classList.remove('hidden');
+            
+            showStatus(`Addendum A created successfully! ${uniqueEmployeesList.length} unique employees from ${totalOriginalRecords} total records.`, 'success');
+        }
+        
+        function downloadAsHTML() {
+            const addendumContent = document.getElementById('addendumContent').innerHTML;
+            
+            const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+    <title>Addendum A - Employee Removals</title>
+    <meta charset="UTF-8">
+    <style>
+        body { 
+            font-family: 'Times New Roman', serif; 
+            margin: 1in; 
+            font-size: 12px;
+            line-height: 1.6;
+            background: white;
+        }
+        table { 
+            border-collapse: collapse; 
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        h2, h3 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        p {
+            margin: 10px 0;
+        }
+        ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        @media print {
+            body { margin: 0.5in; }
+            @page { margin: 0.5in; }
+            table { page-break-inside: auto; }
+            tr { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    ${addendumContent}
+</body>
+</html>`;
+            
+            // Create and download the HTML file
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Addendum_A_Employee_Removals.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showStatus('HTML file downloaded! Open it in your browser and print as PDF.', 'success');
+        }
+        
+        function printAddendum() {
+            const addendumContent = document.getElementById('addendumContent').innerHTML;
+            
+            // Create a new window for printing
+            const printWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes');
+            
+            if (!printWindow) {
+                alert('Popup blocked! Please use "Download HTML" button instead.');
+                return;
+            }
+            
+            printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+    <title>Addendum A - Employee Removals</title>
+    <style>
+        body { 
+            font-family: 'Times New Roman', serif; 
+            margin: 1in; 
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        table { 
+            border-collapse: collapse; 
+            width: 100%;
+            page-break-inside: auto;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        tr { 
+            page-break-inside: avoid; 
+        }
+        @media print {
+            body { margin: 0.5in; }
+            @page { margin: 0.5in; }
+        }
+    </style>
+</head>
+<body>
+    ${addendumContent}
+</body>
+</html>`);
+            
+            printWindow.document.close();
+            
+            // Wait for content to load, then print
+            setTimeout(() => {
+                printWindow.focus();
+                printWindow.print();
+            }, 1000);
+        }
+        
+        function copyToClipboard() {
+            const addendumElement = document.getElementById('addendumContent');
+            const textContent = addendumElement.innerText || addendumElement.textContent;
+            
+            navigator.clipboard.writeText(textContent).then(() => {
+                showStatus('Addendum text copied to clipboard!', 'success');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = textContent;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showStatus('Addendum text copied to clipboard!', 'success');
+            });
+        }
+        
+        function generateEmails() {
+            if (!workbookData || !analysisResults) {
+                showStatus('No analysis results available. Please process a file first.', 'error');
+                return;
+            }
+            
+            console.log("Generating followup emails...");
+            showStatus('Generating followup emails...', 'info');
+            
+            const overdueSheet = workbookData.Sheets['OverdueCourses'];
+            const overdueRange = XLSX.utils.decode_range(overdueSheet['!ref']);
+            
+            // Find header row and column indices
+            let headerRow = 0;
+            let columnIndices = {};
+            
+            // Find the row that contains "UIN" - that's the header row
+            for (let row = 0; row <= Math.min(5, overdueRange.e.r); row++) {
+                for (let col = 0; col <= overdueRange.e.c; col++) {
+                    const cell = overdueSheet[XLSX.utils.encode_cell({r: row, c: col})];
+                    if (cell && cell.v && cell.v.toString().toLowerCase().trim() === 'uin') {
+                        headerRow = row;
+                        break;
+                    }
+                }
+                if (headerRow > 0) break;
+            }
+            
+            // Map column names to indices
+            const headerNames = ['uin', 'name', 'email', 'last paid date', 'workstation', 'workstation name', 
+                                 'adloc', 'adloc name', 'sfs', 'course number', 'course name'];
+            
+            for (let col = 0; col <= overdueRange.e.c; col++) {
+                const headerCell = overdueSheet[XLSX.utils.encode_cell({r: headerRow, c: col})];
+                if (headerCell && headerCell.v) {
+                    const headerValue = headerCell.v.toString().toLowerCase().trim();
+                    columnIndices[headerValue] = col;
+                }
+            }
+            
+            console.log("Found columns:", columnIndices);
+            
+            // Group courses by UIN (only for followups - people within work period)
+            const followupUINs = new Set(
+                analysisResults.analysis
+                    .filter(a => a.isInRange)
+                    .map(a => a.uin)
+            );
+            
+            const employeeData = {};
+            
+            // Process all rows to group by employee
+            for (let row = headerRow + 1; row <= overdueRange.e.r; row++) {
+                const uinCell = overdueSheet[XLSX.utils.encode_cell({r: row, c: columnIndices['uin'] || 0})];
+                
+                if (!uinCell || !uinCell.v) continue;
+                
+                const uin = uinCell.v.toString().trim();
+                
+                // Skip if not a valid UIN or not in followups
+                if (isNaN(uin) || !followupUINs.has(uin)) continue;
+                
+                // Extract all data for this row
+                const rowData = {};
+                for (const [header, colIndex] of Object.entries(columnIndices)) {
+                    const cell = overdueSheet[XLSX.utils.encode_cell({r: row, c: colIndex})];
+                    rowData[header] = cell ? cell.v : '';
+                }
+                
+                // Group by UIN
+                if (!employeeData[uin]) {
+                    employeeData[uin] = {
+                        uin: uin,
+                        name: rowData['name'] || '',
+                        email: rowData['email'] || '',
+                        courses: []
+                    };
+                }
+                
+                employeeData[uin].courses.push(rowData);
+            }
+            
+            console.log(`Grouped data for ${Object.keys(employeeData).length} employees`);
+            
+            // Generate email text for each employee
+            generatedEmails = [];
+            const nextFriday = getNextFriday();
+            
+            for (const [uin, data] of Object.entries(employeeData)) {
+                const firstName = data.name.split(',')[1]?.trim() || data.name.split(' ')[0] || 'there';
+                
+                let emailHTML = `<div style="font-family: Arial, sans-serif;">`;
+                emailHTML += `<p>Howdy ${firstName},</p>`;
+                emailHTML += `<p>This is a reminder that the below State Required <span style="background-color: yellow;">TrainTraq</span>(s) assignment(s) are past due. Please complete this assignment by ${nextFriday}.</p>
+				<p>Please go here to complete these courses: , visit <a href="https://traintraq.tamus.edu/">https://traintraq.tamus.edu/</a></p>`;
+                
+                // Create table
+                emailHTML += `<table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 12px;">`;
+                emailHTML += `<thead><tr style="background-color: #4fa8c5; color: white;">`;
+                emailHTML += `<th style="border: 1px solid #ddd; padding: 8px;">UIN</th>`;
+                emailHTML += `<th style="border: 1px solid #ddd; padding: 8px;">Name</th>`;
+                emailHTML += `<th style="border: 1px solid #ddd; padding: 8px;">Email</th>`;
+                emailHTML += `<th style="border: 1px solid #ddd; padding: 8px;">Course Number</th>`;
+                emailHTML += `<th style="border: 1px solid #ddd; padding: 8px;">Course Name</th>`;
+                emailHTML += `<th style="border: 1px solid #ddd; padding: 8px;">Date Due</th>`;
+                emailHTML += `<th style="border: 1px solid #ddd; padding: 8px;">Date Assigned</th>`;
+                emailHTML += `<th style="border: 1px solid #ddd; padding: 8px;">Primary Supervisor Name</th>`;
+                emailHTML += `<th style="border: 1px solid #ddd; padding: 8px;">Number of Notifications</th>`;
+                emailHTML += `<th style="border: 1px solid #ddd; padding: 8px;">Date of Last Notification</th>`;
+                emailHTML += `<th style="border: 1px solid #ddd; padding: 8px;">Past Due Status</th>`;
+                emailHTML += `</tr></thead><tbody>`;
+                
+                data.courses.forEach((course, index) => {
+                    const bgColor = index % 2 === 0 ? 'white' : '#f9f9f9';
+                    emailHTML += `<tr style="background-color: ${bgColor};">`;
+                    emailHTML += `<td style="border: 1px solid #ddd; padding: 6px;">${course['uin'] || ''}</td>`;
+                    emailHTML += `<td style="border: 1px solid #ddd; padding: 6px;">${course['name'] || ''}</td>`;
+                    emailHTML += `<td style="border: 1px solid #ddd; padding: 6px;">${course['email'] || ''}</td>`;
+                    emailHTML += `<td style="border: 1px solid #ddd; padding: 6px;">${course['course number'] || ''}</td>`;
+                    emailHTML += `<td style="border: 1px solid #ddd; padding: 6px;">${course['course name'] || ''}</td>`;
+                    emailHTML += `<td style="border: 1px solid #ddd; padding: 6px;">${formatDate(course['last paid date']) || ''}</td>`;
+                    emailHTML += `<td style="border: 1px solid #ddd; padding: 6px;">${formatDate(course['date assigned']) || ''}</td>`;
+                    emailHTML += `<td style="border: 1px solid #ddd; padding: 6px;">${course['primary supervisor name'] || ''}</td>`;
+                    emailHTML += `<td style="border: 1px solid #ddd; padding: 6px;">${course['number of notifications'] || ''}</td>`;
+                    emailHTML += `<td style="border: 1px solid #ddd; padding: 6px;">${formatDate(course['date of last notification']) || ''}</td>`;
+                    emailHTML += `<td style="border: 1px solid #ddd; padding: 6px;">${course['past due status'] || ''}</td>`;
+                    emailHTML += `</tr>`;
+                });
+                
+                emailHTML += `</tbody></table>`;
+                emailHTML += `<p style="margin-top: 20px;">Per System Policy 33.05 Employee Training - All employees of The Texas A&M University System (system) receive training on the duties and responsibilities of their positions and on the various policies, regulations, rules, and procedures related to their employment. Training is in accordance with state law and regulations established by the chancellor.</p>`;
+                emailHTML += `<p style="margin-top: 15px;">Thanks!<br>Payton</p>`;
+                emailHTML += `</div>`;
+                
+                generatedEmails.push({
+                    uin: uin,
+                    name: data.name,
+                    email: data.email,
+                    courseCount: data.courses.length,
+                    html: emailHTML
+                });
+            }
+            
+            // Sort emails by name (last name, first name format)
+            generatedEmails.sort((a, b) => {
+                return a.name.localeCompare(b.name);
+            });
+            
+            console.log(`Generated ${generatedEmails.length} emails (sorted by name)`);
+            
+            if (generatedEmails.length === 0) {
+                showStatus('No followup emails to generate. All employees may be outside their work period.', 'info');
+                return;
+            }
+            
+            currentEmailIndex = 0;
+            displayCurrentEmail();
+            document.getElementById('emailViewer').classList.remove('hidden');
+            showStatus(`Generated ${generatedEmails.length} followup emails!`, 'success');
+        }
+        
+        function getNextFriday() {
+            const today = new Date();
+            const dueDate = new Date(today);
+            dueDate.setDate(today.getDate() + 7); // Add 7 days to today
+            
+            return dueDate.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        }
+        
+        function formatDate(dateValue) {
+            if (!dateValue) return '';
+            
+            try {
+                let date;
+                if (dateValue instanceof Date) {
+                    date = dateValue;
+                } else if (typeof dateValue === 'number') {
+                    const parsed = XLSX.SSF.parse_date_code(dateValue);
+                    date = new Date(parsed.y, parsed.m - 1, parsed.d);
+                } else if (typeof dateValue === 'string') {
+                    date = new Date(dateValue);
+                }
+                
+                if (date && !isNaN(date.getTime())) {
+                    return date.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+                }
+            } catch (error) {
+                return dateValue;
+            }
+            
+            return dateValue;
+        }
+		
+		function makeSubjectForEmail(email) {
+		  const count = email.courseCount || 1;
+		  return `Reminder: ${count} State Required TrainTraq Assignment${count > 1 ? 's' : ''} Past Due — ${email.name}`;
+		}
+		
+        // Case-insensitive, whitespace-trimmed column lookup with aliases
+		function getCol(columnIndices, aliases) {
+		  for (const key in columnIndices) {
+			const norm = key.toLowerCase().trim();
+			for (const alias of aliases) {
+			  if (norm === alias) return columnIndices[key];
+			}
+		  }
+		  return null;
+		}
+
+		// Safely parse an XLSX cell that might be number (Excel serial), Date, or string
+		function parseCellDate(value) {
+		  if (!value) return null;
+		  try {
+			if (value instanceof Date) return value;
+			if (typeof value === 'number') {
+			  const parsed = XLSX.SSF.parse_date_code(value);
+			  return new Date(parsed.y, parsed.m - 1, parsed.d);
+			}
+			if (typeof value === 'string') {
+			  const d = new Date(value);
+			  return isNaN(d.getTime()) ? null : d;
+			}
+		  } catch {}
+		  return null;
+		}
+
+		function fmtMDY(dateObj) {
+		  if (!dateObj) return '';
+		  return dateObj.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+		}
+
+		function daysOverdueFrom(dueDate) {
+		  if (!dueDate) return '';
+		  const today = new Date();
+		  const oneDay = 24 * 60 * 60 * 1000;
+		  return Math.max(0, Math.floor((today.setHours(0,0,0,0) - new Date(dueDate.setHours(0,0,0,0))) / oneDay));
+		}
+
+        function displayCurrentEmail() {
+            if (generatedEmails.length === 0) return;
+            
+            const email = generatedEmails[currentEmailIndex];
+            document.getElementById('emailContent').innerHTML = email.html;
+            document.getElementById('emailCounter').textContent = 
+                `Email ${currentEmailIndex + 1} of ${generatedEmails.length} - ${email.name} (${email.courseCount} course${email.courseCount > 1 ? 's' : ''})`;
+            
+            // Enable/disable navigation buttons
+            document.getElementById('prevEmailBtn').disabled = currentEmailIndex === 0;
+            document.getElementById('nextEmailBtn').disabled = currentEmailIndex === generatedEmails.length - 1;
+        }
+        
+        function previousEmail() {
+            if (currentEmailIndex > 0) {
+                currentEmailIndex--;
+                displayCurrentEmail();
+            }
+        }
+        
+        function nextEmail() {
+            if (currentEmailIndex < generatedEmails.length - 1) {
+                currentEmailIndex++;
+                displayCurrentEmail();
+            }
+        }
+        
+        function copyEmailText() {
+            const emailContent = document.getElementById('emailContent').innerHTML;
+            
+            // Create a temporary div to convert HTML to plain text while preserving structure
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = emailContent;
+            
+            // Copy HTML (for pasting into email clients)
+            navigator.clipboard.write([
+                new ClipboardItem({
+                    'text/html': new Blob([emailContent], { type: 'text/html' }),
+                    'text/plain': new Blob([tempDiv.innerText], { type: 'text/plain' })
+                })
+            ]).then(() => {
+                showStatus('Email copied to clipboard! You can paste it into your email client.', 'success');
+            }).catch(() => {
+                // Fallback: just copy as text
+                const textArea = document.createElement('textarea');
+                textArea.value = tempDiv.innerText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showStatus('Email text copied to clipboard!', 'success');
+            });
+        }
+        
+        function convertEmailToPlainText(email) {
+		  const firstName = email.name.split(',')[1]?.trim() || email.name.split(' ')[0] || 'there';
+		  const nextFriday = getNextFriday();
+
+		  const overdueSheet = workbookData.Sheets['OverdueCourses'];
+		  const rng = XLSX.utils.decode_range(overdueSheet['!ref']);
+
+		  // Find header row (same logic you already use in generateEmails)
+		  let headerRow = 0;
+		  for (let row = 0; row <= Math.min(5, rng.e.r); row++) {
+			for (let col = 0; col <= rng.e.c; col++) {
+			  const cell = overdueSheet[XLSX.utils.encode_cell({ r: row, c: col })];
+			  if (cell && typeof cell.v === 'string' && cell.v.toLowerCase().trim() === 'uin') {
+				headerRow = row;
+				break;
+			  }
+			}
+			if (headerRow > 0) break;
+		  }
+
+		  // Build column index map (lowercased header -> index)
+		  const columnIndices = {};
+		  for (let col = 0; col <= rng.e.c; col++) {
+			const hcell = overdueSheet[XLSX.utils.encode_cell({ r: headerRow, c: col })];
+			if (hcell && hcell.v) {
+			  columnIndices[hcell.v.toString().toLowerCase().trim()] = col;
+			}
+		  }
+
+		  // Resolve key columns (supporting common header variants)
+		  const uinCol         = getCol(columnIndices, ['uin', 'employee id']);
+		  const nameCol        = getCol(columnIndices, ['name', 'employee name']);
+		  const emailCol       = getCol(columnIndices, ['email', 'email address']);
+		  const courseNumCol   = getCol(columnIndices, ['course number', 'course id', 'course']);
+		  const courseNameCol  = getCol(columnIndices, ['course name', 'title']);
+		  const assignedCol    = getCol(columnIndices, ['date assigned', 'assigned date']);
+		  const dueCol         = getCol(columnIndices, ['date due', 'due date']);
+		  // Optional extras if you ever want them:
+		  const supervisorCol  = getCol(columnIndices, ['primary supervisor name', 'supervisor', 'manager']);
+		  const lastNotifCol   = getCol(columnIndices, ['date of last notification']);
+		  const notifCountCol  = getCol(columnIndices, ['number of notifications']);
+
+		  // Gather all rows for this UIN (only from Followups set)
+		  const targetUIN = email.uin;
+		  const lines = [];
+
+		  for (let row = headerRow + 1; row <= rng.e.r; row++) {
+			const uinCell = overdueSheet[XLSX.utils.encode_cell({ r: row, c: uinCol ?? 0 })];
+			if (!uinCell || !uinCell.v) continue;
+
+			const rowUIN = uinCell.v.toString().trim();
+			if (rowUIN !== targetUIN) continue;
+
+			const cnCell  = courseNumCol != null  ? overdueSheet[XLSX.utils.encode_cell({ r: row, c: courseNumCol })]  : null;
+			const cName   = courseNameCol != null ? overdueSheet[XLSX.utils.encode_cell({ r: row, c: courseNameCol })] : null;
+			const asCell  = assignedCol != null   ? overdueSheet[XLSX.utils.encode_cell({ r: row, c: assignedCol })]   : null;
+			const dueCell = dueCol != null        ? overdueSheet[XLSX.utils.encode_cell({ r: row, c: dueCol })]        : null;
+
+			const assignedDate = parseCellDate(asCell ? asCell.v : null);
+			const dueDate      = parseCellDate(dueCell ? dueCell.v : null);
+
+			const assignedStr  = fmtMDY(assignedDate);
+			const dueStr       = fmtMDY(dueDate);
+			const overdueDays  = dueDate ? daysOverdueFrom(new Date(dueDate)) : '';
+
+			// Compose a compact, readable block for each course
+			lines.push([
+			  `• ${cnCell?.v ?? ''} — ${cName?.v ?? ''}`.trim(),
+			  assignedStr ? `   Assigned: ${assignedStr}` : null,
+			  dueStr ?      `   Due: ${dueStr}` : null,
+			  overdueDays!=='' ? `   Days overdue: ${overdueDays}` : null,
+			].filter(Boolean).join('\n'));
+		  }
+
+		  // Header + body
+		  let plainText = `Howdy ${firstName},\n\n`;
+		  plainText += `This is a reminder that the State Required TrainTraq assignment(s) below are past due. Please complete them by ${nextFriday}.\n\n`;
+			plainText += `Please go here to complete these courses:\r\nhttps://traintraq.tamus.edu\r\n\r\n`;
+			plainText += `Employee: ${email.name}\r\n`;
+			plainText += `UIN: ${email.uin}\r\n`;
+			plainText += `Email: ${email.email}\r\n\r\n`;			 
+
+		  if (lines.length) {
+			plainText += `--- Past Due Courses ---\n`;
+			plainText += lines.join('\n\n') + '\n\n';
+		  } else {
+			plainText += `No course rows were found for this UIN in the OverdueCourses sheet.\n\n`;
+		  }
+
+		  plainText += `Per System Policy 33.05 Employee Training — All employees of The Texas A&M University System receive training on the duties and responsibilities of their positions and on the various policies, regulations, rules, and procedures related to their employment. Training is in accordance with state law and regulations established by the chancellor.\n\n`;
+		  plainText += `Thanks!\nPayton`;
+
+		  return plainText;
+		}
+
+        
+        function openInOutlook() {
+			if (generatedEmails.length === 0) return;
+
+			const email = generatedEmails[currentEmailIndex];
+			const subject = makeSubjectForEmail(email);   // 👈 updated line
+			const body = convertEmailToPlainText(email);
+
+			const mailtoLink = `mailto:${encodeURIComponent(email.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+			if (mailtoLink.length > 2000) {
+				showStatus('Email content is too long for mailto link. Please use "Copy Email" instead and paste into Outlook.', 'error');
+				return;
+			}
+
+			window.location.href = mailtoLink;
+			showStatus('Opening email in Outlook...', 'success');
+		}
+        
+        function openAllInOutlook() {
+            if (generatedEmails.length === 0) return;
+            
+            const confirmed = confirm(`This will open ${generatedEmails.length} emails in your default email client, one at a time with a 2-second delay between each. Continue?`);
+            
+            if (!confirmed) return;
+            
+            showStatus(`Opening emails in sequence...`, 'info');
+            
+            // Open emails one by one with delay
+            generatedEmails.forEach((email, index) => {
+                setTimeout(() => {
+                    const subject = `Reminder: State Required TrainTraq Assignment(s) Past Due`;
+                    const body = convertEmailToPlainText(email);
+                    const mailtoLink = `mailto:${encodeURIComponent(email.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                    
+                    if (mailtoLink.length <= 2000) {
+                        window.location.href = mailtoLink;
+                    } else {
+                        console.warn(`Email for ${email.name} is too long for mailto link`);
+                    }
+                    
+                    if (index === generatedEmails.length - 1) {
+                        showStatus(`All ${generatedEmails.length} emails opened!`, 'success');
+                    }
+                }, index * 2000); // 2 second delay between emails
+            });
+        }
+    </script>
+</body>
+</html>
