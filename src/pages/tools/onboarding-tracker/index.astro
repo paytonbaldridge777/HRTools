@@ -22,11 +22,13 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
     </div>
 
     <!-- Onboarding Tracker App Container -->
-    <div id="onboarding-root" class="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg p-6 shadow-sm">
-      <div class="text-center py-12">
-        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-tamu-maroon mb-4"></div>
-        <p class="text-[var(--text-secondary)]">Loading Onboarding Tracker...</p>
-      </div>
+    <div id="onboarding-root" class="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg shadow-sm overflow-hidden">
+      <iframe 
+        src="/OnboardingTracker/index.html" 
+        class="w-full border-0"
+        style="min-height: 800px;"
+        title="Onboarding Tracker Tool"
+      ></iframe>
     </div>
 
     <!-- Instructions -->
