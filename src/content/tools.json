@@ -1,0 +1,26 @@
+[
+  {
+    "slug": "fmla-calculator",
+    "name": "FMLA Calculator",
+    "shortDescription": "Calculate FMLA eligibility and leave details for TAMU employees.",
+    "tags": ["Leave", "Compliance"],
+    "status": "stable",
+    "icon": "/icons/fmla.svg"
+  },
+  {
+    "slug": "traintraq-reminders",
+    "name": "TrainTraq Reminders",
+    "shortDescription": "Manage and track training reminder schedules.",
+    "tags": ["Training"],
+    "status": "stable",
+    "icon": "/icons/training.svg"
+  },
+  {
+    "slug": "onboarding-tracker",
+    "name": "Onboarding Tracker",
+    "shortDescription": "Track onboarding tasks and progress for new hires.",
+    "tags": ["Onboarding"],
+    "status": "stable",
+    "icon": "/icons/onboarding.svg"
+  }
+]

@@ -1,0 +1,167 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ToolCard from '../components/ToolCard.astro';
+import SearchInput from '../components/SearchInput.astro';
+import toolsData from '../content/tools.json';
+---
+
+<BaseLayout title="HR Tools - TAMU School of Law">
+  <!-- Hero Section -->
+  <section class="bg-gradient-to-b from-tamu-maroon to-tamu-maroon-700 text-white py-16">
+    <div class="container max-w-[1120px] mx-auto px-4 text-center">
+      <h1 class="text-4xl md:text-5xl font-bold mb-4">
+        HR Tools
+      </h1>
+      <p class="text-xl md:text-2xl mb-8 opacity-90">
+        A suite of internal tools for HR operations
+      </p>
+      <a 
+        href="#tools" 
+        class="inline-flex items-center px-6 py-3 bg-white text-tamu-maroon rounded-lg font-medium hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-tamu-maroon"
+      >
+        Browse Tools
+        <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- Recently Used Section -->
+  <section class="py-8 bg-[var(--bg-tertiary)] border-b border-[var(--border-color)]">
+    <div class="container max-w-[1120px] mx-auto px-4">
+      <div id="recently-used-container" class="hidden">
+        <h2 class="text-xl font-bold mb-4 text-[var(--text-primary)]">Recently Used</h2>
+        <div id="recently-used-list" class="flex gap-4 overflow-x-auto pb-2">
+          <!-- Recently used tools will be inserted here by JavaScript -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Tools Section -->
+  <section id="tools" class="py-12">
+    <div class="container max-w-[1120px] mx-auto px-4">
+      <!-- Search and Filters -->
+      <div class="mb-8">
+        <h2 class="text-3xl font-bold mb-6 text-[var(--text-primary)]">All Tools</h2>
+        <SearchInput />
+        
+        <!-- Filter Tags -->
+        <div class="flex flex-wrap gap-2 mb-6">
+          <button 
+            data-filter="all" 
+            class="filter-btn px-4 py-2 rounded-lg bg-tamu-maroon text-white font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-tamu-maroon"
+          >
+            All
+          </button>
+          <button 
+            data-filter="Leave" 
+            class="filter-btn px-4 py-2 rounded-lg bg-[var(--bg-tertiary)] text-[var(--text-primary)] border border-[var(--border-color)] hover:bg-[var(--hover-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-tamu-maroon"
+          >
+            Leave
+          </button>
+          <button 
+            data-filter="Training" 
+            class="filter-btn px-4 py-2 rounded-lg bg-[var(--bg-tertiary)] text-[var(--text-primary)] border border-[var(--border-color)] hover:bg-[var(--hover-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-tamu-maroon"
+          >
+            Training
+          </button>
+          <button 
+            data-filter="Onboarding" 
+            class="filter-btn px-4 py-2 rounded-lg bg-[var(--bg-tertiary)] text-[var(--text-primary)] border border-[var(--border-color)] hover:bg-[var(--hover-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-tamu-maroon"
+          >
+            Onboarding
+          </button>
+          <button 
+            data-filter="Compliance" 
+            class="filter-btn px-4 py-2 rounded-lg bg-[var(--bg-tertiary)] text-[var(--text-primary)] border border-[var(--border-color)] hover:bg-[var(--hover-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-tamu-maroon"
+          >
+            Compliance
+          </button>
+        </div>
+      </div>
+
+      <!-- Tools Grid -->
+      <div class="tools-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {toolsData.map((tool) => (
+          <ToolCard 
+            name={tool.name}
+            slug={tool.slug}
+            shortDescription={tool.shortDescription}
+            tags={tool.tags}
+            status={tool.status}
+            icon={tool.icon}
+          />
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  function initFilters() {
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const toolCards = document.querySelectorAll('.tool-card');
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const filter = btn.getAttribute('data-filter');
+        
+        // Update button states
+        filterBtns.forEach(b => {
+          if (b === btn) {
+            b.classList.add('bg-tamu-maroon', 'text-white');
+            b.classList.remove('bg-[var(--bg-tertiary)]', 'text-[var(--text-primary)]', 'border');
+          } else {
+            b.classList.remove('bg-tamu-maroon', 'text-white');
+            b.classList.add('bg-[var(--bg-tertiary)]', 'text-[var(--text-primary)]', 'border');
+          }
+        });
+
+        // Filter cards
+        toolCards.forEach(card => {
+          const cardElement = card as HTMLElement;
+          const cardTags = cardElement.textContent?.toLowerCase() || '';
+          
+          if (filter === 'all' || cardTags.includes(filter!.toLowerCase())) {
+            cardElement.style.display = '';
+            cardElement.classList.remove('hidden');
+          } else {
+            cardElement.style.display = 'none';
+            cardElement.classList.add('hidden');
+          }
+        });
+      });
+    });
+  }
+
+  function initRecentlyUsed() {
+    const recentTools = JSON.parse(localStorage.getItem('recentTools') || '[]');
+    const container = document.getElementById('recently-used-container');
+    const list = document.getElementById('recently-used-list');
+    
+    if (recentTools.length > 0 && container && list) {
+      container.classList.remove('hidden');
+      
+      // Show last 5 tools
+      recentTools.slice(0, 5).forEach((toolSlug: string) => {
+        const link = document.createElement('a');
+        link.href = `/tools/${toolSlug}`;
+        link.className = 'flex-shrink-0 px-4 py-2 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg hover:shadow-md transition-all text-[var(--text-primary)] no-underline font-medium';
+        link.textContent = toolSlug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        list.appendChild(link);
+      });
+    }
+  }
+
+  // Initialize on page load
+  initFilters();
+  initRecentlyUsed();
+
+  // Reinitialize after navigation
+  document.addEventListener('astro:page-load', () => {
+    initFilters();
+    initRecentlyUsed();
+  });
+</script>

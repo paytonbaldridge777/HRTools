@@ -1,0 +1,146 @@
+---
+const currentPath = Astro.url.pathname;
+---
+
+<header class="tlw-header sticky top-0 z-[1000] bg-[var(--bg-secondary)] border-b border-[var(--border-color)] shadow-sm">
+  <div class="tlw-brandbar h-[6px] bg-tamu-maroon"></div>
+
+  <div class="container max-w-[1120px] mx-auto px-4">
+    <div class="tlw-nav h-18 flex items-center justify-between">
+      <!-- Brand -->
+      <a href="/" class="tlw-brand flex items-center gap-3 no-underline" aria-label="Return to HR Tools Home">
+        <span class="tlw-badge inline-flex items-center justify-center w-10 h-10 rounded-[10px] text-white bg-tamu-maroon font-bold tracking-wide">
+          TAMU
+        </span>
+        <div class="tlw-brand-text leading-tight">
+          <div class="tlw-kicker text-sm text-[var(--text-secondary)]">TAMU School of Law</div>
+          <div class="tlw-title text-base font-bold text-[var(--text-primary)]">HR Tools</div>
+        </div>
+      </a>
+
+      <!-- Desktop Navigation -->
+      <nav class="tlw-links hidden md:flex items-center gap-2" aria-label="Primary">
+        <a 
+          class={`tlw-link inline-flex items-center px-3 py-2 border border-transparent rounded-lg text-[var(--text-primary)] no-underline font-medium hover:bg-[var(--hover-bg)] hover:border-[var(--border-color)] ${currentPath === '/' ? 'text-white bg-tamu-maroon border-tamu-maroon' : ''}`}
+          href="/"
+          aria-current={currentPath === '/' ? 'page' : undefined}
+        >
+          Home
+        </a>
+        <a 
+          class={`tlw-link inline-flex items-center px-3 py-2 border border-transparent rounded-lg text-[var(--text-primary)] no-underline font-medium hover:bg-[var(--hover-bg)] hover:border-[var(--border-color)] ${currentPath.startsWith('/tools/fmla-calculator') ? 'text-white bg-tamu-maroon border-tamu-maroon' : ''}`}
+          href="/tools/fmla-calculator"
+          aria-current={currentPath.startsWith('/tools/fmla-calculator') ? 'page' : undefined}
+        >
+          FMLA Calculator
+        </a>
+        <a 
+          class={`tlw-link inline-flex items-center px-3 py-2 border border-transparent rounded-lg text-[var(--text-primary)] no-underline font-medium hover:bg-[var(--hover-bg)] hover:border-[var(--border-color)] ${currentPath.startsWith('/tools/traintraq-reminders') ? 'text-white bg-tamu-maroon border-tamu-maroon' : ''}`}
+          href="/tools/traintraq-reminders"
+          aria-current={currentPath.startsWith('/tools/traintraq-reminders') ? 'page' : undefined}
+        >
+          TrainTraq Reminders
+        </a>
+        <a 
+          class={`tlw-link inline-flex items-center px-3 py-2 border border-transparent rounded-lg text-[var(--text-primary)] no-underline font-medium hover:bg-[var(--hover-bg)] hover:border-[var(--border-color)] ${currentPath.startsWith('/tools/onboarding-tracker') ? 'text-white bg-tamu-maroon border-tamu-maroon' : ''}`}
+          href="/tools/onboarding-tracker"
+          aria-current={currentPath.startsWith('/tools/onboarding-tracker') ? 'page' : undefined}
+        >
+          Onboarding Tracker
+        </a>
+        <button 
+          id="theme-toggle" 
+          class="inline-flex items-center justify-center px-3 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--hover-bg)] text-xl cursor-pointer transition-all hover:bg-[var(--bg-tertiary)]"
+          title="Toggle dark mode" 
+          aria-label="Toggle dark mode"
+        >
+          🌙
+        </button>
+      </nav>
+
+      <!-- Mobile menu button -->
+      <button 
+        id="menuBtn" 
+        class="tlw-menu-btn md:hidden inline-flex items-center justify-center w-10 h-10 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-secondary)]"
+        aria-expanded="false" 
+        aria-controls="mobileMenu" 
+        aria-label="Open menu"
+      >
+        ☰
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile menu -->
+  <nav id="mobileMenu" class="tlw-mobile hidden border-t border-[var(--border-color)] bg-[var(--bg-secondary)] flex-col gap-1 p-2 pb-4" aria-label="Mobile">
+    <a class="tlw-mobile-link block px-3 py-2 rounded-lg no-underline text-[var(--text-primary)] border border-transparent hover:bg-[var(--hover-bg)] hover:border-[var(--border-color)]" href="/">Home</a>
+    <a class="tlw-mobile-link block px-3 py-2 rounded-lg no-underline text-[var(--text-primary)] border border-transparent hover:bg-[var(--hover-bg)] hover:border-[var(--border-color)]" href="/tools/fmla-calculator">FMLA Calculator</a>
+    <a class="tlw-mobile-link block px-3 py-2 rounded-lg no-underline text-[var(--text-primary)] border border-transparent hover:bg-[var(--hover-bg)] hover:border-[var(--border-color)]" href="/tools/traintraq-reminders">TrainTraq Reminders</a>
+    <a class="tlw-mobile-link block px-3 py-2 rounded-lg no-underline text-[var(--text-primary)] border border-transparent hover:bg-[var(--hover-bg)] hover:border-[var(--border-color)]" href="/tools/onboarding-tracker">Onboarding Tracker</a>
+  </nav>
+</header>
+
+<script>
+  // Theme toggle functionality
+  function initTheme() {
+    const toggle = document.getElementById('theme-toggle');
+    const root = document.documentElement;
+    
+    // Load saved theme or default to light
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    if (savedTheme === 'dark') {
+      root.classList.add('dark');
+    }
+    updateThemeIcon(savedTheme);
+    
+    function updateThemeIcon(theme: string) {
+      if (toggle) {
+        toggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+        toggle.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+      }
+    }
+    
+    toggle?.addEventListener('click', () => {
+      const isDark = root.classList.contains('dark');
+      const newTheme = isDark ? 'light' : 'dark';
+      
+      if (isDark) {
+        root.classList.remove('dark');
+      } else {
+        root.classList.add('dark');
+      }
+      
+      localStorage.setItem('theme', newTheme);
+      updateThemeIcon(newTheme);
+    });
+  }
+
+  // Mobile menu toggle
+  function initMobileMenu() {
+    const menuBtn = document.getElementById('menuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    
+    menuBtn?.addEventListener('click', () => {
+      const isHidden = mobileMenu?.classList.contains('hidden');
+      if (isHidden) {
+        mobileMenu?.classList.remove('hidden');
+        mobileMenu?.classList.add('flex');
+        menuBtn?.setAttribute('aria-expanded', 'true');
+      } else {
+        mobileMenu?.classList.add('hidden');
+        mobileMenu?.classList.remove('flex');
+        menuBtn?.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
+  // Initialize on page load
+  initTheme();
+  initMobileMenu();
+
+  // Reinitialize after navigation (for Astro view transitions)
+  document.addEventListener('astro:page-load', () => {
+    initTheme();
+    initMobileMenu();
+  });
+</script>

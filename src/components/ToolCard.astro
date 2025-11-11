@@ -1,0 +1,65 @@
+---
+interface Props {
+  name: string;
+  slug: string;
+  shortDescription: string;
+  tags: string[];
+  status: string;
+  icon: string;
+}
+
+const { name, slug, shortDescription, tags, status, icon } = Astro.props;
+
+const statusColors = {
+  stable: 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400',
+  beta: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400',
+  legacy: 'bg-gray-50 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400',
+};
+---
+
+<article class="tool-card group relative bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg p-6 hover:shadow-lg transition-all duration-200 flex flex-col h-full">
+  <!-- Status Badge -->
+  {status !== 'stable' && (
+    <div class={`absolute top-4 right-4 px-2 py-1 rounded-full text-xs font-medium ${statusColors[status as keyof typeof statusColors]}`}>
+      {status}
+    </div>
+  )}
+
+  <!-- Icon -->
+  <div class="mb-4 w-12 h-12 flex items-center justify-center rounded-lg bg-tamu-maroon text-white text-2xl">
+    {icon.endsWith('.svg') ? (
+      <img src={icon} alt="" class="w-8 h-8" />
+    ) : (
+      <span>📊</span>
+    )}
+  </div>
+
+  <!-- Content -->
+  <h3 class="text-xl font-bold mb-2 text-[var(--text-primary)] group-hover:text-tamu-maroon transition-colors">
+    {name}
+  </h3>
+  
+  <p class="text-sm text-[var(--text-secondary)] mb-4 flex-grow">
+    {shortDescription}
+  </p>
+
+  <!-- Tags -->
+  <div class="flex flex-wrap gap-2 mb-4">
+    {tags.map((tag) => (
+      <span class="px-2 py-1 text-xs rounded-full bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] border border-[var(--border-color)]">
+        {tag}
+      </span>
+    ))}
+  </div>
+
+  <!-- Action Button -->
+  <a
+    href={`/tools/${slug}`}
+    class="inline-flex items-center justify-center px-4 py-2 bg-tamu-maroon text-white rounded-lg font-medium hover:bg-tamu-maroon-700 transition-colors focus:outline-none focus:ring-2 focus:ring-tamu-maroon focus:ring-offset-2 mt-auto"
+  >
+    Open Tool
+    <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+    </svg>
+  </a>
+</article>
