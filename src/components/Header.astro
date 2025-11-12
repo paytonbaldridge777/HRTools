@@ -106,9 +106,27 @@ const currentPath = Astro.url.pathname;
       // Find all iframes on the page and send theme change message
       const iframes = document.querySelectorAll('iframe');
       iframes.forEach(iframe => {
-        iframe.contentWindow?.postMessage({ type: 'THEME_CHANGE', theme }, '*');
+        // Wait a bit for iframe to be ready if it just loaded
+        if (iframe.contentWindow) {
+          iframe.contentWindow.postMessage({ type: 'THEME_CHANGE', theme }, '*');
+        }
       });
     }
+    
+    function handleThemeRequest(event: MessageEvent) {
+      // Respond to theme requests from iframes
+      if (event.data && event.data.type === 'REQUEST_THEME') {
+        const currentTheme = root.classList.contains('dark') ? 'dark' : 'light';
+        event.source?.postMessage({ type: 'THEME_CHANGE', theme: currentTheme }, '*' as any);
+      }
+    }
+    
+    window.addEventListener('message', handleThemeRequest);
+    
+    // Also send initial theme when iframes load
+    setTimeout(() => {
+      notifyIframesOfThemeChange(savedTheme);
+    }, 500);
     
     toggle?.addEventListener('click', () => {
       const isDark = root.classList.contains('dark');
