@@ -221,33 +221,33 @@ export function WorkdaysCalculator() {
   };
 
   return (
-    <div className="min-h-screen bg-tamu-gray">
+    <div className="min-h-screen bg-tamu-gray dark:bg-gray-900">
       <div className="max-w-4xl mx-auto p-6">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-tamu-maroon flex items-center justify-center gap-2">
-            <Calculator className="text-tamu-maroon" />
+          <h1 className="text-3xl font-bold text-tamu-maroon dark:text-red-400 flex items-center justify-center gap-2">
+            <Calculator className="text-tamu-maroon dark:text-red-400" />
             FMLA Calculator
           </h1>
           <div className="flex items-center justify-center gap-2 mt-2">
-            <p className="text-tamu-accent-blue">
+            <p className="text-tamu-accent-blue dark:text-blue-400">
               Calculate working days for the past year from effective date
             </p>
-            <span className="text-sm text-tamu-accent-blue/60 flex items-center gap-1">
+            <span className="text-sm text-tamu-accent-blue/60 dark:text-blue-400/60 flex items-center gap-1">
               <Info size={14} />v{APP_VERSION}
             </span>
           </div>
         </div>
 
         <div className="flex flex-col gap-6 mb-6">
-          <h2 className="text-lg font-semibold text-tamu-maroon">Criteria</h2>
+          <h2 className="text-lg font-semibold text-tamu-maroon dark:text-red-400">Criteria</h2>
           <div className="flex gap-4">
             <div
               className={`p-4 flex-1 rounded-lg text-white text-center ${
                 is12MonthsWorked === null
-                  ? 'bg-gray-300'
+                  ? 'bg-gray-300 dark:bg-gray-600'
                   : is12MonthsWorked
-                  ? 'bg-green-500'
-                  : 'bg-red-500'
+                  ? 'bg-green-500 dark:bg-green-600'
+                  : 'bg-red-500 dark:bg-red-600'
               }`}
             >
               12 Months Worked:{' '}
@@ -260,10 +260,10 @@ export function WorkdaysCalculator() {
             <div
               className={`p-4 flex-1 rounded-lg text-white text-center ${
                 is1250HoursWorked === null
-                  ? 'bg-gray-300'
+                  ? 'bg-gray-300 dark:bg-gray-600'
                   : is1250HoursWorked
-                  ? 'bg-green-500'
-                  : 'bg-red-500'
+                  ? 'bg-green-500 dark:bg-green-600'
+                  : 'bg-red-500 dark:bg-red-600'
               }`}
             >
               1,250 Hours Worked:{' '}
@@ -277,7 +277,7 @@ export function WorkdaysCalculator() {
         </div>
 
         <form onSubmit={handleCalculate} className="space-y-6">
-          <h2 className="text-lg font-semibold text-tamu-maroon">Dates</h2>
+          <h2 className="text-lg font-semibold text-tamu-maroon dark:text-red-400">Dates</h2>
           <div className="space-y-4">
             <div className="flex flex-col gap-4">
               {/* <label className="block">
@@ -309,14 +309,14 @@ export function WorkdaysCalculator() {
           />
 
           {error && (
-            <div className="bg-tamu-accent-red/10 border border-tamu-accent-red text-tamu-accent-red px-4 py-3 rounded-lg relative">
+            <div className="bg-tamu-accent-red/10 dark:bg-red-900/20 border border-tamu-accent-red dark:border-red-700 text-tamu-accent-red dark:text-red-400 px-4 py-3 rounded-lg relative">
               {error}
             </div>
           )}
 
           <button
             type="submit"
-            className="w-full bg-tamu-maroon text-tamu-white py-3 px-6 rounded-lg hover:bg-tamu-maroonDark transition-colors flex items-center justify-center gap-2"
+            className="w-full bg-tamu-maroon dark:bg-red-700 text-tamu-white py-3 px-6 rounded-lg hover:bg-tamu-maroonDark dark:hover:bg-red-800 transition-colors flex items-center justify-center gap-2"
           >
             <Calculator />
             Calculate Working Days
