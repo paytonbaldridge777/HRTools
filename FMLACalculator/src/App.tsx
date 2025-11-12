@@ -42,11 +42,11 @@ function App() {
 
   return (
     <Router>
-      <nav className="p-4 bg-tamu-maroon text-white">
-        <Link to="/" className="mr-4">
+      <nav className="p-4 bg-tamu-maroon dark:bg-gray-800 text-white">
+        <Link to="/" className="mr-4 hover:text-gray-300">
           Workdays Calculator
         </Link>
-        <Link to="/manage-holidays" className="mr-4">
+        <Link to="/manage-holidays" className="mr-4 hover:text-gray-300">
           Manage Holidays
         </Link>
       </nav>

@@ -110,42 +110,42 @@ const HolidayManager = () => {
   };
 
   return (
-    <div className="min-h-screen bg-tamu-gray">
-      <div className="max-w-4xl mx-auto p-6 min-h-screen bg-white rounded-lg shadow-lg">
+    <div className="min-h-screen bg-tamu-gray dark:bg-gray-900">
+      <div className="max-w-4xl mx-auto p-6 min-h-screen bg-white dark:bg-gray-800 rounded-lg shadow-lg">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <button
-              className="bg-tamu-accent-blue text-white px-4 py-2 rounded-lg"
+              className="bg-tamu-accent-blue dark:bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 dark:hover:bg-blue-600"
               onClick={resetHolidays}
             >
               Reset Holidays
             </button>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
               Resets dates to default TAMU holidays.
             </span>
           </div>
         </div>
         {Object.entries(holidays).map(([year, holidaySet]) => (
           <div key={year} className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">{year}</h2>
-            <table className="table-auto w-full border-collapse border border-gray-300 mb-4">
+            <h2 className="text-xl font-semibold mb-2 dark:text-gray-200">{year}</h2>
+            <table className="table-auto w-full border-collapse border border-gray-300 dark:border-gray-600 mb-4">
               <thead>
                 <tr>
-                  <th className="border border-gray-300 px-4 py-2">Holiday</th>
-                  <th className="border border-gray-300 px-4 py-2">Date(s)</th>
-                  <th className="border border-gray-300 px-4 py-2">Actions</th>
+                  <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 dark:text-gray-200">Holiday</th>
+                  <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 dark:text-gray-200">Date(s)</th>
+                  <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 dark:text-gray-200">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {Object.entries(holidaySet).map(([holiday, date]) => (
                   <tr key={`${year}-${holiday}`}>
-                    <td className="border border-gray-300 px-4 py-2">
+                    <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 dark:text-gray-200">
                       {holiday}
                     </td>
-                    <td className="border border-gray-300 px-4 py-2">
+                    <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
                       <input
                         type="text"
-                        className="w-full px-2 py-1 border border-gray-300"
+                        className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded"
                         value={date}
                         onChange={(e) =>
                           setHolidays((prev) => ({
@@ -158,15 +158,15 @@ const HolidayManager = () => {
                         }
                       />
                     </td>
-                    <td className="border border-gray-300 px-4 py-2">
+                    <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
                       <button
-                        className="bg-tamu-accent-red text-white px-2 py-1 rounded mr-2"
+                        className="bg-tamu-accent-red dark:bg-red-700 text-white px-2 py-1 rounded mr-2 hover:bg-red-700 dark:hover:bg-red-600"
                         onClick={() => deleteHoliday(year, holiday)}
                       >
                         Delete
                       </button>
                       <button
-                        className="bg-tamu-accent-blue text-white px-2 py-1 rounded"
+                        className="bg-tamu-accent-blue dark:bg-blue-700 text-white px-2 py-1 rounded hover:bg-blue-800 dark:hover:bg-blue-600"
                         onClick={() =>
                           updateHoliday(year, holiday, holidays[year][holiday])
                         }
@@ -182,7 +182,7 @@ const HolidayManager = () => {
         ))}
 
         <div className="mt-4">
-          <h3 className="text-md font-semibold text-tamu-maroon mb-2">
+          <h3 className="text-md font-semibold text-tamu-maroon dark:text-red-400 mb-2">
             Add New Holiday
           </h3>
           <div className="flex gap-4 mb-4">
@@ -191,18 +191,18 @@ const HolidayManager = () => {
               placeholder="Holiday Name"
               value={newHolidayName}
               onChange={(e) => setNewHolidayName(e.target.value)}
-              className="w-1/3 px-4 py-2 border rounded-lg"
+              className="w-1/3 px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg"
             />
             <input
               type="text"
               placeholder="Date(s) (e.g., 2024/07/07 or 2024/07/07-2024/07/10)"
               value={newHolidayDate}
               onChange={(e) => setNewHolidayDate(e.target.value)}
-              className="w-2/3 px-4 py-2 border rounded-lg"
+              className="w-2/3 px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg"
             />
             <button
               onClick={addHoliday}
-              className="bg-tamu-maroon text-white px-4 py-2 rounded-lg"
+              className="bg-tamu-maroon dark:bg-red-700 text-white px-4 py-2 rounded-lg hover:bg-red-800 dark:hover:bg-red-600"
             >
               Add Holiday
             </button>
