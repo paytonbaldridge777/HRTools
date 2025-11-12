@@ -163,68 +163,6 @@
 	  min-height: 6rem;
 	}
 	  
-  /* ===== Shared TAMU Tools Header ===== */
-	:root{
-	  --tamu-maroon:#500000;
-	  --tamu-maroon-700:#7d2926;
-	  --ink:#111827;
-	  --ink-2:#374151;
-	  --line:#e5e7eb;
-	  --bg:#fafafa;
-	}
-
-	.tlw-header{
-	  position: sticky; top:0; z-index:1000;
-	  background: var(--bg-secondary);
-	  border-bottom:1px solid var(--border-color);
-	  box-shadow: 0 1px 0 rgba(17,24,39,.04);
-	}
-	.tlw-brandbar{ height:6px; background:var(--tamu-maroon); }
-
-	.container{ max-width:1120px; margin:0 auto; padding:0 1rem; }
-
-	.tlw-nav{ height:72px; display:flex; align-items:center; justify-content:space-between; }
-
-	.tlw-brand{ display:flex; align-items:center; gap:.75rem; text-decoration:none; }
-	.tlw-badge{
-	  display:inline-flex; align-items:center; justify-content:center;
-	  width:40px; height:40px; border-radius:10px;
-	  color:#fff; background:#500000; font-weight:700; letter-spacing:.5px; /* badge background should always be maroon in either dark or white theme */
-	}
-	.tlw-brand-text{ line-height:1.1; }
-	.tlw-kicker{ font-size:1.78rem; color: var(--text-secondary); }
-	.tlw-title{ font-size:1rem; font-weight:700; color: var(--text-primary); }
-
-	.tlw-links{ display:flex; align-items:center; gap:.5rem; }
-	.tlw-link{
-	  display:inline-flex; align-items:center; padding:.45rem .8rem;
-	  border:1px solid transparent; border-radius:.7rem;
-	  color: var(--text-primary); text-decoration:none; font-weight:500;
-	}
-	.tlw-link:hover{ background: var(--hover-bg); border-color: var(--border-color); }
-	.tlw-link[aria-current="page"]{ color:#fff; background:var(--tamu-maroon); border-color:var(--tamu-maroon); }
-
-	.tlw-menu-btn{
-	  display:none; width:40px; height:40px; border:1px solid var(--border-color);
-	  border-radius:.6rem; background: var(--bg-secondary); color: var(--text-secondary);
-	}
-	@media (max-width: 920px){
-	  .tlw-links{ display:none; }
-	  .tlw-menu-btn{ display:inline-flex; align-items:center; justify-content:center; }
-	}
-
-	/* Mobile drawer */
-	.tlw-mobile{
-	  border-top:1px solid var(--border-color); background: var(--bg-secondary);
-	  display:flex; flex-direction:column; gap:.25rem; padding:.5rem 1rem 1rem;
-	}
-	.tlw-mobile.hidden{ display:none; }
-	.tlw-mobile-link{
-	  padding:.6rem .6rem; border-radius:.5rem; text-decoration:none; color: var(--text-primary);
-	  border:1px solid transparent; display:block;
-	}
-	.tlw-mobile-link:hover{ background: var(--hover-bg); border-color: var(--border-color); }
-
 	/* Optional background polish for landing */
 	body{ background:var(--bg-primary); }
 	
@@ -320,43 +258,6 @@
   </style>
 </head>
 <body class="bg-stone-50 text-gray-800 min-h-screen" data-theme="light">
-	<!-- === Global Header (TAMU Tools) === -->
-	<header class="tlw-header">
-	  <div class="tlw-brandbar"></div>
-
-	  <div class="container">
-		<div class="tlw-nav">
-		  <!-- Brand: always returns to Tools Portal -->
-		  <a href="https://paytonbaldridge777.github.io/LawSchoolTools/" class="tlw-brand" aria-label="Return to Tools Portal">
-			<span class="tlw-badge">TAMU</span>
-			<div class="tlw-brand-text">
-			  <div class="tlw-kicker">TAMU School of Law</div>
-			  <div class="tlw-title">Tools Portal</div>
-			</div>
-		  </a>
-
-		  <!-- Desktop links (works from any repo because URLs are absolute) -->
-		  <nav class="tlw-links" aria-label="Primary">
-			<a class="tlw-link" href="https://paytonbaldridge777.github.io/LawSchoolTools/">Home</a>
-			<a class="tlw-link" href="https://hrdashboard.pages.dev/">HR Onboarding Dashboard</a>
-			<a class="tlw-link" href="https://paytonbaldridge777.github.io/TrainTraqReminders/">TrainTraq Reminders</a>
-			<button id="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
-		  </nav>
-
-		  <!-- Mobile menu button -->
-		  <button id="menuBtn" class="tlw-menu-btn" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">☰</button>
-		</div>
-	  </div>
-
-	  <!-- Mobile menu -->
-	  <nav id="mobileMenu" class="tlw-mobile hidden" aria-label="Mobile">
-		<a class="tlw-mobile-link" href="https://paytonbaldridge777.github.io/LawSchoolTools/">Home</a>
-		<a class="tlw-mobile-link" href="https://hrdashboard.pages.dev/">HR Onboarding Dashboard</a>
-		<a class="tlw-mobile-link" href="https://paytonbaldridge777.github.io/TrainTraqReminders/">TrainTraq Reminders</a>
-	  </nav>
-	</header>
-	<!-- === /Global Header === -->
-
   <!-- App Container -->
   <div id="app-container" class="w-full">
   
@@ -700,33 +601,21 @@
   <!-- JavaScript (unchanged logic; only the drawer toggle is registered inside DOMContentLoaded in your file) -->
   <script>
 
-// Theme Toggle Functionality
+// Theme Sync from Parent Window
 (function() {
   const body = document.body;
-  const themeToggle = document.getElementById('theme-toggle');
   
-  // Load saved theme or default to light
+  // Listen for theme changes from parent window
+  window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'THEME_CHANGE') {
+      const theme = event.data.theme;
+      body.setAttribute('data-theme', theme);
+    }
+  });
+  
+  // Initialize with saved theme or light
   const savedTheme = localStorage.getItem('theme') || 'light';
   body.setAttribute('data-theme', savedTheme);
-  updateThemeIcon(savedTheme);
-  
-  function updateThemeIcon(theme) {
-    if (themeToggle) {
-      themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
-      themeToggle.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
-    }
-  }
-  
-  if (themeToggle) {
-    themeToggle.addEventListener('click', () => {
-      const currentTheme = body.getAttribute('data-theme');
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      
-      body.setAttribute('data-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
-      updateThemeIcon(newTheme);
-    });
-  }
 })();
 
 
