@@ -92,12 +92,22 @@ const currentPath = Astro.url.pathname;
       root.classList.add('dark');
     }
     updateThemeIcon(savedTheme);
+    // Notify iframes of initial theme
+    notifyIframesOfThemeChange(savedTheme);
     
     function updateThemeIcon(theme: string) {
       if (toggle) {
         toggle.textContent = theme === 'dark' ? '☀️' : '🌙';
         toggle.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
       }
+    }
+    
+    function notifyIframesOfThemeChange(theme: string) {
+      // Find all iframes on the page and send theme change message
+      const iframes = document.querySelectorAll('iframe');
+      iframes.forEach(iframe => {
+        iframe.contentWindow?.postMessage({ type: 'THEME_CHANGE', theme }, '*');
+      });
     }
     
     toggle?.addEventListener('click', () => {
@@ -112,6 +122,7 @@ const currentPath = Astro.url.pathname;
       
       localStorage.setItem('theme', newTheme);
       updateThemeIcon(newTheme);
+      notifyIframesOfThemeChange(newTheme);
     });
   }
 

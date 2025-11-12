@@ -8,42 +8,7 @@
 	<link rel="stylesheet" href="./styles.css?v=20251014" />  
 </head>
 <body>
-<!-- === Global Header (TAMU Tools) === -->
-	<header class="tlw-header">
-	  <div class="tlw-brandbar"></div>
-
-	  <div class="container">
-		<div class="tlw-nav">
-		  <!-- Brand: always returns to Tools Portal -->
-		  <a href="https://paytonbaldridge777.github.io/LawSchoolTools/" class="tlw-brand" aria-label="Return to Tools Portal">
-			<span class="tlw-badge">TAMU</span>
-			<div class="tlw-brand-text">
-			  <div class="tlw-kicker">TAMU School of Law</div>
-			  <div class="tlw-title">Tools Portal</div>
-			</div>
-		  </a>
-
-		  <!-- Desktop links (works from any repo because URLs are absolute) -->
-		  <nav class="tlw-links" aria-label="Primary">
-			<a class="tlw-link" href="https://paytonbaldridge777.github.io/LawSchoolTools/">Home</a>
-			<a class="tlw-link" href="https://paytonbaldridge777.github.io/HRDashboard/">HR Onboarding Dashboard</a>
-			<a class="tlw-link" href="https://paytonbaldridge777.github.io/TrainTraqReminders/">TrainTraq Reminders</a>
-		  </nav>
-
-		  <!-- Mobile menu button -->
-		  <button id="menuBtn" class="tlw-menu-btn" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">☰</button>
-		</div>
-	  </div>
-
-	  <!-- Mobile menu -->
-	  <nav id="mobileMenu" class="tlw-mobile hidden" aria-label="Mobile">
-		<a class="tlw-mobile-link" href="https://paytonbaldridge777.github.io/LawSchoolTools/">Home</a>
-		<a class="tlw-mobile-link" href="https://paytonbaldridge777.github.io/HRDashboard/">HR Onboarding Dashboard</a>
-		<a class="tlw-mobile-link" href="https://paytonbaldridge777.github.io/TrainTraqReminders/">TrainTraq Reminders</a>
-	  </nav>
-	</header>
-	<!-- === /Global Header === -->
-		<div class="container">
+	<div class="container">
 			<h1>📊 TrainTraq Overdue Reminders</h1>
 			<p class="subtitle">Upload your Excel file to separate records into Followups and Removals based on work period validity</p>
 			
@@ -1469,6 +1434,18 @@
                 }, index * 2000); // 2 second delay between emails
             });
         }
+        
+        // Listen for theme changes from parent window
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'THEME_CHANGE') {
+                const theme = event.data.theme;
+                document.body.setAttribute('data-theme', theme);
+            }
+        });
+        
+        // Initialize with saved theme or light
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.body.setAttribute('data-theme', savedTheme);
     </script>
 </body>
 </html>
