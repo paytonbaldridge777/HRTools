@@ -18,6 +18,25 @@ function App() {
     };
 
     window.addEventListener('message', handleThemeChange);
+
+    // Request initial theme from parent with slight delay to ensure parent is ready
+    if (window.parent !== window) {
+      const requestTheme = () => {
+        window.parent.postMessage({ type: 'REQUEST_THEME' }, '*');
+      };
+      
+      // Request immediately
+      requestTheme();
+      
+      // Also request after a short delay as a fallback
+      const timeoutId = setTimeout(requestTheme, 100);
+      
+      return () => {
+        clearTimeout(timeoutId);
+        window.removeEventListener('message', handleThemeChange);
+      };
+    }
+
     return () => window.removeEventListener('message', handleThemeChange);
   }, []);
 
