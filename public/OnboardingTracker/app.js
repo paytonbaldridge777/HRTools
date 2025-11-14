@@ -65,7 +65,8 @@ const hrTasks = [
   "WorkDay at Onboarding Step",
   "Workday Onboarding Started",
   "Workday Onboarding Completed",
-  "LF Hold till BP/Start Date Done"
+  "LF Hold till BP/Start Date Done",
+  "SSN received and entered in WD and I-9"
 ];
 
 
@@ -131,22 +132,37 @@ function calculateDueDate(task, startDate, requestReceived) {
       const d6 = new Date(start);
       d6.setDate(d6.getDate() + 3);
       return d6.toISOString().split('T')[0];
+    case "SSN received and entered in WD and I-9":
+      if (!start) return null;
+      const d7 = new Date(start);
+      d7.setDate(d7.getDate() + 40);
+      return d7.toISOString().split('T')[0];
     default:
       return null;
   }
 }
 
-function getFilteredTasks(hireCategory) {
+function getFilteredTasks(hireCategory, internationalHire) {
   const category = hireCategory || 'Newhire';
+  let tasks = hrTasks;
+  
+  // Filter out tasks not needed for Addjob or Transfer
   if (category === 'Addjob' || category === 'Transfer') {
-    return hrTasks.filter(t => t !== "I-9 in Guardian" && t !== "Onboarding Email Sent");
+    tasks = tasks.filter(t => t !== "I-9 in Guardian" && t !== "Onboarding Email Sent");
   }
-  return hrTasks;
+  
+  // Filter out international hire task if not international
+  if (!internationalHire) {
+    tasks = tasks.filter(t => t !== "SSN received and entered in WD and I-9");
+  }
+  
+  return tasks;
 }
 
 function updateStats() {
   const activeList = onboardings.filter(o => o.status === 'active');
   const completedList = onboardings.filter(o => o.status === 'completed');
+  const overdueList = onboardings.filter(o => o.overdueTasks && o.overdueTasks > 0);
   const stats = {
     active: activeList.length,
     completed: completedList.length,
@@ -156,9 +172,37 @@ function updateStats() {
   document.getElementById('stat-active').textContent = stats.active;
   document.getElementById('stat-completed').textContent = stats.completed;
   document.getElementById('stat-overdue').textContent = stats.overdue;
+  
+  // Update dropdowns
+  updateStatDropdown('dropdown-active', activeList);
+  updateStatDropdown('dropdown-completed', completedList);
+  updateStatDropdown('dropdown-overdue', overdueList);
 
   updateAverageCompletionTime(completedList);
   updateInsightCharts(); // use the new compact right-side charts
+}
+
+function updateStatDropdown(dropdownId, employees) {
+  const dropdown = document.getElementById(dropdownId);
+  if (!dropdown) return;
+  
+  dropdown.innerHTML = '';
+  
+  if (employees.length === 0) {
+    dropdown.innerHTML = '<div class="stat-dropdown-item text-gray-500 text-xs">No employees</div>';
+    return;
+  }
+  
+  employees.forEach(emp => {
+    const item = document.createElement('div');
+    item.className = 'stat-dropdown-item text-sm';
+    item.textContent = emp.name;
+    item.onclick = (e) => {
+      e.stopPropagation();
+      showTaskDetailView(emp.id);
+    };
+    dropdown.appendChild(item);
+  });
 }
 
 // Calculate Average Completion Time
@@ -406,7 +450,7 @@ function renderOnboardingCards() {
   const container = document.getElementById('onboarding-cards');
   container.innerHTML = '';
   filteredOnboardings.forEach(o => {
-    const tasks = getFilteredTasks(o.hireCategory);
+    const tasks = getFilteredTasks(o.hireCategory, o.internationalHire);
     const done = Object.keys(o.taskCompletionDates || {}).filter(t => tasks.includes(t)).length;
     const commentText = o.comment ? o.comment : '';
     const pinText = o.pin ? o.pin : 'N/A';
@@ -470,6 +514,7 @@ function renderOnboardingCards() {
 function applyFilters() {
   const hf = document.getElementById('filter-hire-type').value;
   const sf = document.getElementById('filter-status').value;
+  const sortBy = document.getElementById('sort-by').value;
 
   if (sf === 'overdue') {
     // show all with overdue tasks
@@ -481,13 +526,31 @@ function applyFilters() {
              (sf ? o.status === sf : true);
     });
   }
+  
+  // Apply sorting
+  if (sortBy) {
+    filteredOnboardings.sort((a, b) => {
+      switch(sortBy) {
+        case 'name-asc':
+          return (a.name || '').localeCompare(b.name || '');
+        case 'name-desc':
+          return (b.name || '').localeCompare(a.name || '');
+        case 'date-asc':
+          return (a.startDate || '').localeCompare(b.startDate || '');
+        case 'date-desc':
+          return (b.startDate || '').localeCompare(a.startDate || '');
+        default:
+          return 0;
+      }
+    });
+  }
 
   renderOnboardingCards();
   updateStats();
 }
 
 function renderTaskList(o) {
-  const filteredTasks = getFilteredTasks(o.hireCategory);
+  const filteredTasks = getFilteredTasks(o.hireCategory, o.internationalHire);
   const completed = Object.keys(o.taskCompletionDates || {}).filter(t => filteredTasks.includes(t));
   const total = filteredTasks.length;
   document.getElementById('task-progress').textContent = `${completed.length} of ${total} completed`;
@@ -597,7 +660,7 @@ function handleTaskToggle(taskName, isChecked) {
     delete updated[taskName];
   }
   o.taskCompletionDates = updated;
-  const tasks = getFilteredTasks(o.hireCategory);
+  const tasks = getFilteredTasks(o.hireCategory, o.internationalHire);
   const doneCount = Object.keys(updated).filter(t => tasks.includes(t)).length;
   o.progress = tasks.length ? Math.round(doneCount / tasks.length * 100) : 0;
   if (doneCount === tasks.length) o.status = 'completed';
@@ -617,7 +680,7 @@ function handleCompletionDateChange(taskName, newDate) {
     delete updated[taskName];
   }
   o.taskCompletionDates = updated;
-  const tasks = getFilteredTasks(o.hireCategory);
+  const tasks = getFilteredTasks(o.hireCategory, o.internationalHire);
   const doneCount = Object.keys(updated).filter(t => tasks.includes(t)).length;
   o.progress = tasks.length ? Math.round(doneCount / tasks.length * 100) : 0;
   if (doneCount === tasks.length) o.status = 'completed';
@@ -734,7 +797,7 @@ document.getElementById('generate-email').addEventListener('click', () => {
 function updateOverdueCounts() {
   const today = new Date().toISOString().split('T')[0];
   onboardings.forEach(o => {
-    const tasks = getFilteredTasks(o.hireCategory);
+    const tasks = getFilteredTasks(o.hireCategory, o.internationalHire);
     let overdue = 0;
 
     tasks.forEach(task => {
@@ -1040,6 +1103,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('nav-email').addEventListener('click', () => showView('email'));
   document.getElementById('filter-hire-type').addEventListener('change', applyFilters);
   document.getElementById('filter-status').addEventListener('change', applyFilters);
+  document.getElementById('sort-by').addEventListener('change', applyFilters);
   document.getElementById('load-from-github').addEventListener('click', loadDataFromServer);
   document.getElementById('save-data').addEventListener('click', saveData);
   document.getElementById('export-data').addEventListener('click', exportData);
@@ -1112,7 +1176,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showConfirmDialog('Please fill required fields.', () => {});
       return;
     }
-    const tasks = getFilteredTasks(formData.hireCategory);
+    const tasks = getFilteredTasks(formData.hireCategory, formData.internationalHire);
     if (editingOnboarding !== null) {
       const o = onboardings.find(x => x.id === editingOnboarding);
       if (o) Object.assign(o, formData);
