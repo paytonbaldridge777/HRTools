@@ -319,20 +319,22 @@
 	
 	/* Status card dropdown styles */
 	.stat-card {
-	  position: relative;
+  position: relative;
 	}
 	
 	.stat-dropdown {
 	  display: none;
 	  position: absolute;
-	  top: 100%;
+	  top: 100%;        /* still attached to bottom of card */
 	  left: 0;
 	  right: 0;
-	  margin-top: 0.5rem;
+	  /* remove or reduce the margin to avoid a gap */
+	  margin-top: 0;    /* was 0.5rem */
 	  background: var(--card-bg);
 	  border: 1px solid var(--border-color);
 	  border-radius: 0.5rem;
-	  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+	  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+	              0 2px 4px -1px rgba(0, 0, 0, 0.06);
 	  max-height: 300px;
 	  overflow-y: auto;
 	  z-index: 50;
@@ -2086,6 +2088,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </body>
 
 </html>
+
 
 
 
