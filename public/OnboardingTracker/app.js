@@ -192,6 +192,23 @@ function updateStatDropdown(dropdownId, employees) {
     dropdown.innerHTML = '<div class="stat-dropdown-item text-gray-500 text-xs">No employees</div>';
     return;
   }
+
+  // Sort employees by name (A–Z) before rendering
+  const sorted = [...employees].sort((a, b) =>
+    (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+  );
+  
+  sorted.forEach(emp => {
+    const item = document.createElement('div');
+    item.className = 'stat-dropdown-item text-sm';
+    item.textContent = emp.name;
+    item.onclick = (e) => {
+      e.stopPropagation();
+      showTaskDetailView(emp.id);
+    };
+    dropdown.appendChild(item);
+  });
+}
   
   employees.forEach(emp => {
     const item = document.createElement('div');
