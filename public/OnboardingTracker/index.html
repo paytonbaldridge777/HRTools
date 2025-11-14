@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>HR Onboarding Tool</title>
+  <title>HR Onboarding Tracker</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     /* Theme Variables */
@@ -163,6 +163,68 @@
 	  min-height: 6rem;
 	}
 	  
+  /* ===== Shared TAMU Tools Header ===== */
+	:root{
+	  --tamu-maroon:#500000;
+	  --tamu-maroon-700:#7d2926;
+	  --ink:#111827;
+	  --ink-2:#374151;
+	  --line:#e5e7eb;
+	  --bg:#fafafa;
+	}
+
+	.tlw-header{
+	  position: sticky; top:0; z-index:1000;
+	  background: var(--bg-secondary);
+	  border-bottom:1px solid var(--border-color);
+	  box-shadow: 0 1px 0 rgba(17,24,39,.04);
+	}
+	.tlw-brandbar{ height:6px; background:var(--tamu-maroon); }
+
+	.container{ max-width:1120px; margin:0 auto; padding:0 1rem; }
+
+	.tlw-nav{ height:72px; display:flex; align-items:center; justify-content:space-between; }
+
+	.tlw-brand{ display:flex; align-items:center; gap:.75rem; text-decoration:none; }
+	.tlw-badge{
+	  display:inline-flex; align-items:center; justify-content:center;
+	  width:40px; height:40px; border-radius:10px;
+	  color:#fff; background:#500000; font-weight:700; letter-spacing:.5px; /* badge background should always be maroon in either dark or white theme */
+	}
+	.tlw-brand-text{ line-height:1.1; }
+	.tlw-kicker{ font-size:1.78rem; color: var(--text-secondary); }
+	.tlw-title{ font-size:1rem; font-weight:700; color: var(--text-primary); }
+
+	.tlw-links{ display:flex; align-items:center; gap:.5rem; }
+	.tlw-link{
+	  display:inline-flex; align-items:center; padding:.45rem .8rem;
+	  border:1px solid transparent; border-radius:.7rem;
+	  color: var(--text-primary); text-decoration:none; font-weight:500;
+	}
+	.tlw-link:hover{ background: var(--hover-bg); border-color: var(--border-color); }
+	.tlw-link[aria-current="page"]{ color:#fff; background:var(--tamu-maroon); border-color:var(--tamu-maroon); }
+
+	.tlw-menu-btn{
+	  display:none; width:40px; height:40px; border:1px solid var(--border-color);
+	  border-radius:.6rem; background: var(--bg-secondary); color: var(--text-secondary);
+	}
+	@media (max-width: 920px){
+	  .tlw-links{ display:none; }
+	  .tlw-menu-btn{ display:inline-flex; align-items:center; justify-content:center; }
+	}
+
+	/* Mobile drawer */
+	.tlw-mobile{
+	  border-top:1px solid var(--border-color); background: var(--bg-secondary);
+	  display:flex; flex-direction:column; gap:.25rem; padding:.5rem 1rem 1rem;
+	}
+	.tlw-mobile.hidden{ display:none; }
+	.tlw-mobile-link{
+	  padding:.6rem .6rem; border-radius:.5rem; text-decoration:none; color: var(--text-primary);
+	  border:1px solid transparent; display:block;
+	}
+	.tlw-mobile-link:hover{ background: var(--hover-bg); border-color: var(--border-color); }
+
 	/* Optional background polish for landing */
 	body{ background:var(--bg-primary); }
 	
@@ -255,9 +317,86 @@
 	  color: var(--text-primary) !important;
 	}
 	
+	/* Status card dropdown styles */
+	.stat-card {
+	  position: relative;
+	}
+	
+	.stat-dropdown {
+	  display: none;
+	  position: absolute;
+	  top: 100%;
+	  left: 0;
+	  right: 0;
+	  margin-top: 0.5rem;
+	  background: var(--card-bg);
+	  border: 1px solid var(--border-color);
+	  border-radius: 0.5rem;
+	  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+	  max-height: 300px;
+	  overflow-y: auto;
+	  z-index: 50;
+	}
+	
+	.stat-card:hover .stat-dropdown {
+	  display: block;
+	}
+	
+	.stat-dropdown-item {
+	  padding: 0.5rem 1rem;
+	  border-bottom: 1px solid var(--border-color);
+	  cursor: pointer;
+	  transition: background-color 0.2s;
+	}
+	
+	.stat-dropdown-item:last-child {
+	  border-bottom: none;
+	}
+	
+	.stat-dropdown-item:hover {
+	  background-color: var(--hover-bg);
+	}
+	
   </style>
 </head>
 <body class="bg-stone-50 text-gray-800 min-h-screen" data-theme="light">
+	<!-- === Global Header (TAMU Tools) === -->
+	<header class="tlw-header">
+	  <div class="tlw-brandbar"></div>
+
+	  <div class="container">
+		<div class="tlw-nav">
+		  <!-- Brand: always returns to Tools Portal -->
+		  <a href="https://paytonbaldridge777.github.io/LawSchoolTools/" class="tlw-brand" aria-label="Return to Tools Portal">
+			<span class="tlw-badge">TAMU</span>
+			<div class="tlw-brand-text">
+			  <div class="tlw-kicker">TAMU School of Law</div>
+			  <div class="tlw-title">Tools Portal</div>
+			</div>
+		  </a>
+
+		  <!-- Desktop links (works from any repo because URLs are absolute) -->
+		  <nav class="tlw-links" aria-label="Primary">
+			<a class="tlw-link" href="https://paytonbaldridge777.github.io/LawSchoolTools/">Home</a>
+			<a class="tlw-link" href="https://hrdashboard.pages.dev/">HR Onboarding Dashboard</a>
+			<a class="tlw-link" href="https://paytonbaldridge777.github.io/TrainTraqReminders/">TrainTraq Reminders</a>
+			<button id="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
+		  </nav>
+
+		  <!-- Mobile menu button -->
+		  <button id="menuBtn" class="tlw-menu-btn" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">☰</button>
+		</div>
+	  </div>
+
+	  <!-- Mobile menu -->
+	  <nav id="mobileMenu" class="tlw-mobile hidden" aria-label="Mobile">
+		<a class="tlw-mobile-link" href="https://paytonbaldridge777.github.io/LawSchoolTools/">Home</a>
+		<a class="tlw-mobile-link" href="https://hrdashboard.pages.dev/">HR Onboarding Dashboard</a>
+		<a class="tlw-mobile-link" href="https://paytonbaldridge777.github.io/TrainTraqReminders/">TrainTraq Reminders</a>
+	  </nav>
+	</header>
+	<!-- === /Global Header === -->
+
   <!-- App Container -->
   <div id="app-container" class="w-full">
   
@@ -284,30 +423,33 @@
 		<!-- Top Summary Cards (compact) -->
 		<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
 		  <!-- Active -->
-		  <div id="card-active" class="cursor-pointer bg-white p-4 rounded-lg shadow hover:shadow-md transition flex items-center space-x-3 border border-gray-100">
+		  <div id="card-active" class="stat-card cursor-pointer bg-white p-4 rounded-lg shadow hover:shadow-md transition flex items-center space-x-3 border border-gray-100">
 			<div class="text-blue-500 text-2xl">👥</div>
 			<div>
 			  <div id="stat-active" class="text-2xl font-bold leading-tight">0</div>
 			  <div class="text-xs text-gray-600">Active</div>
 			</div>
+			<div id="dropdown-active" class="stat-dropdown"></div>
 		  </div>
 
 		  <!-- Completed -->
-		  <div id="card-completed" class="cursor-pointer bg-white p-4 rounded-lg shadow hover:shadow-md transition flex items-center space-x-3 border border-gray-100">
+		  <div id="card-completed" class="stat-card cursor-pointer bg-white p-4 rounded-lg shadow hover:shadow-md transition flex items-center space-x-3 border border-gray-100">
 			<div class="text-green-500 text-2xl">✅</div>
 			<div>
 			  <div id="stat-completed" class="text-2xl font-bold leading-tight">0</div>
 			  <div class="text-xs text-gray-600">Completed</div>
 			</div>
+			<div id="dropdown-completed" class="stat-dropdown"></div>
 		  </div>
 
 		  <!-- Overdue -->
-		  <div id="card-overdue" class="cursor-pointer bg-white p-4 rounded-lg shadow hover:shadow-md transition flex items-center space-x-3 border border-gray-100">
+		  <div id="card-overdue" class="stat-card cursor-pointer bg-white p-4 rounded-lg shadow hover:shadow-md transition flex items-center space-x-3 border border-gray-100">
 			<div class="text-red-500 text-2xl">⚠️</div>
 			<div>
 			  <div id="stat-overdue" class="text-2xl font-bold leading-tight">0</div>
 			  <div class="text-xs text-gray-600">Overdue</div>
 			</div>
+			<div id="dropdown-overdue" class="stat-dropdown"></div>
 		  </div>
 		</div>
 
@@ -367,6 +509,14 @@
 			<option value="active">Active</option>
 			<option value="completed">Completed</option>
 			<option value="overdue">Overdue</option>
+		  </select>
+		  
+		  <select id="sort-by" class="p-2 border border-gray-300 rounded-lg text-sm">
+			<option value="">Sort By...</option>
+			<option value="name-asc">Name (A-Z)</option>
+			<option value="name-desc">Name (Z-A)</option>
+			<option value="date-asc">Hire Date (Earliest First)</option>
+			<option value="date-desc">Hire Date (Latest First)</option>
 		  </select>
 		</div>
 
@@ -601,21 +751,33 @@
   <!-- JavaScript (unchanged logic; only the drawer toggle is registered inside DOMContentLoaded in your file) -->
   <script>
 
-// Theme Sync from Parent Window
+// Theme Toggle Functionality
 (function() {
   const body = document.body;
+  const themeToggle = document.getElementById('theme-toggle');
   
-  // Listen for theme changes from parent window
-  window.addEventListener('message', function(event) {
-    if (event.data && event.data.type === 'THEME_CHANGE') {
-      const theme = event.data.theme;
-      body.setAttribute('data-theme', theme);
-    }
-  });
-  
-  // Initialize with saved theme or light
+  // Load saved theme or default to light
   const savedTheme = localStorage.getItem('theme') || 'light';
   body.setAttribute('data-theme', savedTheme);
+  updateThemeIcon(savedTheme);
+  
+  function updateThemeIcon(theme) {
+    if (themeToggle) {
+      themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+      themeToggle.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+    }
+  }
+  
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = body.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      
+      body.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      updateThemeIcon(newTheme);
+    });
+  }
 })();
 
 
@@ -649,7 +811,8 @@ const hrTasks = [
   "WorkDay at Onboarding Step",
   "Workday Onboarding Started",
   "Workday Onboarding Completed",
-  "LF Hold till BP/Start Date Done"
+  "LF Hold till BP/Start Date Done",
+  "SSN received and entered in WD and I-9"
 ];
 
 
@@ -717,22 +880,37 @@ function calculateDueDate(task, startDate, requestReceived) {
       const d6 = new Date(start);
       d6.setDate(d6.getDate() + 3);
       return d6.toISOString().split('T')[0];
+    case "SSN received and entered in WD and I-9":
+      if (!start) return null;
+      const d7 = new Date(start);
+      d7.setDate(d7.getDate() + 40);
+      return d7.toISOString().split('T')[0];
     default:
       return null;
   }
 }
 
-function getFilteredTasks(hireCategory) {
+function getFilteredTasks(hireCategory, internationalHire) {
   const category = hireCategory || 'Newhire';
+  let tasks = hrTasks;
+  
+  // Filter out tasks not needed for Addjob or Transfer
   if (category === 'Addjob' || category === 'Transfer') {
-    return hrTasks.filter(t => t !== "I-9 in Guardian" && t !== "Onboarding Email Sent");
+    tasks = tasks.filter(t => t !== "I-9 in Guardian" && t !== "Onboarding Email Sent");
   }
-  return hrTasks;
+  
+  // Filter out international hire task if not international
+  if (!internationalHire) {
+    tasks = tasks.filter(t => t !== "SSN received and entered in WD and I-9");
+  }
+  
+  return tasks;
 }
 
 function updateStats() {
   const activeList = onboardings.filter(o => o.status === 'active');
   const completedList = onboardings.filter(o => o.status === 'completed');
+  const overdueList = onboardings.filter(o => o.overdueTasks && o.overdueTasks > 0);
   const stats = {
     active: activeList.length,
     completed: completedList.length,
@@ -742,9 +920,37 @@ function updateStats() {
   document.getElementById('stat-active').textContent = stats.active;
   document.getElementById('stat-completed').textContent = stats.completed;
   document.getElementById('stat-overdue').textContent = stats.overdue;
+  
+  // Update dropdowns
+  updateStatDropdown('dropdown-active', activeList);
+  updateStatDropdown('dropdown-completed', completedList);
+  updateStatDropdown('dropdown-overdue', overdueList);
 
   updateAverageCompletionTime(completedList);
   updateInsightCharts(); // use the new compact right-side charts
+}
+
+function updateStatDropdown(dropdownId, employees) {
+  const dropdown = document.getElementById(dropdownId);
+  if (!dropdown) return;
+  
+  dropdown.innerHTML = '';
+  
+  if (employees.length === 0) {
+    dropdown.innerHTML = '<div class="stat-dropdown-item text-gray-500 text-xs">No employees</div>';
+    return;
+  }
+  
+  employees.forEach(emp => {
+    const item = document.createElement('div');
+    item.className = 'stat-dropdown-item text-sm';
+    item.textContent = emp.name;
+    item.onclick = (e) => {
+      e.stopPropagation();
+      showTaskDetailView(emp.id);
+    };
+    dropdown.appendChild(item);
+  });
 }
 
 // Calculate Average Completion Time
@@ -1021,7 +1227,7 @@ function renderOnboardingCards() {
   const container = document.getElementById('onboarding-cards');
   container.innerHTML = '';
   filteredOnboardings.forEach(o => {
-    const tasks = getFilteredTasks(o.hireCategory);
+    const tasks = getFilteredTasks(o.hireCategory, o.internationalHire);
     const done = Object.keys(o.taskCompletionDates || {}).filter(t => tasks.includes(t)).length;
     const commentText = o.comment ? o.comment : '';
     const pinText = o.pin ? o.pin : 'N/A';
@@ -1085,6 +1291,7 @@ function renderOnboardingCards() {
 function applyFilters() {
   const hf = document.getElementById('filter-hire-type').value;
   const sf = document.getElementById('filter-status').value;
+  const sortBy = document.getElementById('sort-by').value;
 
   if (sf === 'overdue') {
     // show all with overdue tasks
@@ -1096,13 +1303,31 @@ function applyFilters() {
              (sf ? o.status === sf : true);
     });
   }
+  
+  // Apply sorting
+  if (sortBy) {
+    filteredOnboardings.sort((a, b) => {
+      switch(sortBy) {
+        case 'name-asc':
+          return (a.name || '').localeCompare(b.name || '');
+        case 'name-desc':
+          return (b.name || '').localeCompare(a.name || '');
+        case 'date-asc':
+          return (a.startDate || '').localeCompare(b.startDate || '');
+        case 'date-desc':
+          return (b.startDate || '').localeCompare(a.startDate || '');
+        default:
+          return 0;
+      }
+    });
+  }
 
   renderOnboardingCards();
   updateStats();
 }
 
 function renderTaskList(o) {
-  const filteredTasks = getFilteredTasks(o.hireCategory);
+  const filteredTasks = getFilteredTasks(o.hireCategory, o.internationalHire);
   const completed = Object.keys(o.taskCompletionDates || {}).filter(t => filteredTasks.includes(t));
   const total = filteredTasks.length;
   document.getElementById('task-progress').textContent = `${completed.length} of ${total} completed`;
@@ -1212,7 +1437,7 @@ function handleTaskToggle(taskName, isChecked) {
     delete updated[taskName];
   }
   o.taskCompletionDates = updated;
-  const tasks = getFilteredTasks(o.hireCategory);
+  const tasks = getFilteredTasks(o.hireCategory, o.internationalHire);
   const doneCount = Object.keys(updated).filter(t => tasks.includes(t)).length;
   o.progress = tasks.length ? Math.round(doneCount / tasks.length * 100) : 0;
   if (doneCount === tasks.length) o.status = 'completed';
@@ -1232,7 +1457,7 @@ function handleCompletionDateChange(taskName, newDate) {
     delete updated[taskName];
   }
   o.taskCompletionDates = updated;
-  const tasks = getFilteredTasks(o.hireCategory);
+  const tasks = getFilteredTasks(o.hireCategory, o.internationalHire);
   const doneCount = Object.keys(updated).filter(t => tasks.includes(t)).length;
   o.progress = tasks.length ? Math.round(doneCount / tasks.length * 100) : 0;
   if (doneCount === tasks.length) o.status = 'completed';
@@ -1340,7 +1565,7 @@ function updateEmailEmployeeList() {
 function updateOverdueCounts() {
   const today = new Date().toISOString().split('T')[0];
   onboardings.forEach(o => {
-    const tasks = getFilteredTasks(o.hireCategory);
+    const tasks = getFilteredTasks(o.hireCategory, o.internationalHire);
     let overdue = 0;
 
     tasks.forEach(task => {
@@ -1666,6 +1891,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('nav-email').addEventListener('click', () => showView('email'));
   document.getElementById('filter-hire-type').addEventListener('change', applyFilters);
   document.getElementById('filter-status').addEventListener('change', applyFilters);
+  document.getElementById('sort-by').addEventListener('change', applyFilters);
   document.getElementById('load-from-github').addEventListener('click', loadDataFromServer);
   document.getElementById('save-data').addEventListener('click', saveData);
   document.getElementById('export-data').addEventListener('click', exportData);
@@ -1738,7 +1964,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showConfirmDialog('Please fill required fields.', () => {});
       return;
     }
-    const tasks = getFilteredTasks(formData.hireCategory);
+    const tasks = getFilteredTasks(formData.hireCategory, formData.internationalHire);
     if (editingOnboarding !== null) {
       const o = onboardings.find(x => x.id === editingOnboarding);
       if (o) Object.assign(o, formData);
