@@ -1524,26 +1524,72 @@ function updateEmailEmployeeList() {
 		if (emailType === "prospectiveWelcome") {
 		  template = `
 			<p>Howdy ${firstName}!</br></br>
-			
-			Please provide your UIN and year of study (for example, 1L, 2L, 3L, LLM) to begin this process.</br></br>
-			
-			The offer of employment you received is contingent upon successful completion of a criminal background check and the Employment Eligibility Verification Form (I-9). <strong>Please note that you should not begin working until you receive clearance that all necessary requirements have been completed.</strong></br></br>
-			
-			You will receive a few emails for the hire process.  You will receive a prospective hire form to complete in the Laserfiche system. After that is completed, in the next day or so, you will receive a separate email from Sterling Background Check to complete a criminal background check. After that you receive an email from Perfect Compliance with detailed instructions to complete an electronic Form I-9. After you complete the electronic form, you will be able to come in person to complete your document verification.</br></br>			
-			
-			After you complete the form, we can schedule a time for you to come in and complete the in-person portion. Please review the 
-			<a href="https://www.uscis.gov/i-9-central/form-i-9-acceptable-documents" target="_blank">
-			List of Acceptable Documents</a> (for example, a driver license with a social security card or a US Passport) before you come so you can gather the documents needed to complete the Form I-9. Please remember that you need to present original documents, or receipts in case your documents have been lost, stolen, or damaged.</br></br>
-
-			Once the I-9 and criminal background check are completed you will be entered into Workday.  You will receive emails to allow you to complete on-boarding forms in Workday.</br></br>
-			
-			You will also be responsible for completing mandatory training in the TrainTraq system.  These trainings need to be completed at the beginning of your employment.</br></br>
-
-			After completing your on-boarding requirements, you will use Workday to submit timesheets. You can go to <a href="https://employees.tamu.edu/payroll/calendars.html" target="_blank">Payroll Calendars</a> to find a list of bi-weekly pay dates and timesheet deadlines.</br></br>
-
-			Keep an eye out for the Prospective Hire Form, as none of the other processes begin until that is submitted.</br></br>	
-
-			Thanks!</p></br>
+				To begin the hire process, please provide your <strong>UIN</strong> and <strong>year of study</strong> (e.g., 1L, 2L, 3L, LLM).</br></br>
+				
+				Your offer of employment is contingent upon successful completion of a <strong>criminal background check</strong> and the <strong>Form I-9</strong>. Please remember that you may <strong>not begin 
+				working</strong> until all hiring requirements 
+				are fully completed.</br></br>
+				Below is a breakdown of what to expect next:</br>
+				________________________________________</br></br>
+				<strong>Next Steps in the Hiring Process</strong></br>
+				<ol>
+				  <li>
+				    <strong>Prospective Hire Form (Laserfiche)</strong>
+				    <ul>
+				      <li>You will receive a Prospective Hire Form via Laserfiche.</li>
+				      <li>Complete and submit this form promptly—no other steps can begin until this is done.</li>
+				    </ul>
+				  </li>
+				
+				  <li>
+				    <strong>Criminal Background Check (Sterling)</strong>
+				    <ul>
+				      <li>After the Prospective Hire Form is submitted, you will receive an email from Sterling.</li>
+				      <li>Follow the instructions to complete your background check.</li>
+				    </ul>
+				  </li>
+				
+				  <li>
+				    <strong>Form I-9 (Perfect Compliance)</strong>
+				    <ul>
+				      <li>Next, you will receive instructions from Perfect Compliance to complete the electronic Form I-9.</li>
+				      <li>After submitting the electronic portion, we will schedule a time for you to come in in person for document verification.</li>
+				      <li>Please review the <a href="https://www.uscis.gov/i-9-central/form-i-9-acceptable-documents">List of Acceptable Documents</a> beforehand and bring original documents (or acceptable receipts).</li>
+				    </ul>
+				  </li>
+				
+				  <li>
+				    <strong>Workday Onboarding</strong>
+				    <ul>
+				      <li>Once your background check and Form I-9 are complete, you will be entered into Workday.</li>
+				      <li>You will then receive onboarding tasks to complete in the system.</li>
+				    </ul>
+				  </li>
+				
+				  <li>
+				    <strong>Mandatory Training (TrainTraq)</strong>
+				    <ul>
+				      <li>You will be assigned required TrainTraq trainings that must be completed at the start of your employment.</li>
+				    </ul>
+				  </li>
+				
+				  <li>
+				    <strong>Timesheets &amp; Payroll</strong>
+				    <ul>
+				      <li>After onboarding, you will use Workday to submit your bi-weekly timesheets.</li>
+				      <li>You may view pay dates and deadlines on the <a href="https://employees.tamu.edu/payroll/calendars.html">Payroll Calendars</a> page.</li>
+				      <li>Here is a step-by-step guide on how to enter your time: <em>Entering time in Workday</em>.</li>
+				    </ul>
+				  </li>
+				</ol>
+				________________________________________</br></br>
+				
+				Please keep an eye out for the <strong>Prospective Hire Form</strong>, as it must be completed before everything else can proceed.</br></br>
+				
+				Let me know if you have any questions—I'm here to help!</br></br>
+				Thanks,</br>
+				Payton
+			</p>
 		  `;
 		}		
 		if (emailType === "i9Reminder") {
@@ -2088,6 +2134,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </body>
 
 </html>
+
 
 
 
