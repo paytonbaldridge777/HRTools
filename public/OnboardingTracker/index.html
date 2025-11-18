@@ -644,7 +644,9 @@
               <!-- <option value="welcome">Welcome Message</option> -->
 			  <option value="prospectiveWelcome">Prospective Employee Welcome</option>
               <option value="i9verification">I-9 Verification</option>			  
-			  <option value="i9Reminder">I-9 Section 1 Reminder</option>	
+			  <option value="i9Reminder">I-9 Section 1 Reminder</option>
+			  <option value="WDOnboardingNotice">WD Onboarding Process Notification</option>
+			  <option value="WDOnboardingReminder">WD Onboarding Reminder</option>
             </select>
           </div>
           <div id="employee-details" class="hidden mb-6 bg-gray-50 p-4 rounded-lg">
@@ -1605,6 +1607,32 @@ function updateEmailEmployeeList() {
 			Cheers,</br></p>
 		  `;
 		}			
+		if (emailType === "WDOnboardingNotice") {
+		  template = `
+			<p>Howdy ${firstName}!</br></br>
+			
+			<p>This is to let you know Workday is now at the onboarding step and waiting for you to start the process. You are authorized to begin work as of Monday, 11/17/2025, but be aware that the Workday onboarding is what established your 
+			account in payroll so it's imperative to get this completed as soon as possible so we can complete the hire process. </br></br>
+			
+			You can login to your Workday account from the SSO menu here:</br>
+			<a href="https://sso.tamus.edu">SSO Menu</br></br>
+			
+			Please don't hesitate to reach out if you have any questions on the onboarding.</br></br>
+			
+			Cheers,</br>Payton</p>
+		  `;
+		}			
+		if (emailType === "WDOnboardingReminder") {
+		  template = `
+			<p>Howdy ${firstName}!</br></br>
+			
+			<p>Just a friendly reminder to please complete your Workday onboarding at your earliest convenience. We are unable to complete the hire process until this step is finished. </br></br>
+						
+			Please don't hesitate to reach out if you have any questions on the onboarding.</br></br>
+			
+			Cheers,</br>Payton</p>
+		  `;
+		}		
 		// When generating email
 		document.getElementById('email-message').innerHTML = template;
 		document.getElementById('email-output').classList.remove('hidden');
@@ -2134,6 +2162,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </body>
 
 </html>
+
 
 
 
