@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FMLA Approval Email Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        
+        h1 {
+            color: #500000;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        input[type="date"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #500000;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        button {
+            background: #500000;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #3a0000;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .secondary-btn {
+            background: #666;
+        }
+        
+        .secondary-btn:hover {
+            background: #555;
+        }
+        
+        .loading {
+            display: none;
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .email-preview {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .email-preview.active {
+            display: block;
+        }
+        
+        .email-preview h2 {
+            color: #500000;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        
+        .email-content {
+            background: white;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .error {
+            color: #d32f2f;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .info-box p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📧 FMLA Approval Email Generator</h1>
+        <p class="subtitle">Generate an approval email with automatic FMLA hours exhaustion date calculation</p>
+        
+        <div class="info-box">
+            <p><strong>How it works:</strong></p>
+            <p>• Automatically scrapes TAMU holiday dates</p>
+            <p>• Calculates exhaustion date based on 480 total FMLA hours</p>
+            <p>• Spreads remaining hours across workdays (Mon-Fri, excluding holidays)</p>
+            <p>• Generates a formatted email ready for Outlook</p>
+        </div>
+        
+        <form id="emailForm">
+            <div class="form-group">
+                <label for="employeeName">Employee Name *</label>
+                <input type="text" id="employeeName" name="employeeName" required>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="hoursUsed">FMLA Hours Used *</label>
+                    <input type="number" id="hoursUsed" name="hoursUsed" min="0" max="480" step="0.5" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="lastDate">Last Date FMLA Hours Were Entered *</label>
+                    <input type="date" id="lastDate" name="lastDate" required>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="startDate">Start Date of Leave *</label>
+                    <input type="date" id="startDate" name="startDate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="endDate">End Date of Leave *</label>
+                    <input type="date" id="endDate" name="endDate" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="leaveType">Type of Leave *</label>
+                <select id="leaveType" name="leaveType" required>
+                    <option value="">Select leave type...</option>
+                    <option value="Personal Medical">Personal Medical</option>
+                    <option value="Family Care">Family Care</option>
+                    <option value="Military Family">Military Family</option>
+                    <option value="Qualifying Exigency">Qualifying Exigency</option>
+                </select>
+            </div>
+            
+            <div class="button-group">
+                <button type="submit">Generate Email</button>
+                <button type="button" class="secondary-btn" id="resetBtn">Reset Form</button>
+            </div>
+            
+            <div class="loading" id="loading">
+                <p>⏳ Calculating exhaustion date and generating email...</p>
+            </div>
+        </form>
+        
+        <div class="email-preview" id="emailPreview">
+            <h2>Email Preview</h2>
+            <div class="email-content" id="emailContent"></div>
+            <div class="button-group">
+                <button type="button" id="copyBtn">📋 Copy Email</button>
+                <button type="button" id="outlookBtn">📧 Open in Outlook</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="approval-email.js"></script>
+</body>
+</html>
