@@ -16,6 +16,8 @@
     // Holiday scraping function
     async function scrapeHolidays() {
         try {
+            // NOTE: This fetch will likely fail due to CORS restrictions.
+            // The fallback to getDefaultHolidays() provides reliable holiday dates.
             // Fetch the TAMU holidays page
             const response = await fetch('https://employees.tamu.edu/employee-relations/leave/paid/university-holidays.html', {
                 mode: 'cors'
@@ -55,6 +57,7 @@
     }
     
     // Fallback holidays (TAMU typical holidays)
+    // TODO: Update these dates annually to reflect the current academic year holidays
     function getDefaultHolidays() {
         const currentYear = new Date().getFullYear();
         const nextYear = currentYear + 1;
@@ -288,23 +291,40 @@ Texas A&M University School of Law`;
     });
     
     // Copy to clipboard
-    copyBtn.addEventListener('click', function() {
+    copyBtn.addEventListener('click', async function() {
         if (!generatedEmail) return;
         
-        // Create a temporary element to copy from
-        const temp = document.createElement('div');
-        temp.innerHTML = generatedEmail.html;
-        document.body.appendChild(temp);
-        
-        // Select and copy
-        const range = document.createRange();
-        range.selectNodeContents(temp);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-        
         try {
-            document.execCommand('copy');
+            // Try modern Clipboard API first
+            if (navigator.clipboard && navigator.clipboard.write) {
+                const htmlBlob = new Blob([generatedEmail.html], { type: 'text/html' });
+                const textBlob = new Blob([generatedEmail.text], { type: 'text/plain' });
+                
+                const clipboardItem = new ClipboardItem({
+                    'text/html': htmlBlob,
+                    'text/plain': textBlob
+                });
+                
+                await navigator.clipboard.write([clipboardItem]);
+            } else if (navigator.clipboard && navigator.clipboard.writeText) {
+                // Fallback to writeText if write() is not available
+                await navigator.clipboard.writeText(generatedEmail.text);
+            } else {
+                // Fallback to document.execCommand for older browsers
+                const temp = document.createElement('div');
+                temp.innerHTML = generatedEmail.html;
+                document.body.appendChild(temp);
+                
+                const range = document.createRange();
+                range.selectNodeContents(temp);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+                
+                document.execCommand('copy');
+                document.body.removeChild(temp);
+                selection.removeAllRanges();
+            }
             
             // Show success message
             const originalText = copyBtn.textContent;
@@ -316,10 +336,8 @@ Texas A&M University School of Law`;
                 copyBtn.style.background = '';
             }, 2000);
         } catch (err) {
+            console.error('Copy failed:', err);
             alert('Failed to copy to clipboard. Please select and copy manually.');
-        } finally {
-            document.body.removeChild(temp);
-            selection.removeAllRanges();
         }
     });
     
