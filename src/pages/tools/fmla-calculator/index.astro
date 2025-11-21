@@ -7,7 +7,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
     <!-- FMLA Calculator App Container -->
     <div id="fmla-calculator-root" class="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg shadow-sm overflow-hidden">
       <iframe 
-        src="/FMLACalculator/index.html" 
+        src="/FMLACalculator/main.html" 
         class="w-full border-0"
         style="min-height: 800px;"
         title="FMLA Calculator Tool"
@@ -18,10 +18,10 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
     <div class="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
       <h2 class="text-xl font-bold text-blue-900 dark:text-blue-100 mb-3">How to Use</h2>
       <ul class="list-disc list-inside space-y-2 text-blue-800 dark:text-blue-200">
-        <li>Enter the employee's hire date and start date of leave</li>
-        <li>The calculator will determine FMLA eligibility based on workdays</li>
+        <li><strong>Workdays Calculator:</strong> Enter the employee's hire date and start date of leave to determine FMLA eligibility based on workdays</li>
+        <li><strong>Approval Email Generator:</strong> Generate an approval email with automatic FMLA hours exhaustion date calculation</li>
         <li>View detailed calculations and leave period information</li>
-        <li>Export results for documentation purposes</li>
+        <li>Export or copy results for documentation purposes</li>
       </ul>
     </div>
   </div>
