@@ -197,7 +197,7 @@
         
         return `Hello ${employeeName},
 
-Your request for Family and Medical Leave Act (FMLA) leave has been approved.
+We have received the medical certification from your doctor. 
 
 Leave Details:
 - Type of Leave: ${leaveType}
@@ -206,18 +206,20 @@ Leave Details:
 - FMLA Hours Remaining: ${remainingHours} hours
 - Estimated Exhaustion Date: ${formatDateLong(exhaustionDate)}
 
-The estimated exhaustion date is calculated based on your remaining FMLA hours (${remainingHours} hours) spread across working days at 8 hours per day, excluding weekends and university holidays. This date may vary based on actual leave usage.
+You will not be working during this period, including remote work.  
+ 
 
 Important Reminders:
 - You have a total of 480 hours (12 weeks) of FMLA leave available in a 12-month period
-- Please submit all required documentation to HR in a timely manner
+- For this period, you will make two leave entries per day in Workday: 1) FMLA Time Off and 2) Sick Leave (the sick leave is what generates your pay).
+- If the date of your return changes where you may want to return earlier than this date or need to be out longer to recover, your physician can complete an updated medical certification.
+- While on leave you will want to touch base with your supervisor towards the end of the leave to confirm you will be returning on the expected date. 
 - Contact HR if you have questions about your leave or if your circumstances change
 
-If you have any questions or concerns, please don't hesitate to contact the Human Resources office.
+If you have any questions or concerns, please don't hesitate to contact us.
 
 Best regards,
-Human Resources
-Texas A&M University School of Law`;
+Payton;
     }
     
     // Form submit handler
