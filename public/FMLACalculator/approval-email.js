@@ -154,6 +154,7 @@
     function generateEmail(formData, exhaustionDate) {
         const { employeeName, hoursUsed, leaveType, startDate, endDate } = formData;
         const remainingHours = 480 - hoursUsed;
+        const endDateDisplay = endDate ? formatDateLong(new Date(endDate)) : 'indefinite';
         
         const emailHTML = `
             <p>Hello ${employeeName},</p>
@@ -163,7 +164,7 @@
             <p><strong>Leave Details:</strong></p>
             <ul>
                 <li><strong>Type of Leave:</strong> ${leaveType}</li>
-                <li><strong>Leave Period:</strong> ${formatDateLong(new Date(startDate))} to ${formatDateLong(new Date(endDate))}</li>
+                <li><strong>Leave Period:</strong> ${formatDateLong(new Date(startDate))} to ${endDateDisplay}</li>
                 <li><strong>FMLA Hours Used to Date:</strong> ${hoursUsed} hours</li>
                 <li><strong>FMLA Hours Remaining:</strong> ${remainingHours} hours</li>
                 <li><strong>Estimated Exhaustion Date:</strong> ${formatDateLong(exhaustionDate)}</li>
@@ -194,6 +195,7 @@
     function generatePlainText(formData, exhaustionDate) {
         const { employeeName, hoursUsed, leaveType, startDate, endDate } = formData;
         const remainingHours = 480 - hoursUsed;
+        const endDateDisplay = endDate ? formatDateLong(new Date(endDate)) : 'indefinite';
         
         return `Hello ${employeeName},
 
@@ -201,7 +203,7 @@ We have received the medical certification from your doctor.
 
 Leave Details:
 - Type of Leave: ${leaveType}
-- Leave Period: ${formatDateLong(new Date(startDate))} to ${formatDateLong(new Date(endDate))}
+- Leave Period: ${formatDateLong(new Date(startDate))} to ${endDateDisplay}
 - FMLA Hours Used to Date: ${hoursUsed} hours
 - FMLA Hours Remaining: ${remainingHours} hours
 - Estimated Exhaustion Date: ${formatDateLong(exhaustionDate)}
@@ -219,7 +221,7 @@ Important Reminders:
 If you have any questions or concerns, please don't hesitate to contact us.
 
 Best regards,
-Payton';
+Payton`;
     }
     
     // Form submit handler
@@ -250,12 +252,16 @@ Payton';
             // Validate dates
             const lastDateObj = new Date(formData.lastDate);
             const startDateObj = new Date(formData.startDate);
-            const endDateObj = new Date(formData.endDate);
             
-            if (startDateObj > endDateObj) {
-                alert('Start date must be before or equal to end date');
-                loading.classList.remove('active');
-                return;
+            // Only validate endDate if it's provided
+            if (formData.endDate) {
+                const endDateObj = new Date(formData.endDate);
+                
+                if (startDateObj > endDateObj) {
+                    alert('Start date must be before or equal to end date');
+                    loading.classList.remove('active');
+                    return;
+                }
             }
             
             // Load holidays if not already loaded
