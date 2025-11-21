@@ -219,7 +219,7 @@ Important Reminders:
 If you have any questions or concerns, please don't hesitate to contact us.
 
 Best regards,
-Payton;
+Payton';
     }
     
     // Form submit handler
