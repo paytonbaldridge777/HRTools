@@ -1611,8 +1611,9 @@ function updateEmailEmployeeList() {
 		  template = `
 			<p>Howdy ${firstName}!</br></br>
 			
-			<p>This is to let you know Workday is now at the onboarding step and waiting for you to start the process. You are authorized to begin work as of Monday, 11/17/2025, but be aware that the Workday onboarding is what established your 
-			account in payroll so it's imperative to get this completed as soon as possible so we can complete the hire process. </br></br>
+			<p>This is to let you know that Workday is now at the onboarding step and waiting for you to start the process. You are authorized to begin work as
+			of ${hireDate}!, but be aware that the Workday onboarding is what established your account in payroll so it's imperative to get this completed as 
+			soon as possible so we can complete the hire process. </br></br>
 			
 			You can login to your Workday account from the SSO menu here:</br>
 			<a href="https://sso.tamus.edu">SSO Menu</br></br>
@@ -2162,6 +2163,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </body>
 
 </html>
+
 
 
 
