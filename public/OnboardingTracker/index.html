@@ -647,8 +647,8 @@
 			  <option value="i9Reminder">I-9 Section 1 Reminder</option>
 			  <option value="WDOnboardingNotice">WD Onboarding Process Notification</option>
 			  <option value="WDOnboardingReminder">WD Onboarding Reminder</option>
-			 <option value="SSNReminder">WD Onboarding Reminder</option>
-			 <option value="SSNGuardianReminder">WD Onboarding Reminder</option>
+			 <option value="SSNReminder">SSN Reminder</option>
+			 <option value="SSNGuardianReminder">SSN Guardian Reminder</option>
             </select>
           </div>
           <div id="employee-details" class="hidden mb-6 bg-gray-50 p-4 rounded-lg">
@@ -1641,29 +1641,33 @@ function updateEmailEmployeeList() {
 			<p>Howdy ${firstName},</br></br>
 						
 			I hope you are doing well and settling into your new role. As part of the employment requirements, we need to confirm the status of your Social Security Number (SSN) application.
-			
+			</br>
 			Please reply to this email with one of the following:
-			
+			</br>
 			Confirmation that you have applied for your SSN and the date of application.
 			A copy of the receipt or confirmation from the Social Security Administration.
 			If you have any questions, feel free to reach out.
-			
+			</br>
 			Thank you for your prompt attention to this matter.
-			
-			Cheers, Payton</p></br>
+			</br>
+			Cheers, 
+			</br>
+			Payton</p></br>
 		  `;
 		}	
 		if (emailType === "SSNGuardianReminder") {
 		  template = `
 			<p>Howdy ${firstName},</br></br>
-						
+			</br>			
 			I hope you are doing well and settling into your new role. As part of the employment requirements, your social security number must be added to your I-9 in Guardian. You should have received an email with instructions on updating your I-9. Please locate that email and add the SSN so we can complete the Section 2 of your I-9. 
-			
+			</br>
 			If you have any questions, feel free to reach out.
-			
+			</br>
 			Thank you for your prompt attention to this matter.
-			
-			Cheers, Payton</p></br>
+			</br>
+			Cheers, 
+			</br>
+			Payton</p></br>
 		  `;
 		}	
 		// When generating email
@@ -2195,6 +2199,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </body>
 
 </html>
+
 
 
 
