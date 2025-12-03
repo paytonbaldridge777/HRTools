@@ -222,7 +222,7 @@ function displayViolations(violations) {
                     ${index + 1}. ${escapeHtml(violation.help)}
                 </h3>
                 <span class="px-2 py-1 rounded text-xs font-semibold ${impactColors[violation.impact] || 'bg-gray-100 text-gray-800'}">
-                    ${violation.impact.toUpperCase()}
+                    ${escapeHtml(violation.impact.toUpperCase())}
                 </span>
             </div>
             <p class="text-sm text-gray-600 mb-3">${escapeHtml(violation.description)}</p>
@@ -251,7 +251,7 @@ function displayViolations(violations) {
                 </div>
             </details>
             <div class="mt-3">
-                <a href="${violation.helpUrl}" target="_blank" rel="noopener noreferrer" class="text-sm text-tamu-maroon hover:underline">
+                <a href="${escapeHtml(violation.helpUrl)}" target="_blank" rel="noopener noreferrer" class="text-sm text-tamu-maroon hover:underline">
                     Learn more →
                 </a>
             </div>
@@ -300,6 +300,9 @@ async function processHtmlFile(file) {
     showProgress('Scanning HTML for accessibility issues...', 60);
 
     // Create a temporary container to hold the HTML
+    // Note: Using innerHTML here is intentional for accessibility testing purposes.
+    // The container is never displayed (display:none) and is removed immediately after testing.
+    // This allows axe-core to analyze the full DOM structure of the uploaded HTML.
     const container = document.createElement('div');
     container.innerHTML = text;
     container.style.display = 'none';
@@ -336,6 +339,9 @@ async function processDocxFile(file) {
         await loadLibrary('axe', LIBS.axeCore);
 
         showProgress('Scanning converted document...', 80);
+        // Note: Using innerHTML here is intentional for accessibility testing purposes.
+        // The container is never displayed (display:none) and is removed immediately after testing.
+        // This allows axe-core to analyze the DOM structure of the converted DOCX content.
         const container = document.createElement('div');
         container.innerHTML = html;
         container.style.display = 'none';
@@ -406,7 +412,10 @@ async function processPdfFile(file) {
         // Add notice about PDF limitations
         const notice = document.createElement('div');
         notice.className = 'bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 text-sm text-yellow-800';
-        notice.innerHTML = '<strong>PDF Note:</strong> This scan analyzed the text content extracted from the PDF. Layout-based accessibility checks (such as reading order, table structure, and form fields) are limited. For comprehensive PDF accessibility testing, use specialized PDF accessibility tools.';
+        const strong = document.createElement('strong');
+        strong.textContent = 'PDF Note:';
+        notice.appendChild(strong);
+        notice.appendChild(document.createTextNode(' This scan analyzed the text content extracted from the PDF. Layout-based accessibility checks (such as reading order, table structure, and form fields) are limited. For comprehensive PDF accessibility testing, use specialized PDF accessibility tools.'));
         
         try {
             const scanResults = await axe.run(container);
@@ -487,7 +496,10 @@ async function processImageFile(file) {
         // Add notice about OCR limitations
         const notice = document.createElement('div');
         notice.className = 'bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 text-sm text-yellow-800';
-        notice.innerHTML = '<strong>OCR Note:</strong> This scan analyzed text extracted from the image using OCR. The accuracy depends on image quality. Layout, structure, and non-text content checks are not possible. This is a best-effort analysis.';
+        const strong = document.createElement('strong');
+        strong.textContent = 'OCR Note:';
+        notice.appendChild(strong);
+        notice.appendChild(document.createTextNode(' This scan analyzed text extracted from the image using OCR. The accuracy depends on image quality. Layout, structure, and non-text content checks are not possible. This is a best-effort analysis.'));
 
         try {
             const scanResults = await axe.run(container);
@@ -536,6 +548,9 @@ async function handleUrlScan(url) {
 
         showProgress('Scanning page for accessibility issues...', 80);
 
+        // Note: Using innerHTML here is intentional for accessibility testing purposes.
+        // The container is never displayed (display:none) and is removed immediately after testing.
+        // This allows axe-core to analyze the DOM structure of the fetched HTML.
         const container = document.createElement('div');
         container.innerHTML = html;
         container.style.display = 'none';

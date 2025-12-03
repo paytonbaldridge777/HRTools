@@ -1,4 +1,23 @@
 <!DOCTYPE html>
+<!--
+    Accessibility Scanner - Client-side accessibility testing tool
+    
+    This page provides a standalone accessibility scanner that runs entirely in the browser.
+    It uses third-party libraries loaded from CDN (axe-core, mammoth.js, PDF.js, Tesseract.js).
+    
+    Integration Notes:
+    - This is a standalone HTML page that can work independently of the Astro build system
+    - The header uses a fallback version with TAMU branding
+    - TODO: For tighter integration, consider converting to an Astro page component that uses
+      the shared Header.astro component from src/components/
+    - The page uses Tailwind CSS from CDN to match site styling without adding build dependencies
+    - All scanner assets are in /static/ which is copied to the build output from public/
+    
+    Deployment:
+    - Files are automatically copied from public/ to dist/ during Astro build
+    - The scanner is accessible at /scanner.html (or configure as /scanner via routing)
+    - No server-side processing required - all scanning happens client-side
+-->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
