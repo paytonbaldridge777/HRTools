@@ -41,6 +41,7 @@ body {
     --scanner-gray-900: #111827;
     --scanner-blue-50: #eff6ff;
     --scanner-blue-200: #bfdbfe;
+    --scanner-blue-500: #3b82f6;
     --scanner-blue-800: #1e40af;
     --scanner-red-50: #fef2f2;
     --scanner-red-200: #fecaca;
@@ -296,7 +297,7 @@ body {
 }
 
 .violation-card.minor {
-    border-left-color: #3b82f6;
+    border-left-color: var(--scanner-blue-500);
 }
 
 /* Loading spinner */
