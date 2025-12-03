@@ -1,0 +1,11 @@
+{
+  "name": "accessibility-scanner-server",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Express server for pa11y accessibility scanning",
+  "main": "accessibility-scanner.js",
+  "scripts": {
+    "start": "node accessibility-scanner.js",
+    "dev": "node --watch accessibility-scanner.js"
+  }
+}
