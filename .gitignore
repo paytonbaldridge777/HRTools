@@ -11,6 +11,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+*.log
 
 # Environment variables
 .env
@@ -40,3 +41,8 @@ coverage/
 *.temp
 .cache/
 tmp/
+
+# Server artifacts
+server/.env
+server/node_modules/
+server/*.log
