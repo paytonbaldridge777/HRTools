@@ -22,5 +22,13 @@
     "tags": ["Onboarding"],
     "status": "stable",
     "icon": "/icons/onboarding.svg"
+  },
+  {
+    "slug": "accessibility-checker",
+    "name": "Accessibility Checker",
+    "shortDescription": "Analyze documents and websites for WCAG 2.1 Level AA compliance.",
+    "tags": ["Compliance"],
+    "status": "stable",
+    "icon": "/icons/accessibility.svg"
   }
 ]
