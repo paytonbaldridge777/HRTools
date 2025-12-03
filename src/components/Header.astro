@@ -48,6 +48,13 @@ const currentPath = Astro.url.pathname;
         >
           Onboarding Tracker
         </a>
+        <a 
+          class={`tlw-link inline-flex items-center px-3 py-2 border border-transparent rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)] ${currentPath.startsWith('/tools/accessibility-checker') ? 'bg-[rgba(255,255,255,0.2)] border-[rgba(255,255,255,0.3)]' : ''}`}
+          href="/tools/accessibility-checker"
+          aria-current={currentPath.startsWith('/tools/accessibility-checker') ? 'page' : undefined}
+        >
+          Accessibility Checker
+        </a>
         <button 
           id="theme-toggle" 
           class="inline-flex items-center justify-center px-3 py-2 border border-[rgba(255,255,255,0.3)] rounded-lg bg-[rgba(255,255,255,0.1)] text-xl cursor-pointer transition-all hover:bg-[rgba(255,255,255,0.2)]"
@@ -77,6 +84,7 @@ const currentPath = Astro.url.pathname;
     <a class="tlw-mobile-link block px-3 py-2 rounded-lg no-underline text-white border border-transparent hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)]" href="/tools/fmla-calculator">FMLA Calculator</a>
     <a class="tlw-mobile-link block px-3 py-2 rounded-lg no-underline text-white border border-transparent hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)]" href="/tools/traintraq-reminders">TrainTraq Reminders</a>
     <a class="tlw-mobile-link block px-3 py-2 rounded-lg no-underline text-white border border-transparent hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)]" href="/tools/onboarding-tracker">Onboarding Tracker</a>
+    <a class="tlw-mobile-link block px-3 py-2 rounded-lg no-underline text-white border border-transparent hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)]" href="/tools/accessibility-checker">Accessibility Checker</a>
   </nav>
 </header>
 
