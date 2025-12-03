@@ -89,19 +89,19 @@
     }
     
     [data-theme="dark"] .severity-critical {
-      background: rgba(220, 38, 38, 0.1);
+      background: rgba(220, 38, 38, 0.15);
     }
     
     [data-theme="dark"] .severity-serious {
-      background: rgba(234, 88, 12, 0.1);
+      background: rgba(234, 88, 12, 0.15);
     }
     
     [data-theme="dark"] .severity-moderate {
-      background: rgba(202, 138, 4, 0.1);
+      background: rgba(202, 138, 4, 0.15);
     }
     
     [data-theme="dark"] .severity-minor {
-      background: rgba(8, 145, 178, 0.1);
+      background: rgba(8, 145, 178, 0.15);
     }
     
     .upload-zone {
@@ -381,8 +381,11 @@
         return;
       }
 
+      // Validate file type - accept PDF, Word (DOCX), and HTML files
       const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/html'];
-      if (!allowedTypes.includes(file.type) && !file.name.match(/\.(pdf|docx|html?|htm)$/i)) {
+      const fileExtension = file.name.toLowerCase().match(/\.(pdf|docx|html|htm)$/);
+      
+      if (!allowedTypes.includes(file.type) && !fileExtension) {
         alert('Unsupported file type. Please upload PDF, Word, or HTML files.');
         return;
       }
@@ -421,6 +424,10 @@
     function analyzeDocument(file) {
       showLoading();
       
+      // NOTE: This is a prototype/demo implementation that generates sample accessibility issues
+      // In a production environment, this would integrate with actual accessibility testing libraries
+      // such as axe-core, pa11y, or similar tools to perform real document analysis
+      
       // Simulate progressive analysis
       simulateProgress(() => {
         // Generate sample report for document
@@ -440,6 +447,10 @@
         alert('Please enter a valid URL (e.g., https://example.com)');
         return;
       }
+      
+      // NOTE: This is a prototype/demo implementation that generates sample accessibility issues
+      // In a production environment, this would make API calls to accessibility testing services
+      // or use headless browsers with axe-core to scan live websites for WCAG violations
       
       // Simulate progressive analysis
       simulateProgress(() => {
