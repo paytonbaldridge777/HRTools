@@ -7,5 +7,13 @@
   "scripts": {
     "start": "node accessibility-scanner.js",
     "dev": "node --watch accessibility-scanner.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "pa11y": "^9.0.1",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3"
   }
 }

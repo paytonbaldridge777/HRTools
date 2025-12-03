@@ -66,11 +66,14 @@ const getAllowedDomains = () => {
   }
   
   // Default whitelist - modify for your organization
+  // NOTE: In production, remove 'localhost' and '127.0.0.1' from this list
+  // and use the ALLOWED_DOMAINS environment variable
   return [
-    'localhost',
-    '127.0.0.1',
     'law.tamu.edu',
     // Add your internal domains here
+    // For development: uncomment the lines below
+    // 'localhost',
+    // '127.0.0.1',
   ];
 };
 
@@ -141,7 +144,9 @@ app.post('/api/scan', async (req, res) => {
   const scanTimeout = Math.min(Math.max(timeout, 5000), 60000);
   
   try {
-    console.log(`[Accessibility Scan] Starting scan for: ${url}`);
+    // Sanitize URL for logging (only log hostname to avoid exposing query params/tokens)
+    const logSafeUrl = new URL(url).hostname;
+    console.log(`[Accessibility Scan] Starting scan for: ${logSafeUrl}`);
     const startTime = Date.now();
     
     // Configure pa11y with WCAG 2.1 Level AA standard

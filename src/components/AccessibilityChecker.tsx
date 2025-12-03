@@ -42,7 +42,11 @@ interface ScanResult {
   timestamp: string;
 }
 
-const API_URL = import.meta.env.PUBLIC_SCANNER_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.PUBLIC_SCANNER_API_URL || (
+  typeof window !== 'undefined' && window.location.protocol === 'https:'
+    ? 'https://localhost:3001'  // Will need to be configured for production
+    : 'http://localhost:3001'
+);
 
 const AccessibilityChecker: React.FC = () => {
   const [url, setUrl] = useState('');
