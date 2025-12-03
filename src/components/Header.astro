@@ -1,57 +1,42 @@
 ---
-const currentPath = Astro.url.pathname;
+const { currentPath } = Astro.props;
 ---
-
-<header class="tlw-header sticky top-0 z-[1000] bg-gradient-to-b from-tamu-maroon to-tamu-maroon-700 shadow-sm">
-  <div class="tlw-brandbar h-[6px] bg-tamu-maroon"></div>
-
-  <div class="container max-w-[1120px] mx-auto px-4">
-    <div class="tlw-nav h-18 flex items-center justify-between">
-      <!-- Brand -->
-      <a href="/" class="tlw-brand flex items-center gap-3 no-underline" aria-label="Return to HR Tools Home">
-        <span class="tlw-badge inline-flex items-center justify-center w-10 h-10 rounded-[10px] text-white bg-[rgba(255,255,255,0.2)] font-bold tracking-wide">
-          TAMU
-        </span>
-        <div class="tlw-brand-text leading-tight">
-          <div class="tlw-kicker text-sm text-white opacity-90">TAMU School of Law</div>
-          <div class="tlw-title text-base font-bold text-white">HR Tools</div>
-        </div>
+<header class="tlw-header w-full border-b border-[rgba(255,255,255,0.2)] bg-gradient-to-b from-tamu-maroon to-tamu-maroon-700 text-white shadow-md z-20">
+  <div class="max-w-[1800px] mx-auto px-4">
+    <div class="flex justify-between items-center h-20">
+      <!-- Logo and Title -->
+      <a href="/" class="flex items-center gap-4 no-underline">
+        <img src="/logo.svg" alt="HR Tools Logo" class="h-10" />
+        <span class="text-2xl font-bold whitespace-nowrap">HR Tools</span>
       </a>
 
       <!-- Desktop Navigation -->
-      <nav class="tlw-links hidden md:flex items-center gap-2" aria-label="Primary">
+      <nav class="hidden md:flex items-center gap-2" aria-label="Main">
         <a 
-          class={`tlw-link inline-flex items-center px-3 py-2 border border-transparent rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)] ${currentPath === '/' ? 'bg-[rgba(255,255,255,0.2)] border-[rgba(255,255,255,0.3)]' : ''}`}
-          href="/"
-          aria-current={currentPath === '/' ? 'page' : undefined}
-        >
-          Home
-        </a>
-        <a 
-          class={`tlw-link inline-flex items-center px-3 py-2 border border-transparent rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)] ${currentPath.startsWith('/tools/fmla-calculator') ? 'bg-[rgba(255,255,255,0.2)] border-[rgba(255,255,255,0.3)]' : ''}`}
-          href="/tools/fmla-calculator"
-          aria-current={currentPath.startsWith('/tools/fmla-calculator') ? 'page' : undefined}
+          class={`tlw-link inline-flex items-center px-3 py-2 border border-transparent rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)] ${currentPath.startsWith('/FMLACalculator') ? 'bg-[rgba(255,255,255,0.2)] border-[rgba(255,255,255,0.3)]' : ''}`}
+          href="/FMLACalculator/"
+          aria-current={currentPath.startsWith('/FMLACalculator') ? 'page' : undefined}
         >
           FMLA Calculator
         </a>
         <a 
-          class={`tlw-link inline-flex items-center px-3 py-2 border border-transparent rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)] ${currentPath.startsWith('/tools/traintraq-reminders') ? 'bg-[rgba(255,255,255,0.2)] border-[rgba(255,255,255,0.3)]' : ''}`}
-          href="/tools/traintraq-reminders"
-          aria-current={currentPath.startsWith('/tools/traintraq-reminders') ? 'page' : undefined}
+          class={`tlw-link inline-flex items-center px-3 py-2 border border-transparent rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)] ${currentPath.startsWith('/TrainTraqReminders') ? 'bg-[rgba(255,255,255,0.2)] border-[rgba(255,255,255,0.3)]' : ''}`}
+          href="/TrainTraqReminders/"
+          aria-current={currentPath.startsWith('/TrainTraqReminders') ? 'page' : undefined}
         >
           TrainTraq Reminders
         </a>
         <a 
-          class={`tlw-link inline-flex items-center px-3 py-2 border border-transparent rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)] ${currentPath.startsWith('/tools/onboarding-tracker') ? 'bg-[rgba(255,255,255,0.2)] border-[rgba(255,255,255,0.3)]' : ''}`}
-          href="/tools/onboarding-tracker"
-          aria-current={currentPath.startsWith('/tools/onboarding-tracker') ? 'page' : undefined}
+          class={`tlw-link inline-flex items-center px-3 py-2 border border-transparent rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)] ${currentPath.startsWith('/OnboardingTracker') ? 'bg-[rgba(255,255,255,0.2)] border-[rgba(255,255,255,0.3)]' : ''}`}
+          href="/OnboardingTracker/"
+          aria-current={currentPath.startsWith('/OnboardingTracker') ? 'page' : undefined}
         >
           Onboarding Tracker
         </a>
         <a 
-          class={`tlw-link inline-flex items-center px-3 py-2 border border-transparent rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)] ${currentPath.startsWith('/tools/accessibility-checker') ? 'bg-[rgba(255,255,255,0.2)] border-[rgba(255,255,255,0.3)]' : ''}`}
-          href="/tools/accessibility-checker"
-          aria-current={currentPath.startsWith('/tools/accessibility-checker') ? 'page' : undefined}
+          class={`tlw-link inline-flex items-center px-3 py-2 border border-transparent rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)] ${currentPath.startsWith('/Accessibility') ? 'bg-[rgba(255,255,255,0.2)] border-[rgba(255,255,255,0.3)]' : ''}`}
+          href="/Accessibility/"
+          aria-current={currentPath.startsWith('/Accessibility') ? 'page' : undefined}
         >
           Accessibility Checker
         </a>
@@ -80,104 +65,48 @@ const currentPath = Astro.url.pathname;
 
   <!-- Mobile menu -->
   <nav id="mobileMenu" class="tlw-mobile hidden border-t border-[rgba(255,255,255,0.2)] bg-gradient-to-b from-tamu-maroon to-tamu-maroon-700 flex-col gap-1 p-2 pb-4" aria-label="Mobile">
-    <a class="tlw-mobile-link block px-3 py-2 rounded-lg no-underline text-white border border-transparent hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)]" href="/">Home</a>
-    <a class="tlw-mobile-link block px-3 py-2 rounded-lg no-underline text-white border border-transparent hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)]" href="/tools/fmla-calculator">FMLA Calculator</a>
-    <a class="tlw-mobile-link block px-3 py-2 rounded-lg no-underline text-white border border-transparent hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)]" href="/tools/traintraq-reminders">TrainTraq Reminders</a>
-    <a class="tlw-mobile-link block px-3 py-2 rounded-lg no-underline text-white border border-transparent hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)]" href="/tools/onboarding-tracker">Onboarding Tracker</a>
-    <a class="tlw-mobile-link block px-3 py-2 rounded-lg no-underline text-white border border-transparent hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)]" href="/tools/accessibility-checker">Accessibility Checker</a>
+    <a href="/FMLACalculator/" class="block px-4 py-3 rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)]">FMLA Calculator</a>
+    <a href="/TrainTraqReminders/" class="block px-4 py-3 rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)]">TrainTraq Reminders</a>
+    <a href="/OnboardingTracker/" class="block px-4 py-3 rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)]">Onboarding Tracker</a>
+    <a href="/Accessibility/" class="block px-4 py-3 rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)]">Accessibility Checker</a>
+    <button id="mobile-theme-toggle" class="w-full text-left px-4 py-3 rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)]">Toggle Dark Mode</button>
   </nav>
 </header>
-
 <script>
-  // Theme toggle functionality
-  function initTheme() {
-    const toggle = document.getElementById('theme-toggle');
-    const root = document.documentElement;
-    
-    // Load saved theme or default to light
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    if (savedTheme === 'dark') {
-      root.classList.add('dark');
-    }
-    updateThemeIcon(savedTheme);
-    // Notify iframes of initial theme
-    notifyIframesOfThemeChange(savedTheme);
-    
-    function updateThemeIcon(theme: string) {
-      if (toggle) {
-        toggle.textContent = theme === 'dark' ? '☀️' : '🌙';
-        toggle.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
-      }
-    }
-    
-    function notifyIframesOfThemeChange(theme: string) {
-      // Find all iframes on the page and send theme change message
-      const iframes = document.querySelectorAll('iframe');
-      iframes.forEach(iframe => {
-        // Wait a bit for iframe to be ready if it just loaded
-        if (iframe.contentWindow) {
-          iframe.contentWindow.postMessage({ type: 'THEME_CHANGE', theme }, '*');
-        }
-      });
-    }
-    
-    function handleThemeRequest(event: MessageEvent) {
-      // Respond to theme requests from iframes
-      if (event.data && event.data.type === 'REQUEST_THEME') {
-        const currentTheme = root.classList.contains('dark') ? 'dark' : 'light';
-        event.source?.postMessage({ type: 'THEME_CHANGE', theme: currentTheme }, '*' as any);
-      }
-    }
-    
-    window.addEventListener('message', handleThemeRequest);
-    
-    // Also send initial theme when iframes load
-    setTimeout(() => {
-      notifyIframesOfThemeChange(savedTheme);
-    }, 500);
-    
-    toggle?.addEventListener('click', () => {
-      const isDark = root.classList.contains('dark');
-      const newTheme = isDark ? 'light' : 'dark';
-      
-      if (isDark) {
-        root.classList.remove('dark');
-      } else {
-        root.classList.add('dark');
-      }
-      
-      localStorage.setItem('theme', newTheme);
-      updateThemeIcon(newTheme);
-      notifyIframesOfThemeChange(newTheme);
-    });
-  }
-
-  // Mobile menu toggle
-  function initMobileMenu() {
+  // Script to handle mobile menu and theme toggle
+  document.addEventListener('DOMContentLoaded', function () {
     const menuBtn = document.getElementById('menuBtn');
     const mobileMenu = document.getElementById('mobileMenu');
-    
-    menuBtn?.addEventListener('click', () => {
-      const isHidden = mobileMenu?.classList.contains('hidden');
-      if (isHidden) {
-        mobileMenu?.classList.remove('hidden');
-        mobileMenu?.classList.add('flex');
-        menuBtn?.setAttribute('aria-expanded', 'true');
-      } else {
-        mobileMenu?.classList.add('hidden');
-        mobileMenu?.classList.remove('flex');
-        menuBtn?.setAttribute('aria-expanded', 'false');
-      }
+    menuBtn.addEventListener('click', () => {
+      const isExpanded = menuBtn.getAttribute('aria-expanded') === 'true';
+      menuBtn.setAttribute('aria-expanded', !isExpanded);
+      mobileMenu.classList.toggle('hidden');
+      mobileMenu.classList.toggle('flex');
     });
-  }
 
-  // Initialize on page load
-  initTheme();
-  initMobileMenu();
+    const themeToggle = document.getElementById('theme-toggle');
+    const mobileThemeToggle = document.getElementById('mobile-theme-toggle');
+    
+    const applyTheme = (theme) => {
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+            themeToggle.textContent = '☀️';
+        } else {
+            document.documentElement.classList.remove('dark');
+            themeToggle.textContent = '🌙';
+        }
+    };
 
-  // Reinitialize after navigation (for Astro view transitions)
-  document.addEventListener('astro:page-load', () => {
-    initTheme();
-    initMobileMenu();
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    applyTheme(currentTheme);
+
+    const toggleFn = () => {
+        const newTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+        localStorage.setItem('theme', newTheme);
+        applyTheme(newTheme);
+    };
+
+    themeToggle.addEventListener('click', toggleFn);
+    mobileThemeToggle.addEventListener('click', toggleFn);
   });
 </script>
