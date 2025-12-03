@@ -125,7 +125,7 @@ function initUI() {
 async function fetchSiteHeader() {
     try {
         // TODO: If this site uses Astro SSG, the header might be baked into the index.html
-        // For now, we'll use the fallback header that's already in scanner.html
+        // For now, we'll use the fallback header that's already in the Accessibility scanner page
         // In a production setup, you might want to extract the header component
         // or use a shared template approach
         console.log('Using fallback header - integration with Astro header would require server-side rendering or shared components');

@@ -4,7 +4,7 @@ A **standalone, client-side** accessibility scanner that runs entirely in the us
 
 ## Differences from Existing Accessibility Checker
 
-| Feature | Client-Side Scanner (`/scanner.html`) | Server-Side Checker (`/tools/accessibility-checker`) |
+| Feature | Client-Side Scanner (`/Accessibility/`) | Server-Side Checker (`/tools/accessibility-checker`) |
 |---------|---------------------------------------|-----------------------------------------------------|
 | **Processing** | Browser-only, no server | Requires Node.js server with pa11y |
 | **File Support** | HTML, DOCX, PDF, Images (OCR) | URLs only |
@@ -17,7 +17,7 @@ A **standalone, client-side** accessibility scanner that runs entirely in the us
 
 ### Accessing the Scanner
 
-Navigate to `/scanner.html` on the deployed site (e.g., `https://hrtools.law.tamu.edu/scanner.html`).
+Navigate to `/Accessibility/` on the deployed site (e.g., `https://hrtools.law.tamu.edu/Accessibility/`).
 
 ### Scanning Files
 
@@ -68,7 +68,8 @@ Libraries are **lazy-loaded** only when needed:
 
 ```
 public/
-├── scanner.html          # Main page
+├── Accessibility/
+│   └── index.html        # Main scanner page
 └── static/
     ├── css/
     │   └── scanner.css   # Styles
@@ -82,7 +83,7 @@ Files are automatically copied from `public/` to `dist/` during Astro build:
 
 ```bash
 npm run build
-# Output: dist/scanner.html, dist/static/js/scanner.js, dist/static/css/scanner.css
+# Output: dist/Accessibility/index.html, dist/static/js/scanner.js, dist/static/css/scanner.css
 ```
 
 ## Features
@@ -203,7 +204,7 @@ Potential improvements for future versions:
 
 ## When to Use Which Tool
 
-### Use Client-Side Scanner (`/scanner.html`) when:
+### Use Client-Side Scanner (`/Accessibility/`) when:
 
 - ✅ Scanning confidential documents
 - ✅ Testing DOCX, PDF, or image files
