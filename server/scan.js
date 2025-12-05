@@ -1,13 +1,13 @@
 const express = require('express');
 const puppeteer = require('puppeteer');
 const fs = require('fs');
-const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Get the path to axe-core from node_modules
-const axeCorePath = path.join(__dirname, 'node_modules', 'axe-core', 'axe.min.js');
+// Get the path to axe-core from node_modules and read at startup
+const axeCorePath = require.resolve('axe-core/axe.min.js');
+const axeSource = fs.readFileSync(axeCorePath, 'utf8');
 
 /**
  * GET /scan?url=<target_url>
@@ -65,14 +65,16 @@ app.get('/scan', async (req, res) => {
             timeout: 30000
         });
 
-        // Read axe-core from node_modules
-        const axeSource = fs.readFileSync(axeCorePath, 'utf8');
-
-        // Inject axe-core into the page
+        // Inject axe-core into the page (already loaded at startup)
         await page.evaluate(axeSource);
 
         // Run axe with WCAG tags and all impacts
         const results = await page.evaluate(() => {
+            // Check if axe loaded successfully
+            if (typeof window.axe === 'undefined') {
+                throw new Error('axe-core failed to initialize in the page');
+            }
+            
             return window.axe.run(document, {
                 runOnly: {
                     type: 'tag',

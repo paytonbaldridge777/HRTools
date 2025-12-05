@@ -148,7 +148,18 @@
 
                 // Inject a <base> tag so relative URLs in the fetched HTML resolve correctly
                 const baseTag = `<base href="${escapeHtml(url)}">`;
-                const modifiedHtml = html.replace(/<head>/i, `<head>${baseTag}`);
+                let modifiedHtml = html;
+                
+                // Try to inject after <head> tag, create one if missing
+                if (/<head>/i.test(html)) {
+                    modifiedHtml = html.replace(/<head>/i, `<head>${baseTag}`);
+                } else if (/<html[^>]*>/i.test(html)) {
+                    // If no <head> but has <html>, create a head with base tag
+                    modifiedHtml = html.replace(/<html([^>]*)>/i, `<html$1><head>${baseTag}</head>`);
+                } else {
+                    // No <head> or <html>, prepend the base tag
+                    modifiedHtml = baseTag + html;
+                }
 
                 iframeDoc.open();
                 iframeDoc.write(modifiedHtml);
