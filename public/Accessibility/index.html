@@ -95,7 +95,7 @@
         const violationsList = document.getElementById('violationsList');
 
         // Note: Using a public CORS proxy for simplicity. For production, a self-hosted Cloudflare Worker is recommended.
-        const CORS_PROXY = "https://api.allorigins.win/get?url=";
+        const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
 
         scanBtn.addEventListener('click', async () => {
             const url = urlInput.value;
@@ -112,17 +112,11 @@
             scanBtn.textContent = 'Scanning...';
             
             try {
-                const response = await fetch(`${CORS_PROXY}${encodeURIComponent(url)}`);
+                const response = await fetch(`${CORS_PROXY}${url}`);
                 if (!response.ok) {
                     throw new Error(`Failed to fetch page. Status: ${response.status}`);
                 }
-                const data = await response.json();
-                
-                if (!data || !data.contents) {
-                    throw new Error('Invalid response from proxy service');
-                }
-                
-                const html = data.contents;
+                const html = await response.text();
 
                 // Create an iframe to run the scan in a sandbox
                 const iframe = document.createElement('iframe');
@@ -147,17 +141,12 @@
                         .catch(err => {
                             console.error('Axe-core error:', err);
                             displayError(err.message);
-                            loader.classList.add('hidden');
-                            scanBtn.disabled = false;
-                            scanBtn.textContent = 'Scan';
-                            document.body.removeChild(iframe);
                         });
                 };
 
             } catch (error) {
                 console.error('Error fetching or processing URL:', error);
-                displayError(error.message || 'An error occurred while fetching the page');
-                loader.classList.add('hidden');
+                displayError(error.message);
                 scanBtn.disabled = false;
                 scanBtn.textContent = 'Scan';
             }
