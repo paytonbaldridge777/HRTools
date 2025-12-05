@@ -85,8 +85,7 @@
             </div>
         </div>
     </div>
-
-    <script>
+ <script>
         const urlInput = document.getElementById('urlInput');
         const scanBtn = document.getElementById('scanBtn');
         const resultsDiv = document.getElementById('results');
@@ -94,8 +93,8 @@
         const summary = document.getElementById('summary');
         const violationsList = document.getElementById('violationsList');
 
-        // Note: Using a public CORS proxy for simplicity. For production, a self-hosted Cloudflare Worker is recommended.
-        const CORS_PROXY = "https://cors.pbaldridge.workers.dev/";
+        // Use your Cloudflare Worker endpoint (query param style). Replace with your worker URL if different.
+        const CORS_PROXY = "https://cors.pbaldridge.workers.dev/fetch?url=";
 
         scanBtn.addEventListener('click', async () => {
             const url = urlInput.value;
@@ -111,54 +110,109 @@
             scanBtn.disabled = true;
             scanBtn.textContent = 'Scanning...';
             
+            let iframe = null;
+
             try {
-                const response = await fetch(`${CORS_PROXY}${url}`);
+                const fetchUrl = `${CORS_PROXY}${encodeURIComponent(url)}`;
+
+                const response = await fetch(fetchUrl, {
+                    // you can add credentials/mode if needed; worker should add CORS headers
+                    method: 'GET',
+                });
+
                 if (!response.ok) {
-                    throw new Error(`Failed to fetch page. Status: ${response.status}`);
+                    // Try to surface a clearer message from the worker/upstream
+                    let bodyText = '';
+                    try { bodyText = await response.text(); } catch (e) { /* ignore */ }
+                    throw new Error(`Failed to fetch page. Status: ${response.status} ${response.statusText}${bodyText ? ' — ' + bodyText : ''}`);
                 }
+
                 const html = await response.text();
 
                 // Create an iframe to run the scan in a sandbox
-                const iframe = document.createElement('iframe');
+                iframe = document.createElement('iframe');
                 iframe.style.display = 'none';
+
+                // attach onload handler BEFORE writing content to reduce race conditions
+                iframe.onload = () => {
+                    try {
+                        // axe.run accepts a document or node; pass the iframe's document
+                        const iframeDoc = iframe.contentWindow.document;
+                        // run axe on the iframe's document
+                        axe.run(iframeDoc)
+                            .then(results => {
+                                displayResults(results);
+                                loader.classList.add('hidden');
+                                scanBtn.disabled = false;
+                                scanBtn.textContent = 'Scan';
+                                if (iframe && iframe.parentNode) document.body.removeChild(iframe);
+                            })
+                            .catch(err => {
+                                console.error('Axe-core error:', err);
+                                displayError(err.message || String(err));
+                                loader.classList.add('hidden');
+                                scanBtn.disabled = false;
+                                scanBtn.textContent = 'Scan';
+                                if (iframe && iframe.parentNode) document.body.removeChild(iframe);
+                            });
+                    } catch (err) {
+                        console.error('Error running axe in iframe:', err);
+                        displayError(err.message || String(err));
+                        loader.classList.add('hidden');
+                        scanBtn.disabled = false;
+                        scanBtn.textContent = 'Scan';
+                        if (iframe && iframe.parentNode) document.body.removeChild(iframe);
+                    }
+                };
+
                 document.body.appendChild(iframe);
-                
+
                 const iframeDoc = iframe.contentWindow.document;
                 iframeDoc.open();
                 iframeDoc.write(html);
                 iframeDoc.close();
 
-                // Wait for iframe to be ready before running axe
-                iframe.onload = () => {
-                    axe.run(iframeDoc)
-                        .then(results => {
-                            displayResults(results);
-                            loader.classList.add('hidden');
-                            scanBtn.disabled = false;
-                            scanBtn.textContent = 'Scan';
-                            document.body.removeChild(iframe);
-                        })
-                        .catch(err => {
-                            console.error('Axe-core error:', err);
-                            displayError(err.message);
-                        });
-                };
+                // As a fallback: if iframe's onload doesn't fire for written documents, poll briefly
+                // to detect when the document is ready then trigger the onload logic manually.
+                const maxPoll = 2000; // 2s
+                const start = Date.now();
+                const poll = setInterval(() => {
+                    try {
+                        if (!iframe || !iframe.contentWindow || !iframe.contentWindow.document) return;
+                        const ready = iframe.contentWindow.document.readyState;
+                        if (ready === 'complete' || ready === 'interactive' || Date.now() - start > maxPoll) {
+                            clearInterval(poll);
+                            // Manually call onload handler if it hasn't fired
+                            if (typeof iframe.onload === 'function') {
+                                // Avoid double-running by temporarily saving and nulling onload
+                                const fn = iframe.onload;
+                                iframe.onload = null;
+                                fn();
+                            }
+                        }
+                    } catch (e) {
+                        // ignore cross-origin errors (shouldn't happen, we wrote the doc)
+                        clearInterval(poll);
+                    }
+                }, 150);
 
             } catch (error) {
                 console.error('Error fetching or processing URL:', error);
-                displayError(error.message);
+                displayError(error.message || String(error));
+                loader.classList.add('hidden');
                 scanBtn.disabled = false;
                 scanBtn.textContent = 'Scan';
+                if (iframe && iframe.parentNode) document.body.removeChild(iframe);
             }
         });
 
         function displayError(message) {
             loader.classList.add('hidden');
-            summary.innerHTML = `<p class="text-red-500 font-bold">Error: ${message}</p><p>The server at the URL may be blocking requests, or the URL may be incorrect.</p>`;
+            summary.innerHTML = `<p class="text-red-500 font-bold">Error: ${escapeHtml(message)}</p><p>The server at the URL may be blocking requests, or the URL may be incorrect. Check the browser Network tab to see the proxy response.</p>`;
         }
 
         function displayResults(results) {
-            if (results.violations.length === 0) {
+            if (!results || !results.violations || results.violations.length === 0) {
                 summary.innerHTML = '<p class="text-green-500 font-bold">No accessibility violations found!</p>';
                 return;
             }
@@ -173,8 +227,12 @@
             };
 
             results.violations.forEach(violation => {
-                severities[violation.impact].push(violation);
+                const impact = violation.impact || 'moderate';
+                if (!severities[impact]) severities[impact] = [];
+                severities[impact].push(violation);
             });
+
+            violationsList.innerHTML = '';
 
             Object.keys(severities).forEach(impact => {
                 if (severities[impact].length > 0) {
@@ -192,10 +250,10 @@
                     severities[impact].forEach(violation => {
                         const item = document.createElement('li');
                         item.innerHTML = `
-                            <p class="font-bold">${violation.help}</p>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">${violation.description}</p>
-                            <a href="${violation.helpUrl}" target="_blank" class="text-sm text-blue-500 hover:underline">Learn more</a>
-                            <p class="mt-2 font-mono text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded">${escapeHtml(violation.nodes[0].html)}</p>
+                            <p class="font-bold">${escapeHtml(violation.help || 'Issue')}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">${escapeHtml(violation.description || '')}</p>
+                            <a href="${escapeHtml(violation.helpUrl || '#')}" target="_blank" class="text-sm text-blue-500 hover:underline">Learn more</a>
+                            <p class="mt-2 font-mono text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded">${escapeHtml((violation.nodes && violation.nodes[0] && violation.nodes[0].html) || '')}</p>
                         `;
                         list.appendChild(item);
                     });
@@ -206,11 +264,13 @@
         }
 
         function escapeHtml(str) {
+            if (str == null) return '';
             const div = document.createElement('div');
-            div.appendChild(document.createTextNode(str));
+            div.appendChild(document.createTextNode(String(str)));
             return div.innerHTML;
         }
 
     </script>
+         
 </body>
 </html>
