@@ -85,7 +85,8 @@
             </div>
         </div>
     </div>
- <script>
+
+    <script>
         const urlInput = document.getElementById('urlInput');
         const scanBtn = document.getElementById('scanBtn');
         const resultsDiv = document.getElementById('results');
@@ -111,17 +112,23 @@
             scanBtn.textContent = 'Scanning...';
             
             let iframe = null;
+            let cleanupDone = false;
+            const cleanup = () => {
+                if (cleanupDone) return;
+                cleanupDone = true;
+                if (iframe && iframe.parentNode) {
+                    try { iframe.parentNode.removeChild(iframe); } catch (e) { /* ignore */ }
+                }
+            };
 
             try {
                 const fetchUrl = `${CORS_PROXY}${encodeURIComponent(url)}`;
 
                 const response = await fetch(fetchUrl, {
-                    // you can add credentials/mode if needed; worker should add CORS headers
                     method: 'GET',
                 });
 
                 if (!response.ok) {
-                    // Try to surface a clearer message from the worker/upstream
                     let bodyText = '';
                     try { bodyText = await response.text(); } catch (e) { /* ignore */ }
                     throw new Error(`Failed to fetch page. Status: ${response.status} ${response.statusText}${bodyText ? ' — ' + bodyText : ''}`);
@@ -133,68 +140,119 @@
                 iframe = document.createElement('iframe');
                 iframe.style.display = 'none';
 
-                // attach onload handler BEFORE writing content to reduce race conditions
-                iframe.onload = () => {
-                    try {
-                        // axe.run accepts a document or node; pass the iframe's document
-                        const iframeDoc = iframe.contentWindow.document;
-                        // run axe on the iframe's document
-                        axe.run(iframeDoc)
-                            .then(results => {
-                                displayResults(results);
-                                loader.classList.add('hidden');
-                                scanBtn.disabled = false;
-                                scanBtn.textContent = 'Scan';
-                                if (iframe && iframe.parentNode) document.body.removeChild(iframe);
-                            })
-                            .catch(err => {
-                                console.error('Axe-core error:', err);
-                                displayError(err.message || String(err));
-                                loader.classList.add('hidden');
-                                scanBtn.disabled = false;
-                                scanBtn.textContent = 'Scan';
-                                if (iframe && iframe.parentNode) document.body.removeChild(iframe);
-                            });
-                    } catch (err) {
-                        console.error('Error running axe in iframe:', err);
-                        displayError(err.message || String(err));
-                        loader.classList.add('hidden');
-                        scanBtn.disabled = false;
-                        scanBtn.textContent = 'Scan';
-                        if (iframe && iframe.parentNode) document.body.removeChild(iframe);
-                    }
-                };
-
                 document.body.appendChild(iframe);
 
-                const iframeDoc = iframe.contentWindow.document;
+                // Write the fetched HTML into the iframe
+                const iframeDoc = iframe.contentWindow && iframe.contentWindow.document;
+                if (!iframeDoc) {
+                    throw new Error('Unable to access iframe document.');
+                }
+
                 iframeDoc.open();
                 iframeDoc.write(html);
                 iframeDoc.close();
 
-                // As a fallback: if iframe's onload doesn't fire for written documents, poll briefly
-                // to detect when the document is ready then trigger the onload logic manually.
-                const maxPoll = 2000; // 2s
-                const start = Date.now();
-                const poll = setInterval(() => {
-                    try {
-                        if (!iframe || !iframe.contentWindow || !iframe.contentWindow.document) return;
-                        const ready = iframe.contentWindow.document.readyState;
-                        if (ready === 'complete' || ready === 'interactive' || Date.now() - start > maxPoll) {
-                            clearInterval(poll);
-                            // Manually call onload handler if it hasn't fired
-                            if (typeof iframe.onload === 'function') {
-                                // Avoid double-running by temporarily saving and nulling onload
-                                const fn = iframe.onload;
-                                iframe.onload = null;
-                                fn();
+                // Helper to give a nice timeout for script injection and axe run
+                const AXE_LOAD_TIMEOUT_MS = 10000;
+                const AXE_RUN_TIMEOUT_MS = 15000;
+
+                // Inject axe into the iframe and run it from inside the iframe window.
+                // This avoids cross-window prototype/instance issues which can cause recursion.
+                const injectAndRunAxe = () => {
+                    return new Promise((resolve, reject) => {
+                        let loadTimer = null;
+                        let runTimer = null;
+                        let done = false;
+
+                        const finish = (err, res) => {
+                            if (done) return;
+                            done = true;
+                            clearTimeout(loadTimer);
+                            clearTimeout(runTimer);
+                            if (err) reject(err); else resolve(res);
+                        };
+
+                        // If the iframe page already included axe and exposes it, use that.
+                        try {
+                            const win = iframe.contentWindow;
+                            if (!win) return finish(new Error('Iframe window unavailable'));
+                            // Create <script> element inside the iframe to load axe if necessary
+                            const script = iframeDoc.createElement('script');
+                            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.4.1/axe.min.js';
+                            script.async = true;
+
+                            script.onload = () => {
+                                try {
+                                    // Wait briefly for axe to attach to the iframe window
+                                    runTimer = setTimeout(() => {
+                                        // attempt to run axe inside the iframe
+                                        try {
+                                            if (!win.axe || typeof win.axe.run !== 'function') {
+                                                return finish(new Error('axe did not initialize inside iframe (likely blocked by CSP)'));
+                                            }
+                                            // Run axe inside iframe's window; pass the iframe document
+                                            const runPromise = win.axe.run(win.document, {
+                                                // optional: configure rules or tags
+                                                // runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa'] }
+                                            });
+                                            // Add a timeout for the axe.run
+                                            const abortTimer = setTimeout(() => {
+                                                finish(new Error('axe.run timed out'));
+                                            }, AXE_RUN_TIMEOUT_MS);
+
+                                            runPromise.then(results => {
+                                                clearTimeout(abortTimer);
+                                                finish(null, results);
+                                            }).catch(err => {
+                                                clearTimeout(abortTimer);
+                                                finish(err);
+                                            });
+                                        } catch (err) {
+                                            finish(err);
+                                        }
+                                    }, 50);
+                                } catch (err) {
+                                    finish(err);
+                                }
+                            };
+
+                            script.onerror = () => {
+                                finish(new Error('Failed to inject axe script into iframe. The target page may have a CSP that blocks script injection.'));
+                            };
+
+                            // Append script into iframe document head (or documentElement)
+                            try {
+                                const parentEl = iframeDoc.head || iframeDoc.getElementsByTagName('head')[0] || iframeDoc.documentElement;
+                                if (!parentEl) {
+                                    // If there's no head, append to documentElement
+                                    iframeDoc.documentElement.appendChild(script);
+                                } else {
+                                    parentEl.appendChild(script);
+                                }
+                            } catch (e) {
+                                finish(new Error('Error while appending script into iframe document (possibly due to CSP).'));
+                                return;
                             }
+
+                            // If loading takes too long, abort
+                            loadTimer = setTimeout(() => {
+                                finish(new Error('Loading axe in iframe timed out; the target may block script injection via CSP or network issue.'));
+                            }, AXE_LOAD_TIMEOUT_MS);
+                        } catch (err) {
+                            finish(err);
                         }
-                    } catch (e) {
-                        // ignore cross-origin errors (shouldn't happen, we wrote the doc)
-                        clearInterval(poll);
-                    }
-                }, 150);
+                    });
+                };
+
+                // Run injection + axe
+                const results = await injectAndRunAxe();
+
+                // Display results and cleanup
+                displayResults(results);
+                loader.classList.add('hidden');
+                scanBtn.disabled = false;
+                scanBtn.textContent = 'Scan';
+                cleanup();
 
             } catch (error) {
                 console.error('Error fetching or processing URL:', error);
@@ -202,13 +260,13 @@
                 loader.classList.add('hidden');
                 scanBtn.disabled = false;
                 scanBtn.textContent = 'Scan';
-                if (iframe && iframe.parentNode) document.body.removeChild(iframe);
+                cleanup();
             }
         });
 
         function displayError(message) {
             loader.classList.add('hidden');
-            summary.innerHTML = `<p class="text-red-500 font-bold">Error: ${escapeHtml(message)}</p><p>The server at the URL may be blocking requests, or the URL may be incorrect. Check the browser Network tab to see the proxy response.</p>`;
+            summary.innerHTML = `<p class="text-red-500 font-bold">Error: ${escapeHtml(message)}</p><p>The server at the URL may be blocking requests, or the URL may be incorrect. If the target page uses strict CSP or anti-bot protections, this client-side scanner may not be able to run axe inside the page — consider using a server-side headless scan.</p>`;
         }
 
         function displayResults(results) {
@@ -271,6 +329,5 @@
         }
 
     </script>
-         
 </body>
 </html>
