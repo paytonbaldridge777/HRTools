@@ -1,0 +1,22 @@
+{
+  "name": "hrtools-accessibility-scanner",
+  "version": "1.0.0",
+  "description": "Server-side accessibility scanner using Puppeteer and axe-core",
+  "main": "scan.js",
+  "scripts": {
+    "start": "node scan.js"
+  },
+  "keywords": [
+    "accessibility",
+    "axe-core",
+    "puppeteer",
+    "wcag"
+  ],
+  "author": "TAMU School of Law",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "puppeteer": "^21.0.0",
+    "axe-core": "^4.8.0"
+  }
+}
