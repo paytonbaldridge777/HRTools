@@ -95,7 +95,7 @@
         const violationsList = document.getElementById('violationsList');
 
         // Note: Using a public CORS proxy for simplicity. For production, a self-hosted Cloudflare Worker is recommended.
-        const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
+        const CORS_PROXY = "https://cors.pbaldridge.workers.dev/";
 
         scanBtn.addEventListener('click', async () => {
             const url = urlInput.value;
