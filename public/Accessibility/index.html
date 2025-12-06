@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accessibility Checker</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.4.1/axe.min.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -80,7 +79,7 @@
              <div class="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded">
                 <h3 class="font-bold text-yellow-900 dark:text-yellow-100 mb-2">⚠️ Limitations</h3>
                 <p class="text-sm text-yellow-800 dark:text-yellow-200">
-                  This tool may not work on pages that are heavily reliant on complex JavaScript or are protected by strict security policies (CSPs). It is intended for scanning public, static con[...]
+                  This tool may not work on pages that are heavily reliant on complex JavaScript or are protected by strict security policies (CSPs). It is intended for scanning public, static content. For more reliable scanning, consider using the server-side scanner endpoint.
                 </p>
             </div>
         </div>
@@ -139,113 +138,38 @@
                 // Create an iframe to run the scan in a sandbox
                 iframe = document.createElement('iframe');
                 iframe.style.display = 'none';
-
                 document.body.appendChild(iframe);
 
-                // Write the fetched HTML into the iframe
+                // Write the fetched HTML into the iframe with a <base> tag for relative assets
                 const iframeDoc = iframe.contentWindow && iframe.contentWindow.document;
                 if (!iframeDoc) {
                     throw new Error('Unable to access iframe document.');
                 }
 
+                // Inject a <base> tag so relative URLs in the fetched HTML resolve correctly
+                const baseTag = `<base href="${escapeHtml(url)}">`;
+                let modifiedHtml = html;
+                
+                // Try to inject after <head> tag, create one if missing
+                if (/<head>/i.test(html)) {
+                    modifiedHtml = html.replace(/<head>/i, `<head>${baseTag}`);
+                } else if (/<html[^>]*>/i.test(html)) {
+                    // If no <head> but has <html>, create a head with base tag
+                    modifiedHtml = html.replace(/<html([^>]*)>/i, `<html$1><head>${baseTag}</head>`);
+                } else {
+                    // No <head> or <html>, prepend the base tag
+                    modifiedHtml = baseTag + html;
+                }
+
                 iframeDoc.open();
-                iframeDoc.write(html);
+                iframeDoc.write(modifiedHtml);
                 iframeDoc.close();
 
-                // Helper to give a nice timeout for script injection and axe run
-                const AXE_LOAD_TIMEOUT_MS = 10000;
-                const AXE_RUN_TIMEOUT_MS = 15000;
+                // Wait for iframe to load and reach network idle state
+                await waitForIframeLoadAndIdle(iframe);
 
-                // Inject axe into the iframe and run it from inside the iframe window.
-                // This avoids cross-window prototype/instance issues which can cause recursion.
-                const injectAndRunAxe = () => {
-                    return new Promise((resolve, reject) => {
-                        let loadTimer = null;
-                        let runTimer = null;
-                        let done = false;
-
-                        const finish = (err, res) => {
-                            if (done) return;
-                            done = true;
-                            clearTimeout(loadTimer);
-                            clearTimeout(runTimer);
-                            if (err) reject(err); else resolve(res);
-                        };
-
-                        // If the iframe page already included axe and exposes it, use that.
-                        try {
-                            const win = iframe.contentWindow;
-                            if (!win) return finish(new Error('Iframe window unavailable'));
-                            // Create <script> element inside the iframe to load axe if necessary
-                            const script = iframeDoc.createElement('script');
-                            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.4.1/axe.min.js';
-                            script.async = true;
-
-                            script.onload = () => {
-                                try {
-                                    // Wait briefly for axe to attach to the iframe window
-                                    runTimer = setTimeout(() => {
-                                        // attempt to run axe inside the iframe
-                                        try {
-                                            if (!win.axe || typeof win.axe.run !== 'function') {
-                                                return finish(new Error('axe did not initialize inside iframe (likely blocked by CSP)'));
-                                            }
-                                            // Run axe inside iframe's window; pass the iframe document
-                                            const runPromise = win.axe.run(win.document, {
-                                                // optional: configure rules or tags
-                                                // runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa'] }
-                                            });
-                                            // Add a timeout for the axe.run
-                                            const abortTimer = setTimeout(() => {
-                                                finish(new Error('axe.run timed out'));
-                                            }, AXE_RUN_TIMEOUT_MS);
-
-                                            runPromise.then(results => {
-                                                clearTimeout(abortTimer);
-                                                finish(null, results);
-                                            }).catch(err => {
-                                                clearTimeout(abortTimer);
-                                                finish(err);
-                                            });
-                                        } catch (err) {
-                                            finish(err);
-                                        }
-                                    }, 50);
-                                } catch (err) {
-                                    finish(err);
-                                }
-                            };
-
-                            script.onerror = () => {
-                                finish(new Error('Failed to inject axe script into iframe. The target page may have a CSP that blocks script injection.'));
-                            };
-
-                            // Append script into iframe document head (or documentElement)
-                            try {
-                                const parentEl = iframeDoc.head || iframeDoc.getElementsByTagName('head')[0] || iframeDoc.documentElement;
-                                if (!parentEl) {
-                                    // If there's no head, append to documentElement
-                                    iframeDoc.documentElement.appendChild(script);
-                                } else {
-                                    parentEl.appendChild(script);
-                                }
-                            } catch (e) {
-                                finish(new Error('Error while appending script into iframe document (possibly due to CSP).'));
-                                return;
-                            }
-
-                            // If loading takes too long, abort
-                            loadTimer = setTimeout(() => {
-                                finish(new Error('Loading axe in iframe timed out; the target may block script injection via CSP or network issue.'));
-                            }, AXE_LOAD_TIMEOUT_MS);
-                        } catch (err) {
-                            finish(err);
-                        }
-                    });
-                };
-
-                // Run injection + axe
-                const results = await injectAndRunAxe();
+                // Inject axe and run it from inside the iframe
+                const results = await injectAxeAndRunInIframe(iframe, iframeDoc);
 
                 // Display results and cleanup
                 displayResults(results);
@@ -263,6 +187,150 @@
                 cleanup();
             }
         });
+
+        /**
+         * Wait for the iframe document to reach readyState complete or interactive,
+         * then wait a short "network idle" delay for scripts/styles to load.
+         */
+        async function waitForIframeLoadAndIdle(iframe) {
+            return new Promise((resolve, reject) => {
+                const LOAD_TIMEOUT_MS = 10000;
+                const NETWORK_IDLE_DELAY_MS = 1000;
+                let loadTimer = null;
+
+                const checkReady = () => {
+                    try {
+                        const doc = iframe.contentWindow && iframe.contentWindow.document;
+                        if (!doc) {
+                            reject(new Error('Iframe document unavailable'));
+                            return false;
+                        }
+                        const state = doc.readyState;
+                        if (state === 'complete' || state === 'interactive') {
+                            clearTimeout(loadTimer);
+                            // Wait a short delay for network idle (scripts/styles to load)
+                            setTimeout(() => resolve(), NETWORK_IDLE_DELAY_MS);
+                            return true;
+                        }
+                        return false;
+                    } catch (err) {
+                        reject(err);
+                        return false;
+                    }
+                };
+
+                // Check immediately
+                if (checkReady()) return;
+
+                // Poll readyState
+                const pollInterval = setInterval(() => {
+                    if (checkReady()) {
+                        clearInterval(pollInterval);
+                    }
+                }, 100);
+
+                // Timeout if loading takes too long
+                loadTimer = setTimeout(() => {
+                    clearInterval(pollInterval);
+                    reject(new Error('Iframe failed to load within timeout'));
+                }, LOAD_TIMEOUT_MS);
+            });
+        }
+
+        /**
+         * Inject axe-core into the iframe and run axe from inside the iframe's window.
+         * This avoids cross-window prototype issues and call stack overflows.
+         */
+        async function injectAxeAndRunInIframe(iframe, iframeDoc) {
+            return new Promise((resolve, reject) => {
+                const AXE_LOAD_TIMEOUT_MS = 10000;
+                const AXE_RUN_TIMEOUT_MS = 15000;
+                let loadTimer = null;
+                let runTimer = null;
+                let done = false;
+
+                const finish = (err, res) => {
+                    if (done) return;
+                    done = true;
+                    clearTimeout(loadTimer);
+                    clearTimeout(runTimer);
+                    if (err) reject(err); else resolve(res);
+                };
+
+                try {
+                    const win = iframe.contentWindow;
+                    if (!win) return finish(new Error('Iframe window unavailable'));
+
+                    // Create <script> element inside the iframe to load axe
+                    const script = iframeDoc.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.4.1/axe.min.js';
+                    script.async = true;
+
+                    script.onload = () => {
+                        try {
+                            // Wait briefly for axe to attach to the iframe window
+                            runTimer = setTimeout(() => {
+                                try {
+                                    if (!win.axe || typeof win.axe.run !== 'function') {
+                                        return finish(new Error('axe did not initialize inside iframe (likely blocked by CSP)'));
+                                    }
+
+                                    // Run axe inside iframe's window with WCAG tags and all impacts
+                                    const runPromise = win.axe.run(win.document, {
+                                        runOnly: {
+                                            type: 'tag',
+                                            values: ['wcag2a', 'wcag2aa', 'wcag21aa']
+                                        },
+                                        resultTypes: ['violations', 'passes', 'incomplete', 'inapplicable']
+                                    });
+
+                                    // Add a timeout for the axe.run
+                                    const abortTimer = setTimeout(() => {
+                                        finish(new Error('axe.run timed out'));
+                                    }, AXE_RUN_TIMEOUT_MS);
+
+                                    runPromise.then(results => {
+                                        clearTimeout(abortTimer);
+                                        finish(null, results);
+                                    }).catch(err => {
+                                        clearTimeout(abortTimer);
+                                        finish(err);
+                                    });
+                                } catch (err) {
+                                    finish(err);
+                                }
+                            }, 50);
+                        } catch (err) {
+                            finish(err);
+                        }
+                    };
+
+                    script.onerror = () => {
+                        finish(new Error('Failed to inject axe script into iframe. The target page may have a CSP that blocks script injection.'));
+                    };
+
+                    // Append script into iframe document head (or documentElement)
+                    try {
+                        const parentEl = iframeDoc.head || iframeDoc.getElementsByTagName('head')[0] || iframeDoc.documentElement;
+                        if (!parentEl) {
+                            iframeDoc.documentElement.appendChild(script);
+                        } else {
+                            parentEl.appendChild(script);
+                        }
+                    } catch (e) {
+                        finish(new Error('Error while appending script into iframe document (possibly due to CSP).'));
+                        return;
+                    }
+
+                    // If loading takes too long, abort
+                    loadTimer = setTimeout(() => {
+                        finish(new Error('Loading axe in iframe timed out; the target may block script injection via CSP or network issue.'));
+                    }, AXE_LOAD_TIMEOUT_MS);
+                } catch (err) {
+                    finish(err);
+                }
+            });
+        }
 
         function displayError(message) {
             loader.classList.add('hidden');
