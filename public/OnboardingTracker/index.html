@@ -2087,6 +2087,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('form-start-date').value = o.startDate || '';
     document.getElementById('form-request-received').value = o.requestReceived || '';
     document.getElementById('form-title').value = o.title || '';
+	document.getElementById('form-pay-rate').value = o.payRate || '';
+    document. getElementById('form-supervisors-email').value = o.supervisorsEmail || '';
     document.getElementById('form-uin').value = o.uin || '';
     document.getElementById('form-lf').value = o.lf || '';
     document.getElementById('form-manager').value = o.manager || '';
@@ -2094,9 +2096,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('form-hire-category').value = o.hireCategory || 'Newhire';
     document.getElementById('form-international-hire').checked = !!o.internationalHire;
     document.getElementById('form-comment').value = o.comment || '';
-    document.getElementById('form-pin').value = o.pin || '';
-	document.getElementById('form-pay-rate').value = o.payRate || '';
-	document.getElementById('form-supervisors-email').value = o.supervisorsEmail || '';
+    document.getElementById('form-pin').value = o.pin || '';	
     editingOnboarding = o.id;
     showView('new');
   });
@@ -2109,6 +2109,8 @@ document.addEventListener('DOMContentLoaded', () => {
       startDate: document.getElementById('form-start-date').value,
       requestReceived: document.getElementById('form-request-received').value,
       title: document.getElementById('form-title').value.trim(),
+	  payRate: document.getElementById('form-pay-rate').value.trim(),
+      supervisorsEmail: document.getElementById('form-supervisors-email').value.trim(),
       uin: document.getElementById('form-uin').value.trim(),
       lf: document.getElementById('form-lf').value.trim(),
       manager: document.getElementById('form-manager').value.trim(),
@@ -2117,8 +2119,6 @@ document.addEventListener('DOMContentLoaded', () => {
       hireCategory: document.getElementById('form-hire-category').value,
       comment: document.getElementById('form-comment').value.trim(),
       pin: document.getElementById('form-pin').value.trim(),
-	  payRate: document.getElementById('form-pay-rate').value.trim(),
-	  supervisorsEmail: document.getElementById('form-supervisors-email').value.trim()
     };
     if (!formData.name || !formData.hireType || !formData.startDate || !formData.requestReceived) {
       showConfirmDialog('Please fill required fields.', () => {});
@@ -2246,6 +2246,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </body>
 
 </html>
+
 
 
 
