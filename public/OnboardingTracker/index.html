@@ -1505,10 +1505,10 @@ function updateEmailEmployeeList() {
 	  //const hireDate = emp.startDate || "your start date";
 	  const hireDate = emp.startDate ? emp.startDate.replace(/^(\d{4})-(\d{2})-(\d{2})$/, "$2-$3-$1") : "your start date";
 	  const supervisor = emp.manager || "";
-	  const supervisorEmail = "";
+	  const supervisorEmail = emp.supervisorEmail || "";
 	  const hireType = emp.hireCategory || "";
 	  const title = emp.title || "";
-	  const payRate = "";
+	  const payRate = emp.payRate || "";
 	  const instanceID = emp.lf || "";
 	  const nameParts = (emp.name || "").trim().split(/\s+/);
 	  const firstName = nameParts[0] || "";
@@ -2228,6 +2228,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </body>
 
 </html>
+
 
 
 
