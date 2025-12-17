@@ -2114,7 +2114,9 @@ document.addEventListener('DOMContentLoaded', () => {
       internationalHire: document.getElementById('form-international-hire').checked,
       hireCategory: document.getElementById('form-hire-category').value,
       comment: document.getElementById('form-comment').value.trim(),
-      pin: document.getElementById('form-pin').value.trim()
+      pin: document.getElementById('form-pin').value.trim(),
+	  payRate: document.getElementById('form-pay-rate').value.trim(),
+	  supervisorsEmail: document.getElementById('form-supervisors-email').value.trim()
     };
     if (!formData.name || !formData.hireType || !formData.startDate || !formData.requestReceived) {
       showConfirmDialog('Please fill required fields.', () => {});
@@ -2242,6 +2244,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </body>
 
 </html>
+
 
 
 
