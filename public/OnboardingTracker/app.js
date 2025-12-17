@@ -37,7 +37,7 @@ document.getElementById('login-form').addEventListener('submit', (e) => {
 
 // GITHUB CONFIGURATION
 const GITHUB_CONFIG = {
-  token: 'REPLACE_WITH_YOUR_GITHUB_TOKEN', // TODO: Move to environment variable
+  token: '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',
   owner: 'paytonbaldridge777',
   repo: 'HRDashboard',
   branch: 'main',
