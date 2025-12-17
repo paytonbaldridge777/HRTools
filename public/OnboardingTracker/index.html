@@ -2095,6 +2095,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('form-international-hire').checked = !!o.internationalHire;
     document.getElementById('form-comment').value = o.comment || '';
     document.getElementById('form-pin').value = o.pin || '';
+	document.getElementById('form-pay-rate').value = o.payRate || '';
+	document.getElementById('form-supervisors-email').value = o.supervisorsEmail || '';
     editingOnboarding = o.id;
     showView('new');
   });
@@ -2244,6 +2246,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </body>
 
 </html>
+
 
 
 
