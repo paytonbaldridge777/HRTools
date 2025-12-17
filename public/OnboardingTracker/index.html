@@ -1502,7 +1502,8 @@ function updateEmailEmployeeList() {
 
 	  const emailType = document.getElementById('email-type').value;
 	  //const firstName = emp.name ? emp.name.trim().split(' ')[0] : "Employee";
-	  const hireDate = emp.startDate || "your start date";
+	  //const hireDate = emp.startDate || "your start date";
+	  const hireDate = emp.startDate ? emp.startDate.replace(/^(\d{4})-(\d{2})-(\d{2})$/, "$2-$3-$1") : "your start date";
 	  const supervisor = emp.manager || "";
 	  const supervisorEmail = "";
 	  const hireType = emp.hireCategory || "";
@@ -1610,9 +1611,9 @@ function updateEmailEmployeeList() {
 		  template = `
 			<p>Howdy ${firstName}!</br></br>
 			
-			<p>You should have just received an email asking you to fill out your Prospective Hire Form. This form is a required step before we can begin processing your hire in Workday.</br></br>
+			<p>You should have received an email asking you to fill out your Prospective Hire Form. This form is a required step before we can begin processing your hire in Workday.</br></br>
 			
-			Your intended start date is currently set for ${hireDate}. However, we have a very short window for this hire and without the PHF, we won’t be able to initiate the hiring process, and your start date will need to be delayed.</br></br>
+			Your intended start date is currently set for ${hireDate}. However, However, we aren't able to initiate the hiring process until we receive your PHF back.</br></br>
 			
 			Please click the following link to complete the Prospective Hire Form:</br>
 			<a href="https://it-lf-ecmf.tamu.edu/Forms//Prospective-Hire-Form?Hiring_Department=School%20Of%20Law&Supervisor=${supervisor}&Hire_Date=${hireDate}&Position_Type=${hireType}&Position_Title=${title}&Rate_of_Pay=${payRate}&Position_Length=&Department_Contact_Name=&Department_Contact_Email=&HR_Contact=HUB%203%20-%20Integrity&HR_Contact_Email=hr3@tamu.edu&Action_For=Hourly%20Student&Instance_ID=${instanceID}&Will_this_position_be_located_in_the_Bryan_College_Station_area_=No_3&Employee_Last_Family_Name=${lastName}&Employee_First_Given_Name=${firstName}&Which_Company_will_the_employee_be_hired_under_=Texas%2520A%2526M%2520University&Division_Code=CLW&Customer_Support_Hub_Team_Name=HROE_HUB3&Customer_Support_Hub_Email=hr3@tamu.edu&Full_Time_Part_Time=&Type_of_Staff_Position=&Percent_Effort=&Supervisor_Email=${supervisorEmail}&Customer_Support_Hubs=HUB%203%20-%20Integrity&Dept_Code=CLLW&Hidden_Hire_Date=${hireDate}">SSO Menu</a></br></br>
@@ -2227,6 +2228,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </body>
 
 </html>
+
 
 
 
