@@ -564,9 +564,17 @@
                 <input type="text" id="form-title" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-500">
               </div>
               <div>
+                <label for="form-pay-rate" class="block text-sm font-medium mb-2">Pay Rate</label>
+                <input type="text" id="form-pay-rate" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-500">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
                 <label for="form-uin" class="block text-sm font-medium mb-2">UIN</label>
                 <input type="text" id="form-uin" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-500">
               </div>
+              <div></div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -580,9 +588,15 @@
               </div>
             </div>
 
-            <div>
-              <label for="form-email" class="block text-sm font-medium mb-2">Email</label>
-              <input type="email" id="form-email" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-500">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="form-supervisors-email" class="block text-sm font-medium mb-2">Manager Email</label>
+                <input type="email" id="form-supervisors-email" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-500">
+              </div>
+              <div>
+                <label for="form-email" class="block text-sm font-medium mb-2">Employee Email</label>
+                <input type="email" id="form-email" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-500">
+              </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -790,7 +804,7 @@
 
 // GITHUB CONFIGURATION
 const GITHUB_CONFIG = {
-  token: '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',
+  token: 'REPLACE_WITH_YOUR_GITHUB_TOKEN', // TODO: Move to environment variable
   owner: 'paytonbaldridge777',
   repo: 'HRDashboard',
   branch: 'main',

@@ -37,7 +37,7 @@ document.getElementById('login-form').addEventListener('submit', (e) => {
 
 // GITHUB CONFIGURATION
 const GITHUB_CONFIG = {
-  token: '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',
+  token: 'REPLACE_WITH_YOUR_GITHUB_TOKEN', // TODO: Move to environment variable
   owner: 'paytonbaldridge777',
   repo: 'HRDashboard',
   branch: 'main',
@@ -643,13 +643,15 @@ function renderEmployeeInfo(o) {
   infoEl.innerHTML = `
     <h2 class="text-2xl font-bold">${o.name}</h2>
     <p class="text-gray-600">${o.hireType} • ${o.title || ''}</p>
+    <p class="text-sm text-gray-500">Pay Rate: ${o.payRate || 'N/A'}</p>
     <p class="text-sm text-gray-500">Start Date: ${o.startDate}</p>
     <p class="text-sm text-gray-500">Request Received: ${o.requestReceived}</p>
     <p class="text-sm text-gray-500">UIN: ${o.uin ? `<a href="https://www.myworkday.com/tamus/d/search.htmld?q=${o.uin}" target="_blank" class="text-stone-5000 hover:text-blue-800 underline">${o.uin}</a>` : 'N/A'}</p>
     <p class="text-sm text-gray-500">LF: ${o.lf ? `<a href="https://it-lf-ecmf.tamu.edu/Forms/Home/Reports#/reports/custom/simpleTable/1278/1268/detail/${o.lf}" target="_blank" class="text-stone-5000 hover:text-blue-800 underline">${o.lf}</a>` : 'N/A'}</p>
     <p class="text-sm text-gray-500">PIN: ${o.pin ? `<a href="https://www.myworkday.com/tamus/d/search.htmld?q=${o.pin}&state=searchCategory-all%3Adefault" target="_blank" class="text-stone-5000 hover:text-blue-800 underline">${o.pin}</a>` : 'N/A'}</p>
     <p class="text-sm text-gray-500">Manager: ${o.manager || 'N/A'}</p>
-    <p class="text-sm text-gray-500">Email: ${o.email || 'N/A'}</p>
+    <p class="text-sm text-gray-500">Manager Email: ${o.supervisorsEmail || 'N/A'}</p>
+    <p class="text-sm text-gray-500">Employee Email: ${o.email || 'N/A'}</p>
   `;
 }
 
@@ -1160,9 +1162,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('form-start-date').value = o.startDate || '';
     document.getElementById('form-request-received').value = o.requestReceived || '';
     document.getElementById('form-title').value = o.title || '';
+    document.getElementById('form-pay-rate').value = o.payRate || '';
     document.getElementById('form-uin').value = o.uin || '';
     document.getElementById('form-lf').value = o.lf || '';
     document.getElementById('form-manager').value = o.manager || '';
+    document.getElementById('form-supervisors-email').value = o.supervisorsEmail || '';
     document.getElementById('form-email').value = o.email || '';
     document.getElementById('form-hire-category').value = o.hireCategory || 'Newhire';
     document.getElementById('form-international-hire').checked = !!o.internationalHire;
@@ -1180,9 +1184,11 @@ document.addEventListener('DOMContentLoaded', () => {
       startDate: document.getElementById('form-start-date').value,
       requestReceived: document.getElementById('form-request-received').value,
       title: document.getElementById('form-title').value.trim(),
+      payRate: document.getElementById('form-pay-rate').value.trim(),
       uin: document.getElementById('form-uin').value.trim(),
       lf: document.getElementById('form-lf').value.trim(),
       manager: document.getElementById('form-manager').value.trim(),
+      supervisorsEmail: document.getElementById('form-supervisors-email').value.trim(),
       email: document.getElementById('form-email').value.trim(),
       internationalHire: document.getElementById('form-international-hire').checked,
       hireCategory: document.getElementById('form-hire-category').value,
