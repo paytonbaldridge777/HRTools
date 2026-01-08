@@ -528,19 +528,58 @@ function renderOnboardingCards() {
   });
 }
 
+// Helper function to check if an onboarding matches the search term
+function matchesSearch(onboarding, searchTerm) {
+  if (!searchTerm) return true;
+  
+  const term = searchTerm.toLowerCase();
+  
+  // Search in Name
+  if ((onboarding.name || '').toLowerCase().includes(term)) return true;
+  
+  // Search in UIN
+  if ((onboarding.uin || '').toLowerCase().includes(term)) return true;
+  
+  // Search in Start Date
+  if ((onboarding.startDate || '').toLowerCase().includes(term)) return true;
+  
+  // Search in Manager/Supervisor
+  if ((onboarding.manager || '').toLowerCase().includes(term)) return true;
+  
+  // Search in LF
+  if ((onboarding.lf || '').toLowerCase().includes(term)) return true;
+  
+  // Search in Hire Category
+  if ((onboarding.hireCategory || '').toLowerCase().includes(term)) return true;
+  
+  // Search in Hire Type
+  if ((onboarding.hireType || '').toLowerCase().includes(term)) return true;
+  
+  // Search for International vs Domestic
+  if (onboarding.internationalHire && term.includes('international')) return true;
+  if (!onboarding.internationalHire && term.includes('domestic')) return true;
+  
+  return false;
+}
+
 function applyFilters() {
   const hf = document.getElementById('filter-hire-type').value;
   const sf = document.getElementById('filter-status').value;
   const sortBy = document.getElementById('sort-by').value;
+  const searchInput = document.getElementById('search-input');
+  const searchTerm = searchInput ? searchInput.value.trim() : '';
 
   if (sf === 'overdue') {
     // show all with overdue tasks
-    filteredOnboardings = onboardings.filter(o => o.overdueTasks && o.overdueTasks > 0);
+    filteredOnboardings = onboardings.filter(o => 
+      (o.overdueTasks && o.overdueTasks > 0) && matchesSearch(o, searchTerm)
+    );
   } else {
     // regular active/completed filters
     filteredOnboardings = onboardings.filter(o => {
       return (hf ? o.hireType === hf : true) &&
-             (sf ? o.status === sf : true);
+             (sf ? o.status === sf : true) &&
+             matchesSearch(o, searchTerm);
     });
   }
   
@@ -1120,6 +1159,13 @@ document.addEventListener('DOMContentLoaded', () => {
     showView('new');
   });
   document.getElementById('nav-email').addEventListener('click', () => showView('email'));
+  
+  // Add search input listener if it exists
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', applyFilters);
+  }
+  
   document.getElementById('filter-hire-type').addEventListener('change', applyFilters);
   document.getElementById('filter-status').addEventListener('change', applyFilters);
   document.getElementById('sort-by').addEventListener('change', applyFilters);
