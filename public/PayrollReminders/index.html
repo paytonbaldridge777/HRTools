@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payroll Reminders Processor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="./styles.css?v=20260204" />
+</head>
+<body>
+    <div class="container">
+        <h1>💼 Payroll Reminders</h1>
+        <p class="subtitle">Upload your Excel file to generate manager reminder emails for unsubmitted and unapproved hours</p>
+        
+        <div class="instructions">
+            <h3>📝 What this tool does:</h3>
+            <ol>
+                <li>Reads your Excel file with employee timesheet data</li>
+                <li>Required columns: Worker, UIN, Manager Email, Unsubmitted Hours Worked, Unapproved Hours Worked</li>
+                <li>Groups employees by Manager Email</li>
+                <li>Generates one email per manager with their employees who need attention</li>
+                <li>Includes unsubmitted hours section and/or unapproved hours section as needed</li>
+                <li>Employees with both types of hours appear in both sections</li>
+            </ol>
+            <p><strong>Result:</strong> Professional email reminders for each manager about their employees' pending timesheet actions.</p>
+        </div>
+        
+        <div class="upload-section">
+            <div id="upload-area">
+                <h3>📁 Upload Your Excel File</h3>
+                <p>Select your .xlsx file with employee timesheet data</p>
+                <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls">
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                    Choose File
+                </button>
+                <p id="fileName" style="margin-top: 15px; font-weight: 600; color: #28a745;"></p>
+            </div>
+        </div>
+        
+        <div id="dateSection" class="date-section hidden">
+            <h3>📅 Select Pay Date</h3>
+            <p>Choose the payment date to include in the email reminders:</p>
+            <input type="date" id="payDateInput" class="date-input">
+        </div>
+        
+        <button id="processBtn" class="process-btn" onclick="generateEmails()" disabled>
+            ✉️ Generate Manager Emails
+        </button>
+        
+        <div id="status" class="status hidden"></div>
+        <div id="loading" class="spinner hidden"></div>
+        
+        <div id="results" class="results hidden">
+            <h3>📊 Processing Results</h3>
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div id="totalEmployees" class="stat-number">-</div>
+                    <div class="stat-label">Total Employees</div>
+                </div>
+                <div class="stat-card">
+                    <div id="totalManagers" class="stat-number">-</div>
+                    <div class="stat-label">Managers to Email</div>
+                </div>
+                <div class="stat-card">
+                    <div id="employeesWithIssues" class="stat-number">-</div>
+                    <div class="stat-label">Employees Needing Action</div>
+                </div>
+            </div>
+            <div id="warningMessages"></div>
+        </div>
+        
+        <!-- Email Viewer -->
+        <div id="emailViewer" class="hidden" style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <h3 style="text-align: center; color: #2c3e50;">📧 Manager Email Generator</h3>
+            <div style="text-align: center; margin: 15px 0;">
+                <span id="emailCounter" style="font-weight: 600; color: #666;"></span>
+            </div>
+            <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
+                <button onclick="previousEmail()" id="prevEmailBtn" class="action-btn">⬅️ Previous</button>
+                <button onclick="openInOutlook()" class="action-btn success">📧 Open in Outlook</button>
+                <button onclick="copyEmailText()" class="action-btn primary">📋 Copy Email</button>
+                <button onclick="nextEmail()" id="nextEmailBtn" class="action-btn">Next ➡️</button>
+            </div>
+            <div style="text-align: center; margin-bottom: 15px;">
+                <button onclick="openAllInOutlook()" class="action-btn" style="background: #6f42c1; color: white; padding: 10px 20px;">📬 Open All Emails in Outlook</button>
+                <p style="font-size: 12px; color: #666; margin-top: 5px;">Opens all emails one by one in your default email client</p>
+            </div>
+            <div id="emailContent" style="background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; padding: 20px; font-family: Arial, sans-serif; line-height: 1.6; max-height: 600px; overflow-y: auto;"></div>
+        </div>
+    </div>
+    
+    <script>
+        let workbookData = null;
+        let generatedEmails = [];
+        let currentEmailIndex = 0;
+        let payrollData = null;
+        
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('fileName').textContent = `Selected: ${file.name}`;
+                
+                // Read the file
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        workbookData = XLSX.read(e.target.result, {
+                            cellStyles: true,
+                            cellFormulas: true,
+                            cellDates: true,
+                            cellNF: true,
+                            sheetStubs: true
+                        });
+                        showStatus('File loaded successfully!', 'success');
+                        document.getElementById('dateSection').classList.remove('hidden');
+                        
+                        // Set default date to today
+                        const today = new Date().toISOString().split('T')[0];
+                        document.getElementById('payDateInput').value = today;
+                        
+                        document.getElementById('processBtn').disabled = false;
+                    } catch (error) {
+                        showStatus('Error reading file: ' + error.message, 'error');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+        
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.classList.remove('hidden');
+        }
+        
+        function parsePayrollData(workbook) {
+            // Get the first sheet
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            
+            // Convert to JSON
+            const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+            
+            if (data.length < 2) {
+                throw new Error('Excel file appears to be empty or has insufficient data');
+            }
+            
+            // Find header row and column indices
+            let headerRow = -1;
+            let columnIndices = {};
+            
+            for (let i = 0; i < Math.min(10, data.length); i++) {
+                const row = data[i];
+                const headers = row.map(h => (h || '').toString().toLowerCase().trim());
+                
+                if (headers.some(h => h.includes('worker') || h.includes('employee'))) {
+                    headerRow = i;
+                    
+                    // Find required columns
+                    for (let j = 0; j < headers.length; j++) {
+                        const header = headers[j];
+                        if (header.includes('worker') || header.includes('employee name')) {
+                            columnIndices.worker = j;
+                        } else if (header.includes('uin')) {
+                            columnIndices.uin = j;
+                        } else if (header.includes('manager') && header.includes('email')) {
+                            columnIndices.managerEmail = j;
+                        } else if (header.includes('unsubmitted')) {
+                            columnIndices.unsubmitted = j;
+                        } else if (header.includes('unapproved')) {
+                            columnIndices.unapproved = j;
+                        } else if (header.includes('approved') && !header.includes('unapproved')) {
+                            columnIndices.approved = j;
+                        }
+                    }
+                    break;
+                }
+            }
+            
+            if (headerRow === -1) {
+                throw new Error('Could not find header row with required columns');
+            }
+            
+            // Validate required columns
+            const required = ['worker', 'uin', 'managerEmail', 'unsubmitted', 'unapproved'];
+            const missing = required.filter(col => columnIndices[col] === undefined);
+            
+            if (missing.length > 0) {
+                throw new Error(`Missing required columns: ${missing.join(', ')}`);
+            }
+            
+            // Parse employee data
+            const employees = [];
+            const warnings = [];
+            
+            for (let i = headerRow + 1; i < data.length; i++) {
+                const row = data[i];
+                
+                if (!row || row.length === 0) continue;
+                
+                const worker = row[columnIndices.worker];
+                const uin = row[columnIndices.uin];
+                const managerEmail = row[columnIndices.managerEmail];
+                const unsubmitted = parseFloat(row[columnIndices.unsubmitted]) || 0;
+                const unapproved = parseFloat(row[columnIndices.unapproved]) || 0;
+                
+                // Skip if no worker name or UIN
+                if (!worker || !uin) continue;
+                
+                // Skip if no manager email
+                if (!managerEmail || managerEmail.toString().trim() === '') continue;
+                
+                // Check for employees with 0 hours in both columns
+                if (unsubmitted === 0 && unapproved === 0) {
+                    warnings.push(`${worker} (UIN: ${uin}) has 0 hours in both Unsubmitted and Unapproved columns`);
+                    continue;
+                }
+                
+                employees.push({
+                    worker: worker.toString().trim(),
+                    uin: uin.toString().trim(),
+                    managerEmail: managerEmail.toString().trim().toLowerCase(),
+                    unsubmitted: unsubmitted,
+                    unapproved: unapproved
+                });
+            }
+            
+            return { employees, warnings, columnIndices };
+        }
+        
+        function groupByManager(employees) {
+            const managerGroups = {};
+            
+            employees.forEach(emp => {
+                if (!managerGroups[emp.managerEmail]) {
+                    managerGroups[emp.managerEmail] = [];
+                }
+                managerGroups[emp.managerEmail].push(emp);
+            });
+            
+            return managerGroups;
+        }
+        
+        function formatPayDate(dateString) {
+            const date = new Date(dateString + 'T00:00:00');
+            return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' });
+        }
+        
+        function createEmailHTML(managerEmail, employees, payDate) {
+            const formattedPayDate = formatPayDate(payDate);
+            
+            // Separate employees by issue type
+            const unsubmittedEmployees = employees.filter(e => e.unsubmitted > 0);
+            const unapprovedEmployees = employees.filter(e => e.unapproved > 0);
+            
+            let emailHTML = `
+                <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                    <p style="margin-bottom: 15px;">Howdy,</p>
+            `;
+            
+            // Unsubmitted hours section
+            if (unsubmittedEmployees.length > 0) {
+                emailHTML += `
+                    <p style="margin-bottom: 15px;">The following employee(s) has entered hours for this pay period but has not yet submitted them. Please remind these employees to submit their hours in Workday as soon as possible for payment on ${formattedPayDate}.</p>
+                    
+                    <table style="border-collapse: collapse; width: 100%; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <thead>
+                            <tr style="background: linear-gradient(135deg, #500000 0%, #800000 100%); color: white;">
+                                <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: left; font-weight: 600;">Worker</th>
+                                <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: left; font-weight: 600;">UIN</th>
+                                <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: center; font-weight: 600;">Unsubmitted Hours</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                unsubmittedEmployees.forEach((emp, index) => {
+                    const bgColor = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
+                    emailHTML += `
+                        <tr style="background-color: ${bgColor};">
+                            <td style="border: 1px solid #ddd; padding: 10px 8px;">${emp.worker}</td>
+                            <td style="border: 1px solid #ddd; padding: 10px 8px;">${emp.uin}</td>
+                            <td style="border: 1px solid #ddd; padding: 10px 8px; text-align: center; font-weight: 600; color: #c00000;">${emp.unsubmitted.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+                
+                emailHTML += `
+                        </tbody>
+                    </table>
+                `;
+            }
+            
+            // Unapproved hours section
+            if (unapprovedEmployees.length > 0) {
+                emailHTML += `
+                    <p style="margin-bottom: 15px;">The following employee(s) has entered hours for this pay period that are awaiting approval. Please approve these hours in Workday as soon as possible for payment on ${formattedPayDate}.</p>
+                    
+                    <table style="border-collapse: collapse; width: 100%; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <thead>
+                            <tr style="background: linear-gradient(135deg, #500000 0%, #800000 100%); color: white;">
+                                <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: left; font-weight: 600;">Worker</th>
+                                <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: left; font-weight: 600;">UIN</th>
+                                <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: center; font-weight: 600;">Unapproved Hours</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                unapprovedEmployees.forEach((emp, index) => {
+                    const bgColor = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
+                    emailHTML += `
+                        <tr style="background-color: ${bgColor};">
+                            <td style="border: 1px solid #ddd; padding: 10px 8px;">${emp.worker}</td>
+                            <td style="border: 1px solid #ddd; padding: 10px 8px;">${emp.uin}</td>
+                            <td style="border: 1px solid #ddd; padding: 10px 8px; text-align: center; font-weight: 600; color: #c00000;">${emp.unapproved.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+                
+                emailHTML += `
+                        </tbody>
+                    </table>
+                `;
+            }
+            
+            // Closing
+            emailHTML += `
+                    <p style="margin-top: 20px; margin-bottom: 5px;">Please don't hesitate to reach out if you have any questions.</p>
+                    <p style="margin-top: 5px; margin-bottom: 15px;">Thanks!<br>Payton</p>
+                </div>
+            `;
+            
+            return emailHTML;
+        }
+        
+        function createEmailText(managerEmail, employees, payDate) {
+            const formattedPayDate = formatPayDate(payDate);
+            
+            const unsubmittedEmployees = employees.filter(e => e.unsubmitted > 0);
+            const unapprovedEmployees = employees.filter(e => e.unapproved > 0);
+            
+            let emailText = 'Howdy,\n\n';
+            
+            // Unsubmitted hours section
+            if (unsubmittedEmployees.length > 0) {
+                emailText += `The following employee(s) has entered hours for this pay period but has not yet submitted them. Please remind these employees to submit their hours in Workday as soon as possible for payment on ${formattedPayDate}.\n\n`;
+                
+                emailText += 'Worker\tUIN\tUnsubmitted Hours\n';
+                unsubmittedEmployees.forEach(emp => {
+                    emailText += `${emp.worker}\t${emp.uin}\t${emp.unsubmitted.toFixed(2)}\n`;
+                });
+                emailText += '\n';
+            }
+            
+            // Unapproved hours section
+            if (unapprovedEmployees.length > 0) {
+                emailText += `The following employee(s) has entered hours for this pay period that are awaiting approval. Please approve these hours in Workday as soon as possible for payment on ${formattedPayDate}.\n\n`;
+                
+                emailText += 'Worker\tUIN\tUnapproved Hours\n';
+                unapprovedEmployees.forEach(emp => {
+                    emailText += `${emp.worker}\t${emp.uin}\t${emp.unapproved.toFixed(2)}\n`;
+                });
+                emailText += '\n';
+            }
+            
+            emailText += 'Please don\'t hesitate to reach out if you have any questions.\n\n';
+            emailText += 'Thanks!\nPayton';
+            
+            return emailText;
+        }
+        
+        function generateEmails() {
+            if (!workbookData) {
+                showStatus('Please select a file first!', 'error');
+                return;
+            }
+            
+            const payDate = document.getElementById('payDateInput').value;
+            if (!payDate) {
+                showStatus('Please select a pay date!', 'error');
+                return;
+            }
+            
+            document.getElementById('loading').classList.remove('hidden');
+            showStatus('Processing file and generating emails...', 'info');
+            
+            setTimeout(() => {
+                try {
+                    payrollData = parsePayrollData(workbookData);
+                    
+                    if (payrollData.employees.length === 0) {
+                        throw new Error('No valid employee records found in the file');
+                    }
+                    
+                    // Group by manager
+                    const managerGroups = groupByManager(payrollData.employees);
+                    
+                    // Generate emails
+                    generatedEmails = [];
+                    Object.keys(managerGroups).forEach(managerEmail => {
+                        const employees = managerGroups[managerEmail];
+                        generatedEmails.push({
+                            to: managerEmail,
+                            subject: `Action Required: Employee Timesheet Reminders for Payment on ${formatPayDate(payDate)}`,
+                            htmlBody: createEmailHTML(managerEmail, employees, payDate),
+                            textBody: createEmailText(managerEmail, employees, payDate),
+                            employees: employees
+                        });
+                    });
+                    
+                    // Display results
+                    document.getElementById('totalEmployees').textContent = payrollData.employees.length;
+                    document.getElementById('totalManagers').textContent = generatedEmails.length;
+                    document.getElementById('employeesWithIssues').textContent = payrollData.employees.length;
+                    
+                    // Show warnings if any
+                    const warningDiv = document.getElementById('warningMessages');
+                    if (payrollData.warnings.length > 0) {
+                        let warningHTML = '<div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 15px; margin-top: 15px;">';
+                        warningHTML += '<h4 style="margin-top: 0; color: #856404;">⚠️ Warning: Employees Excluded</h4>';
+                        warningHTML += '<p style="color: #856404; margin-bottom: 10px;">The following employees had 0 hours in both Unsubmitted and Unapproved columns and were excluded:</p>';
+                        warningHTML += '<ul style="color: #856404; margin: 0;">';
+                        payrollData.warnings.forEach(warning => {
+                            warningHTML += `<li>${warning}</li>`;
+                        });
+                        warningHTML += '</ul></div>';
+                        warningDiv.innerHTML = warningHTML;
+                    } else {
+                        warningDiv.innerHTML = '';
+                    }
+                    
+                    document.getElementById('results').classList.remove('hidden');
+                    
+                    // Show email viewer
+                    currentEmailIndex = 0;
+                    displayCurrentEmail();
+                    document.getElementById('emailViewer').classList.remove('hidden');
+                    
+                    document.getElementById('loading').classList.add('hidden');
+                    showStatus(`Successfully generated ${generatedEmails.length} emails for managers!`, 'success');
+                    
+                } catch (error) {
+                    document.getElementById('loading').classList.add('hidden');
+                    showStatus('Error processing file: ' + error.message, 'error');
+                }
+            }, 500);
+        }
+        
+        function displayCurrentEmail() {
+            if (generatedEmails.length === 0) return;
+            
+            const email = generatedEmails[currentEmailIndex];
+            
+            document.getElementById('emailCounter').textContent = 
+                `Email ${currentEmailIndex + 1} of ${generatedEmails.length} | To: ${email.to}`;
+            
+            document.getElementById('emailContent').innerHTML = email.htmlBody;
+            
+            // Update navigation buttons
+            document.getElementById('prevEmailBtn').disabled = currentEmailIndex === 0;
+            document.getElementById('nextEmailBtn').disabled = currentEmailIndex === generatedEmails.length - 1;
+        }
+        
+        function previousEmail() {
+            if (currentEmailIndex > 0) {
+                currentEmailIndex--;
+                displayCurrentEmail();
+            }
+        }
+        
+        function nextEmail() {
+            if (currentEmailIndex < generatedEmails.length - 1) {
+                currentEmailIndex++;
+                displayCurrentEmail();
+            }
+        }
+        
+        function copyEmailText() {
+            const email = generatedEmails[currentEmailIndex];
+            
+            // Create a formatted version for clipboard
+            let clipboardText = `To: ${email.to}\n`;
+            clipboardText += `Subject: ${email.subject}\n\n`;
+            clipboardText += email.textBody;
+            
+            navigator.clipboard.writeText(clipboardText).then(() => {
+                showStatus('Email copied to clipboard!', 'success');
+            }).catch(err => {
+                showStatus('Failed to copy email: ' + err.message, 'error');
+            });
+        }
+        
+        function openInOutlook() {
+            const email = generatedEmails[currentEmailIndex];
+            
+            const subject = encodeURIComponent(email.subject);
+            const body = encodeURIComponent(email.textBody);
+            const to = encodeURIComponent(email.to);
+            
+            const mailtoLink = `mailto:${to}?subject=${subject}&body=${body}`;
+            
+            window.location.href = mailtoLink;
+        }
+        
+        function openAllInOutlook() {
+            if (generatedEmails.length === 0) return;
+            
+            let currentIndex = 0;
+            
+            function openNext() {
+                if (currentIndex >= generatedEmails.length) {
+                    showStatus('All emails opened!', 'success');
+                    return;
+                }
+                
+                const email = generatedEmails[currentIndex];
+                const subject = encodeURIComponent(email.subject);
+                const body = encodeURIComponent(email.textBody);
+                const to = encodeURIComponent(email.to);
+                
+                const mailtoLink = `mailto:${to}?subject=${subject}&body=${body}`;
+                window.location.href = mailtoLink;
+                
+                currentIndex++;
+                
+                // Wait before opening next email
+                if (currentIndex < generatedEmails.length) {
+                    setTimeout(openNext, 1000);
+                } else {
+                    showStatus('All emails opened!', 'success');
+                }
+            }
+            
+            showStatus(`Opening ${generatedEmails.length} emails...`, 'info');
+            openNext();
+        }
+    </script>
+</body>
+</html>
