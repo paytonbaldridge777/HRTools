@@ -477,19 +477,30 @@
             }
         }
         
-        function copyEmailText() {
+        async function copyEmailText() {
             const email = generatedEmails[currentEmailIndex];
             
-            // Create a formatted version for clipboard
-            let clipboardText = `To: ${email.to}\n`;
-            clipboardText += `Subject: ${email.subject}\n\n`;
-            clipboardText += email.textBody;
-            
-            navigator.clipboard.writeText(clipboardText).then(() => {
-                showStatus('Email copied to clipboard!', 'success');
-            }).catch(err => {
-                showStatus('Failed to copy email: ' + err.message, 'error');
-            });
+            try {
+                // Create clipboard items with both HTML and plain text formats
+                const htmlBlob = new Blob([email.htmlBody], { type: 'text/html' });
+                const textBlob = new Blob([email.textBody], { type: 'text/plain' });
+                
+                const clipboardItem = new ClipboardItem({
+                    'text/html': htmlBlob,
+                    'text/plain': textBlob
+                });
+                
+                await navigator.clipboard.write([clipboardItem]);
+                showStatus('Email body copied with formatting!', 'success');
+            } catch (err) {
+                // Fallback to plain text if HTML copy fails
+                try {
+                    await navigator.clipboard.writeText(email.textBody);
+                    showStatus('Email body copied (plain text)', 'success');
+                } catch (fallbackErr) {
+                    showStatus('Failed to copy email: ' + fallbackErr.message, 'error');
+                }
+            }
         }
         
         function openInOutlook() {
