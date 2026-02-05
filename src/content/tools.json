@@ -30,5 +30,13 @@
     "tags": ["Compliance"],
     "status": "stable",
     "icon": "/icons/accessibility.svg"
+  },
+  {
+    "slug": "payroll-reminders",
+    "name": "Payroll Reminders",
+    "shortDescription": "Generate manager reminder emails for unsubmitted and unapproved timesheet hours.",
+    "tags": ["Payroll", "Compliance"],
+    "status": "stable",
+    "icon": "/icons/payroll.svg"
   }
 ]
