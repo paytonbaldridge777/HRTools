@@ -1,0 +1,45 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Payroll Reminders - HR Tools">
+  <div class="container max-w-[1800px] mx-auto px-4 py-12">
+    <!-- Payroll Reminders App Container -->
+    <div id="payroll-root" class="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg shadow-sm overflow-hidden">
+      <iframe 
+        src="/PayrollReminders/index.html" 
+        class="w-full border-0"
+        style="min-height: 800px;"
+        title="Payroll Reminders Tool"
+      ></iframe>
+    </div>
+
+    <!-- Instructions -->
+    <div class="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+      <h2 class="text-xl font-bold text-blue-900 dark:text-blue-100 mb-3">How to Use</h2>
+      <ul class="list-disc list-inside space-y-2 text-blue-800 dark:text-blue-200">
+        <li>Upload your Excel file with timesheet data</li>
+        <li>Required columns: Worker, UIN, Manager Email, Unsubmitted Hours Worked, Unapproved Hours Worked</li>
+        <li>Select the pay date for the reminders</li>
+        <li>Generate professional email reminders for each manager</li>
+        <li>Copy or download the generated emails</li>
+      </ul>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  // Track tool usage in localStorage
+  function trackToolUsage() {
+    const recentTools = JSON.parse(localStorage.getItem('recentTools') || '[]');
+    const toolSlug = 'payroll-reminders';
+    
+    const filtered = recentTools.filter((slug: string) => slug !== toolSlug);
+    filtered.unshift(toolSlug);
+    const updated = filtered.slice(0, 5);
+    
+    localStorage.setItem('recentTools', JSON.stringify(updated));
+  }
+
+  trackToolUsage();
+</script>
