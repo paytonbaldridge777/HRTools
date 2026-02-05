@@ -34,7 +34,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
     const recentTools = JSON.parse(localStorage.getItem('recentTools') || '[]');
     const toolSlug = 'payroll-reminders';
     
-    const filtered = recentTools.filter((slug: string) => slug !== toolSlug);
+    const filtered = recentTools.filter((slug) => slug !== toolSlug);
     filtered.unshift(toolSlug);
     const updated = filtered.slice(0, 5);
     
