@@ -292,6 +292,26 @@
         let currentEmailIndex = 0;
         let currentViewMode = 'individual'; // 'individual' or 'broadcast'
         let payrollData = null;
+
+        let templateCache = {}; // Cache loaded templates
+
+        async function loadTemplate(filename) {
+            if (templateCache[filename]) {
+                return templateCache[filename];
+            }
+            
+            try {
+                const response = await fetch(`./${filename}`);
+                if (!response.ok) throw new Error(`Failed to load ${filename}`);
+                const html = await response.text();
+                templateCache[filename] = html;
+                return html;
+            } catch (error) {
+                console.error('Error loading template:', error);
+                showStatus(`Error loading template: ${filename}`, 'error');
+                return '';
+            }
+        }
         
         // Constants
         const BCC_DISPLAY_LIMIT = 100; // Maximum characters to show for BCC list before truncating
@@ -388,7 +408,7 @@
             }
             
             // Validate required columns
-            const required = ['worker', 'uin', 'managerEmail', 'unsubmitted', 'unapproved'];
+            const required = ['worker', 'uin', 'managerEmail', 'unsubmitted', 'unapproved', 'workerEmail'];
             const missing = required.filter(col => columnIndices[col] === undefined);
             
             if (missing.length > 0) {
@@ -410,32 +430,26 @@
                 const managerEmail = row[columnIndices.managerEmail];
                 const unsubmitted = parseFloat(row[columnIndices.unsubmitted]) || 0;
                 const unapproved = parseFloat(row[columnIndices.unapproved]) || 0;
-                
-                // Skip if no worker name or UIN
-                if (!worker || !uin) continue;
-                
+
                 // Skip if no manager email
                 if (!managerEmail || managerEmail.toString().trim() === '') continue;
+                
+                // Skip if no worker name or UIN
+                if (!worker || !uin) continue;        
                 
                 // Check for employees with 0 hours in both columns
                 if (unsubmitted === 0 && unapproved === 0) {
                     warnings.push(`${worker} (UIN: ${uin}) has 0 hours in both Unsubmitted and Unapproved columns`);
                     continue;
-                }
-                
-                const employee = {
+                }                
+                employees.push({
                     worker: worker.toString().trim(),
                     uin: uin.toString().trim(),
                     managerEmail: managerEmail.toString().trim().toLowerCase(),
+                    workerEmail: row[columnIndices.workerEmail] ? row[columnIndices.workerEmail].toString().trim().toLowerCase() : '',
                     unsubmitted: unsubmitted,
                     unapproved: unapproved
-                };
-                
-                if (workerEmail && workerEmail.toString().trim() !== '') {
-                    employee.workerEmail = workerEmail.toString().trim().toLowerCase();
-                }
-                
-                employees.push(employee);
+                });
             }
             
             return { employees, warnings, columnIndices };
@@ -878,7 +892,7 @@
                 hour12: true 
             });
             
-            return { date: dateStr, day: dayStr, time: timeStr };
+            return { fullDate: dateStr, dayName: dayStr, time: timeStr };
         }
         
         function extractBroadcastParams() {
@@ -932,114 +946,112 @@
             return tmp.textContent || tmp.innerText || '';
         }
         
-        function generateBroadcastEmails() {
-            if (!workbookData) {
-                showStatus('Please select a file first!', 'error');
-                return;
-            }
-            
-            if (!payrollData) {
-                showStatus('Please generate manager emails first to process the file!', 'error');
-                return;
-            }
-            
-            // Validate required fields
-            const hrManager = document.getElementById('hrManagerEmail').value;
-            if (!hrManager) {
-                showStatus('Please enter HR Manager email!', 'error');
+        async function generateBroadcastEmails() {
+            if (!payrollData || !payrollData.employees.length) {
+                showStatus('Please process a file first!', 'error');
                 return;
             }
             
             const currentPeriod = document.getElementById('currentPeriod').value;
-            if (!currentPeriod) {
-                showStatus('Please enter current period range!', 'error');
+            const currentWorkerDT = document.getElementById('currentDueWorkerDateTime').value;
+            const currentManagerDT = document.getElementById('currentDueManagerDateTime').value;
+            const retroWorkerDT = document.getElementById('retroDueWorkerDateTime').value;
+            const retroManagerDT = document.getElementById('retroDueManagerDateTime').value;
+            const retroPeriod = document.getElementById('retroPeriod').value;           
+            const hrManager = document.getElementById('hrManagerEmail').value;
+            const payDate = document.getElementById('payDateInput').value;
+            
+            if (!currentPeriod || !currentWorkerDT || !currentManagerDT || !retroPeriod || !retroWorkerDT || !retroManagerDT || !hrManager || !payDate) {
+                showStatus('Please fill in all broadcast email parameters!', 'error');
                 return;
             }
             
-            document.getElementById('loading').classList.remove('hidden');
-            showStatus('Generating broadcast emails...', 'info');
+            showStatus('Loading templates...', 'info');
             
-            // Small delay to allow UI to update before processing
-            setTimeout(() => {
-                try {
-                    const params = extractBroadcastParams();
-                    const workers = extractUniqueEmails('Worker Email');
-                    const managers = extractUniqueEmails('Manager Email');
-                    
-                    if (managers.length === 0) {
-                        throw new Error('No manager emails found in the file');
-                    }
-                    
-                    // Create broadcast emails array
-                    broadcastEmails = [];
-                    
-                    // Only add worker emails if worker email addresses were found
-                    // This allows the tool to work even without a Worker Email column,
-                    // generating only manager broadcast emails (2 instead of 4)
-                    if (workers.length > 0) {
-                        broadcastEmails.push({
-                            type: 'worker-current',
-                            label: 'Worker Current Period Reminder',
-                            to: '',
-                            bcc: workers.join('; '),
-                            cc: params.hrManager,
-                            subject: `Timesheet submissions due by ${params.currentDueWorker}`,
-                            htmlBody: fillTemplate(WORKER_CURRENT_TEMPLATE, params),
-                            textBody: stripHtml(fillTemplate(WORKER_CURRENT_TEMPLATE, params))
-                        });
-                        
-                        broadcastEmails.push({
-                            type: 'worker-retro',
-                            label: 'Worker Retro Period Reminder',
-                            to: '',
-                            bcc: workers.join('; '),
-                            cc: params.hrManager,
-                            subject: `Timesheet corrections for prior pay periods due by ${params.retroDueWorker}`,
-                            htmlBody: fillTemplate(WORKER_RETRO_TEMPLATE, params),
-                            textBody: stripHtml(fillTemplate(WORKER_RETRO_TEMPLATE, params))
-                        });
-                    } else {
-                        showStatus('Note: Worker emails not found in file. Only generating manager broadcast emails.', 'info');
-                    }
-                    
-                    // Always add manager emails
-                    broadcastEmails.push({
-                        type: 'manager-current',
-                        label: 'Manager Current Period Reminder',
-                        to: '',
-                        bcc: managers.join('; '),
-                        cc: params.hrManager,
-                        subject: `Timesheet approvals due by ${params.currentDueManagerDay}, ${params.currentDueManager} by ${params.currentDueManagerTime}`,
-                        htmlBody: fillTemplate(MANAGER_CURRENT_TEMPLATE, params),
-                        textBody: stripHtml(fillTemplate(MANAGER_CURRENT_TEMPLATE, params))
-                    });
-                    
-                    broadcastEmails.push({
-                        type: 'manager-retro',
-                        label: 'Manager Retro Period Reminder',
-                        to: '',
-                        bcc: managers.join('; '),
-                        cc: params.hrManager,
-                        subject: `Timesheet approvals for prior pay periods due by ${params.retroDueManager}`,
-                        htmlBody: fillTemplate(MANAGER_RETRO_TEMPLATE, params),
-                        textBody: stripHtml(fillTemplate(MANAGER_RETRO_TEMPLATE, params))
-                    });
-                    
-                    // Switch to broadcast view mode
-                    currentViewMode = 'broadcast';
-                    currentEmailIndex = 0;
-                    displayCurrentEmail();
-                    document.getElementById('emailViewer').classList.remove('hidden');
-                    
-                    document.getElementById('loading').classList.add('hidden');
-                    showStatus(`Successfully generated ${broadcastEmails.length} broadcast emails!`, 'success');
-                    
-                } catch (error) {
-                    document.getElementById('loading').classList.add('hidden');
-                    showStatus('Error generating broadcast emails: ' + error.message, 'error');
-                }
-            }, 500);
-        }
+            // Load all 4 templates
+            const [currentEmployeeTemplate, currentSupervisorTemplate, retroEmployeeTemplate, retroSupervisorTemplate] = await Promise.all([
+            loadTemplate('Current_LAW_employee_reminder.html'),
+            loadTemplate('Current_LAW_supervisor_reminder.html'),
+            loadTemplate('LAW_Retro_employee_reminder.html'),
+            loadTemplate('LAW_Retro_supervisor_reminder.html')
+            ]);
+            
+            if (!currentEmployeeTemplate || !currentSupervisorTemplate || !retroEmployeeTemplate || !retroSupervisorTemplate) {
+                showStatus('Failed to load email templates!', 'error');
+                return;
+            }
+            
+            const currentWorker = parseDateTimeInput(currentWorkerDT);
+            const currentManager = parseDateTimeInput(currentManagerDT);
+            const retroWorker = parseDateTimeInput(retroWorkerDT);
+            const retroManager = parseDateTimeInput(retroManagerDT);
+            
+            const workerEmails = extractUniqueEmails(payrollData.employees, 'workerEmail');
+            const managerEmails = extractUniqueEmails(payrollData.employees, 'managerEmail');
+            
+            if (workerEmails.length === 0) {
+                showStatus('No worker emails found! Check "Worker Email" column.', 'error');
+                return;
+            }
+            
+            const params = {
+                currentPeriod: currentPeriod,
+                currentDueWorker: currentWorker.fullDate,
+                currentDueWorkerDay: currentWorker.dayName,
+                currentDueManager: currentManager.fullDate,
+                currentDueManagerDay: currentManager.dayName,
+                currentDueManagerTime: currentManager.time,
+                retroPeriod: retroPeriod,
+                retroDueWorker: retroWorker.fullDate,
+                retroDueWorkerDay: retroWorker.dayName,
+                retroDueManager: retroManager.fullDate,
+                retroDueManagerDay: retroManager.dayName,
+                payDate: formatPayDate(payDate)
+            };
+            
+            broadcastEmails = [
+            {
+                label: 'Worker Current Reminder',
+                to: '',
+                bcc: workerEmails.join('; '),
+                cc: hrManager,
+                subject: `Timesheet submissions due by ${params.currentDueWorker}`,
+                htmlBody: fillTemplate(currentEmployeeTemplate, params),
+                textBody: stripHtml(fillTemplate(currentEmployeeTemplate, params))
+            },
+            {
+                label: 'Manager Current Reminder',
+                to: '',
+                bcc: managerEmails.join('; '),
+                cc: hrManager,
+                subject: `Timesheet approvals due by ${params.currentDueManagerDay}, ${params.currentDueManager} by 11 am`,
+                htmlBody: fillTemplate(currentSupervisorTemplate, params),
+                textBody: stripHtml(fillTemplate(currentSupervisorTemplate, params))
+            },
+            {
+                label: 'Worker Retro Reminder',
+                to: '',
+                bcc: workerEmails.join('; '),
+                cc: hrManager,
+                subject: `Timesheet corrections for prior pay periods due by ${params.retroDueWorker}`,
+                htmlBody: fillTemplate(retroEmployeeTemplate, params),
+                textBody: stripHtml(fillTemplate(retroEmployeeTemplate, params))
+            },
+            {
+                label: 'Manager Retro Reminder',
+                to: '',
+                bcc: managerEmails.join('; '),
+                cc: hrManager,
+                subject: `Timesheet approvals for prior pay periods due by ${params.retroDueManager}`,
+                htmlBody: fillTemplate(retroSupervisorTemplate, params),
+                textBody: stripHtml(fillTemplate(retroSupervisorTemplate, params))
+            }
+            ];            
+            currentViewMode = 'broadcast';
+            currentEmailIndex = 0;
+            displayCurrentEmail();
+            showStatus(`Successfully generated 4 broadcast emails! (${workerEmails.length} workers, ${managerEmails.length} managers)`, 'success');
+        }    
     </script>
 </body>
 </html>
