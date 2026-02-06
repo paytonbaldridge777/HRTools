@@ -166,8 +166,13 @@
     </div>
     
     <script>
-        // Email Templates
-        const WORKER_CURRENT_TEMPLATE = `<div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+        // Email Templates - Full HTML documents from template files
+        const WORKER_CURRENT_TEMPLATE = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
     <p style="margin-bottom: 15px;">Howdy,</p>
     
     <p style="margin-bottom: 15px;">This is a friendly reminder to submit your timesheet for the current pay period <strong>{currentPeriod}</strong>.</p>
@@ -186,9 +191,15 @@
     <p style="margin-top: 20px; margin-bottom: 5px;">Thank you for your prompt attention to this matter.</p>
     
     <p style="margin-top: 5px; margin-bottom: 15px;">Thanks!<br>TAMU School of Law HR</p>
-</div>`;
+</body>
+</html>`;
 
-        const MANAGER_CURRENT_TEMPLATE = `<div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+        const MANAGER_CURRENT_TEMPLATE = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
     <p style="margin-bottom: 15px;">Howdy,</p>
     
     <p style="margin-bottom: 15px;">This is a reminder to review and approve timesheets for your direct reports for the current pay period <strong>{currentPeriod}</strong>.</p>
@@ -210,9 +221,15 @@
     <p style="margin-top: 20px; margin-bottom: 5px;">Thank you for your prompt attention to this matter.</p>
     
     <p style="margin-top: 5px; margin-bottom: 15px;">Thanks!<br>TAMU School of Law HR</p>
-</div>`;
+</body>
+</html>`;
 
-        const WORKER_RETRO_TEMPLATE = `<div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+        const WORKER_RETRO_TEMPLATE = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
     <p style="margin-bottom: 15px;">Howdy,</p>
     
     <p style="margin-bottom: 15px;">This is a reminder to review and submit any corrections to your timesheets for <strong>prior pay periods ({retroPeriod})</strong>.</p>
@@ -234,9 +251,15 @@
     <p style="margin-top: 20px; margin-bottom: 5px;">Thank you for your prompt attention to this matter.</p>
     
     <p style="margin-top: 5px; margin-bottom: 15px;">Thanks!<br>TAMU School of Law HR</p>
-</div>`;
+</body>
+</html>`;
 
-        const MANAGER_RETRO_TEMPLATE = `<div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+        const MANAGER_RETRO_TEMPLATE = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
     <p style="margin-bottom: 15px;">Howdy,</p>
     
     <p style="margin-bottom: 15px;">This is a reminder to review and approve any timesheet corrections submitted by your direct reports for <strong>prior pay periods ({retroPeriod})</strong>.</p>
@@ -260,7 +283,8 @@
     <p style="margin-top: 20px; margin-bottom: 5px;">Thank you for your prompt attention to this matter.</p>
     
     <p style="margin-top: 5px; margin-bottom: 15px;">Thanks!<br>TAMU School of Law HR</p>
-</div>`;
+</body>
+</html>`;
 
         let workbookData = null;
         let generatedEmails = [];
