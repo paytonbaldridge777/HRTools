@@ -270,7 +270,7 @@
         let payrollData = null;
         
         // Constants
-        const BCC_DISPLAY_LIMIT = 100;
+        const BCC_DISPLAY_LIMIT = 100; // Maximum characters to show for BCC list before truncating
         
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -576,6 +576,7 @@
             document.getElementById('loading').classList.remove('hidden');
             showStatus('Processing file and generating emails...', 'info');
             
+            // Small delay to allow UI to update before processing
             setTimeout(() => {
                 try {
                     payrollData = parsePayrollData(workbookData);
@@ -934,6 +935,7 @@
             document.getElementById('loading').classList.remove('hidden');
             showStatus('Generating broadcast emails...', 'info');
             
+            // Small delay to allow UI to update before processing
             setTimeout(() => {
                 try {
                     const params = extractBroadcastParams();
@@ -948,6 +950,8 @@
                     broadcastEmails = [];
                     
                     // Only add worker emails if worker email addresses were found
+                    // This allows the tool to work even without a Worker Email column,
+                    // generating only manager broadcast emails (2 instead of 4)
                     if (workers.length > 0) {
                         broadcastEmails.push({
                             type: 'worker-current',
