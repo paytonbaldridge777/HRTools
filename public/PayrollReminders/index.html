@@ -855,15 +855,14 @@
         }
         
         // Broadcast Email Functions
-        function extractUniqueEmails(columnName) {
+        function extractUniqueEmails(emailField) {
             if (!payrollData || !payrollData.employees) return [];
             
             const emails = new Set();
             payrollData.employees.forEach(emp => {
-                if (columnName === 'workerEmail' && emp.workerEmail) {  // ✅ Changed to 'workerEmail'
-                    emails.add(emp.workerEmail);
-                } else if (columnName === 'managerEmail' && emp.managerEmail) {  // ✅ Changed to 'managerEmail'
-                    emails.add(emp.managerEmail);
+                const email = emp[emailField];  // ✅ Use bracket notation to access property dynamically
+                if (email && email.trim()) {
+                    emails.add(email.trim().toLowerCase());
                 }
             });
             
