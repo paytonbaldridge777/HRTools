@@ -43,6 +43,54 @@
             <input type="date" id="payDateInput" class="date-input">
         </div>
         
+        <div id="broadcastSection" class="broadcast-section hidden" style="background: #f8f9fa; border: 2px solid #28a745; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <h3 style="color: #28a745; margin-top: 0;">📢 Broadcast Email Parameters</h3>
+            <p style="margin-bottom: 20px;">Fill in the parameters below to generate broadcast reminder emails to all workers and managers:</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+                <div>
+                    <h4 style="margin-bottom: 10px; color: #333;">Current Period Settings</h4>
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Current Period Range:</label>
+                        <input type="text" id="currentPeriod" placeholder="e.g., January 25 - February 7, 2026" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Worker Submission Deadline:</label>
+                        <input type="datetime-local" id="currentDueWorkerDateTime" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Manager Approval Deadline:</label>
+                        <input type="datetime-local" id="currentDueManagerDateTime" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 style="margin-bottom: 10px; color: #333;">Retro Period Settings</h4>
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Retro Period Description:</label>
+                        <input type="text" id="retroPeriod" placeholder="e.g., Up to 6 prior pay periods" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Worker Retro Deadline:</label>
+                        <input type="datetime-local" id="retroDueWorkerDateTime" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Manager Retro Deadline:</label>
+                        <input type="datetime-local" id="retroDueManagerDateTime" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">HR Manager Email (for CC):</label>
+                <input type="email" id="hrManagerEmail" placeholder="e.g., pbaldridge@tamu.edu" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            
+            <button id="generateBroadcastBtn" class="process-btn" onclick="generateBroadcastEmails()" style="background: #28a745; margin-top: 10px;">
+                📢 Generate Broadcast Reminder Emails
+            </button>
+        </div>
+        
         <button id="processBtn" class="process-btn" onclick="generateEmails()" disabled>
             ✉️ Generate Manager Emails
         </button>
@@ -71,17 +119,45 @@
         
         <!-- Email Viewer -->
         <div id="emailViewer" class="hidden" style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0;">
-            <h3 style="text-align: center; color: #2c3e50;">📧 Manager Email Generator</h3>
+            <h3 style="text-align: center; color: #2c3e50;">📧 Email Generator</h3>
+            
+            <!-- View Mode Tabs -->
+            <div style="display: flex; justify-content: center; gap: 10px; margin: 15px 0;">
+                <button onclick="switchViewMode('individual')" id="individualTab" class="action-btn" style="flex: 1; max-width: 200px;">
+                    Individual Emails
+                </button>
+                <button onclick="switchViewMode('broadcast')" id="broadcastTab" class="action-btn" style="flex: 1; max-width: 200px;">
+                    Broadcast Emails
+                </button>
+            </div>
+            
             <div style="text-align: center; margin: 15px 0;">
                 <span id="emailCounter" style="font-weight: 600; color: #666;"></span>
             </div>
+            
+            <!-- Email metadata (To, BCC, CC, Subject) -->
+            <div id="emailMetadata" style="background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; padding: 15px; margin-bottom: 15px; display: none;">
+                <div style="margin-bottom: 8px;">
+                    <strong>To:</strong> <span id="emailTo" style="margin-left: 10px;"></span>
+                </div>
+                <div id="emailBccContainer" style="margin-bottom: 8px; display: none;">
+                    <strong>BCC:</strong> <span id="emailBcc" style="margin-left: 10px; font-size: 12px;"></span>
+                </div>
+                <div id="emailCcContainer" style="margin-bottom: 8px; display: none;">
+                    <strong>CC:</strong> <span id="emailCc" style="margin-left: 10px;"></span>
+                </div>
+                <div style="margin-bottom: 0;">
+                    <strong>Subject:</strong> <span id="emailSubject" style="margin-left: 10px;"></span>
+                </div>
+            </div>
+            
             <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
                 <button onclick="previousEmail()" id="prevEmailBtn" class="action-btn">⬅️ Previous</button>
                 <button onclick="openInOutlook()" class="action-btn success">📧 Open in Outlook</button>
                 <button onclick="copyEmailText()" class="action-btn primary">📋 Copy Email</button>
                 <button onclick="nextEmail()" id="nextEmailBtn" class="action-btn">Next ➡️</button>
             </div>
-            <div style="text-align: center; margin-bottom: 15px;">
+            <div style="text-align: center; margin-bottom: 15px;" id="openAllContainer">
                 <button onclick="openAllInOutlook()" class="action-btn" style="background: #6f42c1; color: white; padding: 10px 20px;">📬 Open All Emails in Outlook</button>
                 <p style="font-size: 12px; color: #666; margin-top: 5px;">Opens all emails one by one in your default email client</p>
             </div>
@@ -90,9 +166,107 @@
     </div>
     
     <script>
+        // Email Templates
+        const WORKER_CURRENT_TEMPLATE = `<div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+    <p style="margin-bottom: 15px;">Howdy,</p>
+    
+    <p style="margin-bottom: 15px;">This is a friendly reminder to submit your timesheet for the current pay period <strong>{currentPeriod}</strong>.</p>
+    
+    <p style="margin-bottom: 15px;">Please ensure your hours are submitted in Workday by <strong>{currentDueWorkerDay}, {currentDueWorker}</strong> for payment on <strong>{payDate}</strong>.</p>
+    
+    <p style="margin-bottom: 15px;"><strong>What you need to do:</strong></p>
+    <ol style="margin-bottom: 20px; padding-left: 25px;">
+        <li style="margin-bottom: 8px;">Log into Workday</li>
+        <li style="margin-bottom: 8px;">Review your time entries for accuracy</li>
+        <li style="margin-bottom: 8px;">Submit your timesheet for approval</li>
+    </ol>
+    
+    <p style="margin-bottom: 15px;">If you have any questions or need assistance with timesheet submission, please reach out to your supervisor or contact HR at <a href="mailto:{HRManager}" style="color: #500000;">{HRManager}</a>.</p>
+    
+    <p style="margin-top: 20px; margin-bottom: 5px;">Thank you for your prompt attention to this matter.</p>
+    
+    <p style="margin-top: 5px; margin-bottom: 15px;">Thanks!<br>TAMU School of Law HR</p>
+</div>`;
+
+        const MANAGER_CURRENT_TEMPLATE = `<div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+    <p style="margin-bottom: 15px;">Howdy,</p>
+    
+    <p style="margin-bottom: 15px;">This is a reminder to review and approve timesheets for your direct reports for the current pay period <strong>{currentPeriod}</strong>.</p>
+    
+    <p style="margin-bottom: 15px;">Please ensure all timesheet approvals are completed in Workday by <strong>{currentDueManagerDay}, {currentDueManager} by {currentDueManagerTime}</strong> for payment on <strong>{payDate}</strong>.</p>
+    
+    <p style="margin-bottom: 15px;"><strong>What you need to do:</strong></p>
+    <ol style="margin-bottom: 20px; padding-left: 25px;">
+        <li style="margin-bottom: 8px;">Log into Workday</li>
+        <li style="margin-bottom: 8px;">Navigate to your inbox for pending approvals</li>
+        <li style="margin-bottom: 8px;">Review each timesheet for accuracy</li>
+        <li style="margin-bottom: 8px;">Approve or send back for corrections as needed</li>
+    </ol>
+    
+    <p style="margin-bottom: 15px;">Timely approval ensures your employees are paid correctly and on schedule. If you have employees who have not yet submitted their timesheets, please follow up with them directly.</p>
+    
+    <p style="margin-bottom: 15px;">If you have any questions or need assistance with the approval process, please contact HR at <a href="mailto:{HRManager}" style="color: #500000;">{HRManager}</a>.</p>
+    
+    <p style="margin-top: 20px; margin-bottom: 5px;">Thank you for your prompt attention to this matter.</p>
+    
+    <p style="margin-top: 5px; margin-bottom: 15px;">Thanks!<br>TAMU School of Law HR</p>
+</div>`;
+
+        const WORKER_RETRO_TEMPLATE = `<div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+    <p style="margin-bottom: 15px;">Howdy,</p>
+    
+    <p style="margin-bottom: 15px;">This is a reminder to review and submit any corrections to your timesheets for <strong>prior pay periods ({retroPeriod})</strong>.</p>
+    
+    <p style="margin-bottom: 15px;">If you have any time entry corrections or missed hours from previous pay periods, please submit them in Workday by <strong>{retroDueWorkerDay}, {retroDueWorker}</strong> for payment on <strong>{payDate}</strong>.</p>
+    
+    <p style="margin-bottom: 15px;"><strong>What you need to do:</strong></p>
+    <ol style="margin-bottom: 20px; padding-left: 25px;">
+        <li style="margin-bottom: 8px;">Log into Workday</li>
+        <li style="margin-bottom: 8px;">Review your timesheets for the specified retro period</li>
+        <li style="margin-bottom: 8px;">Submit any corrections or missed hours</li>
+        <li style="margin-bottom: 8px;">Ensure all entries are submitted for approval</li>
+    </ol>
+    
+    <p style="margin-bottom: 15px;"><strong>Important:</strong> Retro corrections must be submitted by the deadline to be included in the upcoming payroll cycle. Late submissions will be processed in the following pay period.</p>
+    
+    <p style="margin-bottom: 15px;">If you have any questions or need assistance with timesheet corrections, please reach out to your supervisor or contact HR at <a href="mailto:{HRManager}" style="color: #500000;">{HRManager}</a>.</p>
+    
+    <p style="margin-top: 20px; margin-bottom: 5px;">Thank you for your prompt attention to this matter.</p>
+    
+    <p style="margin-top: 5px; margin-bottom: 15px;">Thanks!<br>TAMU School of Law HR</p>
+</div>`;
+
+        const MANAGER_RETRO_TEMPLATE = `<div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+    <p style="margin-bottom: 15px;">Howdy,</p>
+    
+    <p style="margin-bottom: 15px;">This is a reminder to review and approve any timesheet corrections submitted by your direct reports for <strong>prior pay periods ({retroPeriod})</strong>.</p>
+    
+    <p style="margin-bottom: 15px;">Please ensure all retro timesheet approvals are completed in Workday by <strong>{retroDueManagerDay}, {retroDueManager}</strong> for payment on <strong>{payDate}</strong>.</p>
+    
+    <p style="margin-bottom: 15px;"><strong>What you need to do:</strong></p>
+    <ol style="margin-bottom: 20px; padding-left: 25px;">
+        <li style="margin-bottom: 8px;">Log into Workday</li>
+        <li style="margin-bottom: 8px;">Navigate to your inbox for pending retro approvals</li>
+        <li style="margin-bottom: 8px;">Review each timesheet correction for accuracy</li>
+        <li style="margin-bottom: 8px;">Approve or send back for corrections as needed</li>
+    </ol>
+    
+    <p style="margin-bottom: 15px;"><strong>Important:</strong> Retro approvals must be completed by the deadline to ensure corrections are included in the upcoming payroll cycle. Late approvals will be processed in the following pay period.</p>
+    
+    <p style="margin-bottom: 15px;">If you have employees who have submitted corrections that require clarification, please follow up with them directly before the approval deadline.</p>
+    
+    <p style="margin-bottom: 15px;">If you have any questions or need assistance with the approval process, please contact HR at <a href="mailto:{HRManager}" style="color: #500000;">{HRManager}</a>.</p>
+    
+    <p style="margin-top: 20px; margin-bottom: 5px;">Thank you for your prompt attention to this matter.</p>
+    
+    <p style="margin-top: 5px; margin-bottom: 15px;">Thanks!<br>TAMU School of Law HR</p>
+</div>`;
+
         let workbookData = null;
         let generatedEmails = [];
+        let broadcastEmails = [];
         let currentEmailIndex = 0;
+        let currentViewMode = 'individual'; // 'individual' or 'broadcast'
         let payrollData = null;
         
         document.getElementById('fileInput').addEventListener('change', function(e) {
@@ -113,6 +287,7 @@
                         });
                         showStatus('File loaded successfully!', 'success');
                         document.getElementById('dateSection').classList.remove('hidden');
+                        document.getElementById('broadcastSection').classList.remove('hidden');
                         
                         // Set default date to today
                         const today = new Date().toISOString().split('T')[0];
@@ -160,7 +335,9 @@
                     // Find required columns
                     for (let j = 0; j < headers.length; j++) {
                         const header = headers[j];
-                        if (header.includes('worker') || header.includes('employee name')) {
+                        if ((header.includes('worker') || header.includes('employee')) && header.includes('email')) {
+                            columnIndices.workerEmail = j;
+                        } else if (header.includes('worker') || header.includes('employee name')) {
                             columnIndices.worker = j;
                         } else if (header.includes('uin')) {
                             columnIndices.uin = j;
@@ -201,6 +378,7 @@
                 
                 const worker = row[columnIndices.worker];
                 const uin = row[columnIndices.uin];
+                const workerEmail = columnIndices.workerEmail !== undefined ? row[columnIndices.workerEmail] : null;
                 const managerEmail = row[columnIndices.managerEmail];
                 const unsubmitted = parseFloat(row[columnIndices.unsubmitted]) || 0;
                 const unapproved = parseFloat(row[columnIndices.unapproved]) || 0;
@@ -217,13 +395,19 @@
                     continue;
                 }
                 
-                employees.push({
+                const employee = {
                     worker: worker.toString().trim(),
                     uin: uin.toString().trim(),
                     managerEmail: managerEmail.toString().trim().toLowerCase(),
                     unsubmitted: unsubmitted,
                     unapproved: unapproved
-                });
+                };
+                
+                if (workerEmail && workerEmail.toString().trim() !== '') {
+                    employee.workerEmail = workerEmail.toString().trim().toLowerCase();
+                }
+                
+                employees.push(employee);
             }
             
             return { employees, warnings, columnIndices };
@@ -451,21 +635,85 @@
         }
         
         function displayCurrentEmail() {
-            if (generatedEmails.length === 0) return;
+            const emails = currentViewMode === 'individual' ? generatedEmails : broadcastEmails;
             
-            const email = generatedEmails[currentEmailIndex];
+            if (emails.length === 0) return;
             
-            document.getElementById('emailCounter').textContent = 
-                `Email ${currentEmailIndex + 1} of ${generatedEmails.length} | To: ${email.to}`;
+            const email = emails[currentEmailIndex];
             
+            // Update tab styling
+            document.getElementById('individualTab').style.background = currentViewMode === 'individual' ? '#007bff' : '#6c757d';
+            document.getElementById('individualTab').style.color = 'white';
+            document.getElementById('broadcastTab').style.background = currentViewMode === 'broadcast' ? '#28a745' : '#6c757d';
+            document.getElementById('broadcastTab').style.color = 'white';
+            
+            // Update counter
+            if (currentViewMode === 'individual') {
+                document.getElementById('emailCounter').textContent = 
+                    `Email ${currentEmailIndex + 1} of ${emails.length} | To: ${email.to}`;
+            } else {
+                document.getElementById('emailCounter').textContent = 
+                    `Broadcast Email ${currentEmailIndex + 1} of ${emails.length} | ${email.label}`;
+            }
+            
+            // Show/hide metadata section for broadcast emails
+            const metadataDiv = document.getElementById('emailMetadata');
+            if (currentViewMode === 'broadcast') {
+                metadataDiv.style.display = 'block';
+                document.getElementById('emailTo').textContent = email.to || '(Empty - using BCC)';
+                
+                // Show BCC
+                const bccContainer = document.getElementById('emailBccContainer');
+                if (email.bcc) {
+                    bccContainer.style.display = 'block';
+                    const bccEmails = email.bcc.split('; ');
+                    document.getElementById('emailBcc').textContent = `${bccEmails.length} recipients: ${email.bcc.substring(0, 100)}${email.bcc.length > 100 ? '...' : ''}`;
+                } else {
+                    bccContainer.style.display = 'none';
+                }
+                
+                // Show CC
+                const ccContainer = document.getElementById('emailCcContainer');
+                if (email.cc) {
+                    ccContainer.style.display = 'block';
+                    document.getElementById('emailCc').textContent = email.cc;
+                } else {
+                    ccContainer.style.display = 'none';
+                }
+                
+                document.getElementById('emailSubject').textContent = email.subject;
+            } else {
+                metadataDiv.style.display = 'none';
+            }
+            
+            // Display email content
             document.getElementById('emailContent').innerHTML = email.htmlBody;
             
             // Update navigation buttons
             document.getElementById('prevEmailBtn').disabled = currentEmailIndex === 0;
-            document.getElementById('nextEmailBtn').disabled = currentEmailIndex === generatedEmails.length - 1;
+            document.getElementById('nextEmailBtn').disabled = currentEmailIndex === emails.length - 1;
+            
+            // Show/hide "Open All" button for individual emails only
+            document.getElementById('openAllContainer').style.display = currentViewMode === 'individual' ? 'block' : 'none';
+        }
+        
+        function switchViewMode(mode) {
+            if (mode === 'individual' && generatedEmails.length === 0) {
+                showStatus('No individual emails generated yet. Generate manager emails first.', 'error');
+                return;
+            }
+            if (mode === 'broadcast' && broadcastEmails.length === 0) {
+                showStatus('No broadcast emails generated yet. Generate broadcast emails first.', 'error');
+                return;
+            }
+            
+            currentViewMode = mode;
+            currentEmailIndex = 0;
+            displayCurrentEmail();
         }
         
         function previousEmail() {
+            const emails = currentViewMode === 'individual' ? generatedEmails : broadcastEmails;
             if (currentEmailIndex > 0) {
                 currentEmailIndex--;
                 displayCurrentEmail();
@@ -473,14 +721,16 @@
         }
         
         function nextEmail() {
-            if (currentEmailIndex < generatedEmails.length - 1) {
+            const emails = currentViewMode === 'individual' ? generatedEmails : broadcastEmails;
+            if (currentEmailIndex < emails.length - 1) {
                 currentEmailIndex++;
                 displayCurrentEmail();
             }
         }
         
         async function copyEmailText() {
-            const email = generatedEmails[currentEmailIndex];
+            const emails = currentViewMode === 'individual' ? generatedEmails : broadcastEmails;
+            const email = emails[currentEmailIndex];
             
             try {
                 // Create clipboard items with both HTML and plain text formats
@@ -506,13 +756,24 @@
         }
         
         function openInOutlook() {
-            const email = generatedEmails[currentEmailIndex];
+            const emails = currentViewMode === 'individual' ? generatedEmails : broadcastEmails;
+            const email = emails[currentEmailIndex];
             
             const subject = encodeURIComponent(email.subject);
             const body = encodeURIComponent(email.textBody);
-            const to = encodeURIComponent(email.to);
+            const to = encodeURIComponent(email.to || '');
             
-            const mailtoLink = `mailto:${to}?subject=${subject}&body=${body}`;
+            // For broadcast emails, include BCC and CC in the mailto link
+            let mailtoLink = `mailto:${to}?subject=${subject}&body=${body}`;
+            
+            if (currentViewMode === 'broadcast') {
+                if (email.bcc) {
+                    mailtoLink += `&bcc=${encodeURIComponent(email.bcc)}`;
+                }
+                if (email.cc) {
+                    mailtoLink += `&cc=${encodeURIComponent(email.cc)}`;
+                }
+            }
             
             window.location.href = mailtoLink;
         }
@@ -548,6 +809,198 @@
             
             showStatus(`Opening ${generatedEmails.length} emails...`, 'info');
             openNext();
+        }
+        
+        // Broadcast Email Functions
+        function extractUniqueEmails(columnName) {
+            if (!payrollData || !payrollData.employees) return [];
+            
+            const emails = new Set();
+            payrollData.employees.forEach(emp => {
+                if (columnName === 'Worker Email' && emp.workerEmail) {
+                    emails.add(emp.workerEmail);
+                } else if (columnName === 'Manager Email' && emp.managerEmail) {
+                    emails.add(emp.managerEmail);
+                }
+            });
+            
+            return Array.from(emails);
+        }
+        
+        function parseDateTimeInput(datetimeValue) {
+            if (!datetimeValue) return { date: '', day: '', time: '' };
+            
+            const dt = new Date(datetimeValue);
+            
+            // Format date as "February 14, 2026"
+            const dateStr = dt.toLocaleDateString('en-US', { 
+                month: 'long', 
+                day: 'numeric', 
+                year: 'numeric' 
+            });
+            
+            // Get day name as "Friday"
+            const dayStr = dt.toLocaleDateString('en-US', { weekday: 'long' });
+            
+            // Format time as "5:00 PM"
+            const timeStr = dt.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+            
+            return { date: dateStr, day: dayStr, time: timeStr };
+        }
+        
+        function extractBroadcastParams() {
+            const payDate = document.getElementById('payDateInput').value;
+            const currentPeriod = document.getElementById('currentPeriod').value;
+            const retroPeriod = document.getElementById('retroPeriod').value;
+            const hrManager = document.getElementById('hrManagerEmail').value;
+            
+            const currentWorkerDT = parseDateTimeInput(document.getElementById('currentDueWorkerDateTime').value);
+            const currentManagerDT = parseDateTimeInput(document.getElementById('currentDueManagerDateTime').value);
+            const retroWorkerDT = parseDateTimeInput(document.getElementById('retroDueWorkerDateTime').value);
+            const retroManagerDT = parseDateTimeInput(document.getElementById('retroDueManagerDateTime').value);
+            
+            return {
+                payDate: payDate,
+                currentPeriod: currentPeriod,
+                currentDueWorker: currentWorkerDT.date,
+                currentDueWorkerDay: currentWorkerDT.day,
+                currentDueManager: currentManagerDT.date,
+                currentDueManagerDay: currentManagerDT.day,
+                currentDueManagerTime: currentManagerDT.time,
+                retroPeriod: retroPeriod,
+                retroDueWorker: retroWorkerDT.date,
+                retroDueWorkerDay: retroWorkerDT.day,
+                retroDueManager: retroManagerDT.date,
+                retroDueManagerDay: retroManagerDT.day,
+                hrManager: hrManager
+            };
+        }
+        
+        function fillTemplate(template, params) {
+            return template
+                .replace(/{currentPeriod}/g, params.currentPeriod)
+                .replace(/{currentDueWorker}/g, params.currentDueWorker)
+                .replace(/{currentDueWorkerDay}/g, params.currentDueWorkerDay)
+                .replace(/{currentDueManager}/g, params.currentDueManager)
+                .replace(/{currentDueManagerDay}/g, params.currentDueManagerDay)
+                .replace(/{currentDueManagerTime}/g, params.currentDueManagerTime)
+                .replace(/{retroPeriod}/g, params.retroPeriod)
+                .replace(/{retroDueWorker}/g, params.retroDueWorker)
+                .replace(/{retroDueWorkerDay}/g, params.retroDueWorkerDay)
+                .replace(/{retroDueManager}/g, params.retroDueManager)
+                .replace(/{retroDueManagerDay}/g, params.retroDueManagerDay)
+                .replace(/{HRManager}/g, params.hrManager)
+                .replace(/{payDate}/g, formatPayDate(params.payDate));
+        }
+        
+        function stripHtml(html) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            return tmp.textContent || tmp.innerText || '';
+        }
+        
+        function generateBroadcastEmails() {
+            if (!workbookData) {
+                showStatus('Please select a file first!', 'error');
+                return;
+            }
+            
+            if (!payrollData) {
+                showStatus('Please generate manager emails first to process the file!', 'error');
+                return;
+            }
+            
+            // Validate required fields
+            const hrManager = document.getElementById('hrManagerEmail').value;
+            if (!hrManager) {
+                showStatus('Please enter HR Manager email!', 'error');
+                return;
+            }
+            
+            const currentPeriod = document.getElementById('currentPeriod').value;
+            if (!currentPeriod) {
+                showStatus('Please enter current period range!', 'error');
+                return;
+            }
+            
+            document.getElementById('loading').classList.remove('hidden');
+            showStatus('Generating broadcast emails...', 'info');
+            
+            setTimeout(() => {
+                try {
+                    const params = extractBroadcastParams();
+                    const workers = extractUniqueEmails('Worker Email');
+                    const managers = extractUniqueEmails('Manager Email');
+                    
+                    if (workers.length === 0) {
+                        showStatus('Warning: No worker emails found in the Excel file. Make sure there is a "Worker Email" column.', 'error');
+                    }
+                    
+                    if (managers.length === 0) {
+                        throw new Error('No manager emails found in the file');
+                    }
+                    
+                    broadcastEmails = [
+                        {
+                            type: 'worker-current',
+                            label: 'Worker Current Period Reminder',
+                            to: '',
+                            bcc: workers.join('; '),
+                            cc: params.hrManager,
+                            subject: `Timesheet submissions due by ${params.currentDueWorker}`,
+                            htmlBody: fillTemplate(WORKER_CURRENT_TEMPLATE, params),
+                            textBody: stripHtml(fillTemplate(WORKER_CURRENT_TEMPLATE, params))
+                        },
+                        {
+                            type: 'manager-current',
+                            label: 'Manager Current Period Reminder',
+                            to: '',
+                            bcc: managers.join('; '),
+                            cc: params.hrManager,
+                            subject: `Timesheet approvals due by ${params.currentDueManagerDay}, ${params.currentDueManager} by ${params.currentDueManagerTime}`,
+                            htmlBody: fillTemplate(MANAGER_CURRENT_TEMPLATE, params),
+                            textBody: stripHtml(fillTemplate(MANAGER_CURRENT_TEMPLATE, params))
+                        },
+                        {
+                            type: 'worker-retro',
+                            label: 'Worker Retro Period Reminder',
+                            to: '',
+                            bcc: workers.join('; '),
+                            cc: params.hrManager,
+                            subject: `Timesheet corrections for prior pay periods due by ${params.retroDueWorker}`,
+                            htmlBody: fillTemplate(WORKER_RETRO_TEMPLATE, params),
+                            textBody: stripHtml(fillTemplate(WORKER_RETRO_TEMPLATE, params))
+                        },
+                        {
+                            type: 'manager-retro',
+                            label: 'Manager Retro Period Reminder',
+                            to: '',
+                            bcc: managers.join('; '),
+                            cc: params.hrManager,
+                            subject: `Timesheet approvals for prior pay periods due by ${params.retroDueManager}`,
+                            htmlBody: fillTemplate(MANAGER_RETRO_TEMPLATE, params),
+                            textBody: stripHtml(fillTemplate(MANAGER_RETRO_TEMPLATE, params))
+                        }
+                    ];
+                    
+                    // Switch to broadcast view mode
+                    currentViewMode = 'broadcast';
+                    currentEmailIndex = 0;
+                    displayCurrentEmail();
+                    document.getElementById('emailViewer').classList.remove('hidden');
+                    
+                    document.getElementById('loading').classList.add('hidden');
+                    showStatus(`Successfully generated ${broadcastEmails.length} broadcast emails!`, 'success');
+                    
+                } catch (error) {
+                    document.getElementById('loading').classList.add('hidden');
+                    showStatus('Error generating broadcast emails: ' + error.message, 'error');
+                }
+            }, 500);
         }
     </script>
 </body>
