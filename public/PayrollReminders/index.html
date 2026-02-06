@@ -269,6 +269,9 @@
         let currentViewMode = 'individual'; // 'individual' or 'broadcast'
         let payrollData = null;
         
+        // Constants
+        const BCC_DISPLAY_LIMIT = 100;
+        
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
@@ -335,9 +338,10 @@
                     // Find required columns
                     for (let j = 0; j < headers.length; j++) {
                         const header = headers[j];
-                        if ((header.includes('worker') || header.includes('employee')) && header.includes('email')) {
+                        // Check for worker/employee email first (more specific)
+                        if ((header.includes('worker') || header.includes('employee')) && header.includes('email') && !header.includes('manager')) {
                             columnIndices.workerEmail = j;
-                        } else if (header.includes('worker') || header.includes('employee name')) {
+                        } else if ((header.includes('worker') || header.includes('employee name')) && !header.includes('email')) {
                             columnIndices.worker = j;
                         } else if (header.includes('uin')) {
                             columnIndices.uin = j;
@@ -667,7 +671,7 @@
                 if (email.bcc) {
                     bccContainer.style.display = 'block';
                     const bccEmails = email.bcc.split('; ');
-                    document.getElementById('emailBcc').textContent = `${bccEmails.length} recipients: ${email.bcc.substring(0, 100)}${email.bcc.length > 100 ? '...' : ''}`;
+                    document.getElementById('emailBcc').textContent = `${bccEmails.length} recipients: ${email.bcc.substring(0, BCC_DISPLAY_LIMIT)}${email.bcc.length > BCC_DISPLAY_LIMIT ? '...' : ''}`;
                 } else {
                     bccContainer.style.display = 'none';
                 }
@@ -936,16 +940,16 @@
                     const workers = extractUniqueEmails('Worker Email');
                     const managers = extractUniqueEmails('Manager Email');
                     
-                    if (workers.length === 0) {
-                        showStatus('Warning: No worker emails found in the Excel file. Make sure there is a "Worker Email" column.', 'error');
-                    }
-                    
                     if (managers.length === 0) {
                         throw new Error('No manager emails found in the file');
                     }
                     
-                    broadcastEmails = [
-                        {
+                    // Create broadcast emails array
+                    broadcastEmails = [];
+                    
+                    // Only add worker emails if worker email addresses were found
+                    if (workers.length > 0) {
+                        broadcastEmails.push({
                             type: 'worker-current',
                             label: 'Worker Current Period Reminder',
                             to: '',
@@ -954,18 +958,9 @@
                             subject: `Timesheet submissions due by ${params.currentDueWorker}`,
                             htmlBody: fillTemplate(WORKER_CURRENT_TEMPLATE, params),
                             textBody: stripHtml(fillTemplate(WORKER_CURRENT_TEMPLATE, params))
-                        },
-                        {
-                            type: 'manager-current',
-                            label: 'Manager Current Period Reminder',
-                            to: '',
-                            bcc: managers.join('; '),
-                            cc: params.hrManager,
-                            subject: `Timesheet approvals due by ${params.currentDueManagerDay}, ${params.currentDueManager} by ${params.currentDueManagerTime}`,
-                            htmlBody: fillTemplate(MANAGER_CURRENT_TEMPLATE, params),
-                            textBody: stripHtml(fillTemplate(MANAGER_CURRENT_TEMPLATE, params))
-                        },
-                        {
+                        });
+                        
+                        broadcastEmails.push({
                             type: 'worker-retro',
                             label: 'Worker Retro Period Reminder',
                             to: '',
@@ -974,18 +969,33 @@
                             subject: `Timesheet corrections for prior pay periods due by ${params.retroDueWorker}`,
                             htmlBody: fillTemplate(WORKER_RETRO_TEMPLATE, params),
                             textBody: stripHtml(fillTemplate(WORKER_RETRO_TEMPLATE, params))
-                        },
-                        {
-                            type: 'manager-retro',
-                            label: 'Manager Retro Period Reminder',
-                            to: '',
-                            bcc: managers.join('; '),
-                            cc: params.hrManager,
-                            subject: `Timesheet approvals for prior pay periods due by ${params.retroDueManager}`,
-                            htmlBody: fillTemplate(MANAGER_RETRO_TEMPLATE, params),
-                            textBody: stripHtml(fillTemplate(MANAGER_RETRO_TEMPLATE, params))
-                        }
-                    ];
+                        });
+                    } else {
+                        showStatus('Note: Worker emails not found in file. Only generating manager broadcast emails.', 'info');
+                    }
+                    
+                    // Always add manager emails
+                    broadcastEmails.push({
+                        type: 'manager-current',
+                        label: 'Manager Current Period Reminder',
+                        to: '',
+                        bcc: managers.join('; '),
+                        cc: params.hrManager,
+                        subject: `Timesheet approvals due by ${params.currentDueManagerDay}, ${params.currentDueManager} by ${params.currentDueManagerTime}`,
+                        htmlBody: fillTemplate(MANAGER_CURRENT_TEMPLATE, params),
+                        textBody: stripHtml(fillTemplate(MANAGER_CURRENT_TEMPLATE, params))
+                    });
+                    
+                    broadcastEmails.push({
+                        type: 'manager-retro',
+                        label: 'Manager Retro Period Reminder',
+                        to: '',
+                        bcc: managers.join('; '),
+                        cc: params.hrManager,
+                        subject: `Timesheet approvals for prior pay periods due by ${params.retroDueManager}`,
+                        htmlBody: fillTemplate(MANAGER_RETRO_TEMPLATE, params),
+                        textBody: stripHtml(fillTemplate(MANAGER_RETRO_TEMPLATE, params))
+                    });
                     
                     // Switch to broadcast view mode
                     currentViewMode = 'broadcast';
