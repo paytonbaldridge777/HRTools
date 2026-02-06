@@ -988,6 +988,10 @@
             
             const workerEmails = extractUniqueEmails(payrollData.employees, 'workerEmail');
             const managerEmails = extractUniqueEmails(payrollData.employees, 'managerEmail');
+            // DEBUG: Check what we got
+            console.log('Worker Emails:', workerEmails);
+            console.log('Manager Emails:', managerEmails);
+            console.log('All employees:', payrollData.employees);
             
             if (workerEmails.length === 0) {
                 showStatus('No worker emails found! Check "Worker Email" column.', 'error');
