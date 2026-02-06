@@ -860,9 +860,9 @@
             
             const emails = new Set();
             payrollData.employees.forEach(emp => {
-                if (columnName === 'Worker Email' && emp.workerEmail) {
+                if (columnName === 'workerEmail' && emp.workerEmail) {  // ✅ Changed to 'workerEmail'
                     emails.add(emp.workerEmail);
-                } else if (columnName === 'Manager Email' && emp.managerEmail) {
+                } else if (columnName === 'managerEmail' && emp.managerEmail) {  // ✅ Changed to 'managerEmail'
                     emails.add(emp.managerEmail);
                 }
             });
