@@ -855,26 +855,26 @@
         }
         
        function extractUniqueEmails(emailField) {
-            console.log('extractUniqueEmails called with:', emailField);
+            //console.log('extractUniqueEmails called with:', emailField);
             
             if (!payrollData || !payrollData.employees) {
                 console.log('No payroll data!');
                 return [];
             }
             
-            console.log('Number of employees:', payrollData.employees.length);
+            //console.log('Number of employees:', payrollData.employees.length);
             
             const emails = new Set();
             payrollData.employees.forEach((emp, index) => {
                 const email = emp[emailField];
-                console.log(`Employee ${index}: ${emp.worker}, emailField=${emailField}, email=${email}`);
+                //console.log(`Employee ${index}: ${emp.worker}, emailField=${emailField}, email=${email}`);
                 if (email && email.trim()) {
                     emails.add(email.trim().toLowerCase());
-                    console.log(`  Added: ${email.trim().toLowerCase()}`);
+                    //console.log(`  Added: ${email.trim().toLowerCase()}`);
                 }
             });
             
-            console.log('Final emails array:', Array.from(emails));
+            //console.log('Final emails array:', Array.from(emails));
             return Array.from(emails);
         }
         
@@ -1009,9 +1009,9 @@
             const workerEmails = extractUniqueEmails('workerEmail');
             const managerEmails = extractUniqueEmails('managerEmail');
             // DEBUG: Check what we got
-            console.log('Worker Emails:', workerEmails);
-            console.log('Manager Emails:', managerEmails);
-            console.log('All employees:', payrollData.employees);
+            //console.log('Worker Emails:', workerEmails);
+            //console.log('Manager Emails:', managerEmails);
+            //console.log('All employees:', payrollData.employees);
             
             if (workerEmails.length === 0) {
                 showStatus('No worker emails found! Check "Worker Email" column.', 'error');
