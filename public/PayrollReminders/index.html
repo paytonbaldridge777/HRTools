@@ -860,7 +860,7 @@
             
             const emails = new Set();
             payrollData.employees.forEach(emp => {
-                const email = emp[emailField];  // ✅ Use bracket notation to access property dynamically
+                const email = emp[emailField];  // Use bracket notation to access property dynamically
                 if (email && email.trim()) {
                     emails.add(email.trim().toLowerCase());
                 }
