@@ -1,31 +1,333 @@
+<!-- Subject: EARLY DEADLINE -Time Sheet approvals for PRIOR pay periods are due Thursday, July 17 by 5 pm -->
+<!-- Subject: Time Sheet approvals for PRIOR pay periods are due Thursday, July 17 by 5 pm -->
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Reminder - Word Document Format</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        .word-doc {
+            max-width: 8.5in;
+            margin: 0 auto;
+            background: white;
+            padding: 1in;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            min-height: 11in;
+            page-break-inside: avoid;
+        }
+        
+        .header-section {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #500000;
+            color: #FFFFFF;
+            border-radius: 8px;
+        }
+        
+        .header-section h1 {
+            font-size: 24pt;
+            font-weight: bold;
+            margin: 0 0 10px 0;
+            color: #FFFFFF;
+        }
+        
+        .header-section .subtitle {
+            font-size: 12pt;
+            margin: 0;
+            color: #FFFFFF;
+        }
+        
+        .urgent-banner {
+            background: #3C0000;
+            color: #FFFFFF;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14pt;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .deadline-box {
+            background: #D6D3C4;
+            border: 3px solid #732F2F;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .deadline-box h2 {
+            color: #500000;
+            font-size: 18pt;
+            margin: 0 0 10px 0;
+            font-weight: bold;
+        }
+        
+        .deadline-date {
+            font-size: 22pt;
+            font-weight: bold;
+            color: #3C0000;
+            margin: 10px 0;
+        }
+        
+        .section-header {
+            color: #500000;
+            font-size: 16pt;
+            font-weight: bold;
+            margin: 25px 0 15px 0;
+            border-bottom: 2px solid #500000;
+            padding-bottom: 5px;
+        }
+        
+        .important-notes {
+            background: #D1D1D1;
+            border-left: 4px solid #500000;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .note-item {
+            margin: 15px 0;
+            padding-left: 20px;
+            position: relative;
+            color: #202020;
+        }
+        
+        .note-item::before {
+            content: '▶';
+            position: absolute;
+            left: 0;
+            color: #500000;
+            font-weight: bold;
+        }
+        
+        .resources-section {
+            background: #D6D3C4;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .resource-item {
+            background: #FFFFFF;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border-left: 4px solid #732F2F;
+        }
+        
+        .resource-item a {
+            color: #500000;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .help-section {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: #D1D1D1;
+            border-radius: 8px;
+        }
+        
+        .contact-section {
+            background: #D6D3C4;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 8px;
+        }
+        
+        .contact-box {
+            background: #FFFFFF;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #707070;
+        }
+        
+        .contact-header {
+            color: #500000;
+            font-size: 14pt;
+            font-weight: bold;
+            margin: 0 0 15px 0;
+        }
+        
+        .contact-info {
+            margin: 8px 0;
+            color: #3E3E3E;
+        }
+        
+        .contact-info a {
+            color: #500000;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .university-branding {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #707070;
+        }
+        
+        .university-name {
+            color: #500000;
+            font-size: 18pt;
+            font-weight: bold;
+            margin: 0 0 5px 0;
+        }
+        
+        .university-tagline {
+            color: #3E3E3E;
+            font-style: italic;
+            font-size: 12pt;
+        }
+        
+        .copy-instructions {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        
+        .copy-instructions h3 {
+            color: #1976d2;
+            margin: 0 0 10px 0;
+            font-size: 14pt;
+        }
+        
+        .copy-instructions p {
+            margin: 5px 0;
+            color: #333;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .word-doc {
+                box-shadow: none;
+                padding: 0.5in;
+            }
+            
+            .copy-instructions {
+                display: none;
+            }
+        }
+    </style>
 </head>
-<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-    <p style="margin-bottom: 15px;">Howdy,</p>
-    
-    <p style="margin-bottom: 15px;">This is a reminder to review and approve any timesheet corrections submitted by your direct reports for <strong>prior pay periods ({retroPeriod})</strong>.</p>
-    
-    <p style="margin-bottom: 15px;">Please ensure all retro timesheet approvals are completed in Workday by <strong>{retroDueManagerDay}, {retroDueManager}</strong> for payment on <strong>{payDate}</strong>.</p>
-    
-    <p style="margin-bottom: 15px;"><strong>What you need to do:</strong></p>
-    <ol style="margin-bottom: 20px; padding-left: 25px;">
-        <li style="margin-bottom: 8px;">Log into Workday</li>
-        <li style="margin-bottom: 8px;">Navigate to your inbox for pending retro approvals</li>
-        <li style="margin-bottom: 8px;">Review each timesheet correction for accuracy</li>
-        <li style="margin-bottom: 8px;">Approve or send back for corrections as needed</li>
-    </ol>
-    
-    <p style="margin-bottom: 15px;"><strong>Important:</strong> Retro approvals must be completed by the deadline to ensure corrections are included in the upcoming payroll cycle. Late approvals will be processed in the following pay period.</p>
-    
-    <p style="margin-bottom: 15px;">If you have employees who have submitted corrections that require clarification, please follow up with them directly before the approval deadline.</p>
-    
-    <p style="margin-bottom: 15px;">If you have any questions or need assistance with the approval process, please contact HR at <a href="mailto:{HRManager}" style="color: #500000;">{HRManager}</a>.</p>
-    
-    <p style="margin-top: 20px; margin-bottom: 5px;">Thank you for your prompt attention to this matter.</p>
-    
-    <p style="margin-top: 5px; margin-bottom: 15px;">Thanks!<br>TAMU School of Law HR</p>
+<body>
+    <div class="word-doc">
+	    <!-- Subject Section -->
+         <div class="help-section">
+            <p style="font-size: 12pt; color: #666; margin: 0;">
+                <strong>Subject: Timesheet approvals for prior pay periods due by {retroDueManager}</strong><br>               
+            </p>
+        </div>
+        <!-- Header Section -->
+        <div class="header-section">
+            <h1>Texas A&M University School of Law</h1>
+            <div class="subtitle">Division of Human Resources and Organizational Effectiveness</div>
+        </div>
+        
+        <!-- Urgent Banner Delete unused banner after copy/paste-->
+        <div class="urgent-banner">
+            ⚠️ EARLY DEADLINE - Time Sheet approvals for Prior Pay Periods
+        </div>
+		<div class="urgent-banner">
+            Time Sheet approvals for Prior Pay Periods
+        </div>
+        
+        <!-- Deadline Box -->
+        <div class="deadline-box">
+            <h2>Approval Deadline</h2>
+			<!-- UPDATE BELOW DEADLINE - ######################################################################################## -->
+            <div class="deadline-date">{retroDueManagerDay}, {retroDueManager}</div>
+            <p style="margin: 10px 0; font-weight: bold;"><span style="color: red;font-weight: bold;">Supervisors</span>, please be sure to check timesheets today for any hours entered for prior pay periods (up to 6 prior periods). These must be submitted and approved by <span style="color: red;font-weight: bold;">{retroDueManagerDay}, {retroDueManager}, no later than 5:00 PM.</span></p>
+        </div>
+        
+        <!-- Important Notes -->
+        <div class="important-notes">
+            <h3 class="section-header" style="margin-top: 0; color: #500000;">Important Notes</h3>           
+            <div class="note-item">
+			<!-- UPDATE BELOW PERIOD - ######################################################################################## -->
+                <strong>Retro Time Period Coverage:</strong> {retroPeriod}
+            </div>
+            <div class="note-item">
+                <strong>Any hours that have not been approved by 5 pm will not be paid during this pay period</strong> 
+            </div>
+        </div>
+        
+        <!-- Resources Section -->
+        <div class="resources-section">
+            <h3 class="section-header" style="margin-top: 0; color: #500000;">Resources & Documentation</h3>
+            
+            <div class="resource-item">
+                📄 <a href="https://employees.tamu.edu/payroll/_media/calendars/2026/main-biweekly-pay-schedule-2026.pdf">
+                    Bi-Weekly Pay Schedule (2026 Fiscal Year)
+                </a>
+            </div>      
+			<div class="resource-item">
+                📄 <a href="https://apps.tamuds.tamu.edu/resources/download/4365054/review-time-report.pdf">
+                    How to Review Employee Time
+                </a>
+            </div>  			
+            <div class="resource-item">
+                📄 <strong>You may also contact your HR Representative for training</strong>
+                </a>
+            </div>  
+			<div class="resource-item">
+                📄 <strong>Approving these hours can also be accomplished by navigating directly to an employee's time sheet: Locate the employee's Workday profile -> select actions -> click on time and leave -> enter date indicated below -> review the hours entered and use the blue "Review" button in bottom right corner to approve.  </strong>
+                </a>
+            </div> 
+			<div class="resource-item">
+                📄 <a href="https://it.tamus.edu/workdayservices/training/job_aid/delegate-and-complete-delegated-task/">
+                    Delegation Instructions
+                </a>
+            </div>
+        </div>       
+        
+        <!-- Help Section -->
+        <div class="help-section">
+            <p style="font-size: 12pt; color: #666; margin: 0;">
+                <strong>Questions or need assistance?</strong><br>
+                Please reach out to the HR team using the contact information below.
+            </p>
+        </div>
+        
+        <!-- Contact Section -->
+        <div class="contact-section">
+           <div class="contact-box">
+                 <h4 class="contact-header">Contact Information</h4>
+                <div class="contact-info"><strong>Payton Baldridge</strong> | HR Generalist II (Hub 3 - Integrity)</div>
+                <div class="contact-info">Division of Human Resources and Organizational Effectiveness</div>
+                <div class="contact-info"><strong>Address:</strong> Water Gardens Place - Room 240 | 100 W 15th St, Ft Worth, TX 76102</div>
+                <div class="contact-info"><strong>Phone:</strong> 817.212.4132</strong></div>
+                <div class="contact-info"><strong>Email:</strong> <a href="mailto:pbaldridge@tamu.edu">pbaldridge@tamu.edu</a></div>
+                <div class="contact-info"><strong>Website:</strong> <a href="http://employees.tamu.edu/">employees.tamu.edu</a></div>
+                <div class="contact-info"><a href="https://service.tamu.edu/TDClient/45/Portal/Home/" style="color: #dc3545;">tx.ag/servicehero</a>
+            </div>            
+            <div class="university-branding">
+                <div class="university-name">Texas A&M UNIVERSITY</div>
+                <div class="university-tagline">Purpose Driven. People Focused.</div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
