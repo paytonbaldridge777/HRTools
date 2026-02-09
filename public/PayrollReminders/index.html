@@ -994,8 +994,8 @@
             const retroWorker = parseDateTimeInput(retroWorkerDT);
             const retroManager = parseDateTimeInput(retroManagerDT);
             
-            const workerEmails = extractUniqueEmails(payrollData.employees, 'workerEmail');
-            const managerEmails = extractUniqueEmails(payrollData.employees, 'managerEmail');
+            const workerEmails = extractUniqueEmails('workerEmail');
+            const managerEmails = extractUniqueEmails('managerEmail');
             // DEBUG: Check what we got
             console.log('Worker Emails:', workerEmails);
             console.log('Manager Emails:', managerEmails);
