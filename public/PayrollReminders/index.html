@@ -776,8 +776,20 @@
             const email = emails[currentEmailIndex];
             
             try {
+                // Strip outer HTML document structure for cleaner paste
+                let htmlToCopy = email.htmlBody;
+                
+                // If it's a full HTML document, extract just the body content
+                if (htmlToCopy.includes('<!DOCTYPE') || htmlToCopy.includes('<html')) {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlToCopy, 'text/html');
+                    // Get everything inside <body>, or fall back to full content
+                    const bodyContent = doc.body ? doc.body.innerHTML : htmlToCopy;
+                    htmlToCopy = bodyContent;
+                }
+                
                 // Create clipboard items with both HTML and plain text formats
-                const htmlBlob = new Blob([email.htmlBody], { type: 'text/html' });
+                const htmlBlob = new Blob([htmlToCopy], { type: 'text/html' });
                 const textBlob = new Blob([email.textBody], { type: 'text/plain' });
                 
                 const clipboardItem = new ClipboardItem({
