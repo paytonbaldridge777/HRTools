@@ -984,6 +984,18 @@
             loadTemplate('LAW_Retro_supervisor_reminder.html')
             ]);
             
+            //DEBUG loading of email templates:
+            console.log('Template lengths:');
+            console.log('currentEmployeeTemplate:', currentEmployeeTemplate.length, 'chars');
+            console.log('currentSupervisorTemplate:', currentSupervisorTemplate.length, 'chars');
+            console.log('retroEmployeeTemplate:', retroEmployeeTemplate.length, 'chars');
+            console.log('retroSupervisorTemplate:', retroSupervisorTemplate.length, 'chars');
+            
+            if (!currentEmployeeTemplate || !currentSupervisorTemplate || !retroEmployeeTemplate || !retroSupervisorTemplate) {
+                showStatus('Failed to load email templates!', 'error');
+                return;
+            }
+            
             if (!currentEmployeeTemplate || !currentSupervisorTemplate || !retroEmployeeTemplate || !retroSupervisorTemplate) {
                 showStatus('Failed to load email templates!', 'error');
                 return;
