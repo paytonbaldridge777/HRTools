@@ -784,15 +784,15 @@
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(htmlToCopy, 'text/html');
         
-                    const bodyContent = doc.body ? doc.body.innerHTML : htmlToCopy;
-                    const styleContent = doc.head ? doc.head.querySelectorAll('style') : [];
-        
+                    const styleNodes = doc.head ? doc.head.querySelectorAll('style') : [];
                     let styles = '';
-                    styleContent.forEach(styleTag => {
+                    styleNodes.forEach(styleTag => {
                         styles += styleTag.outerHTML;
                     });
         
-                    htmlToCopy = `${styles}${bodyContent}`;
+                    const bodyHtml = doc.body ? doc.body.outerHTML : htmlToCopy;
+        
+                    htmlToCopy = `${styles}${bodyHtml}`;
                 }
                 
                 // Create clipboard items with both HTML and plain text formats
