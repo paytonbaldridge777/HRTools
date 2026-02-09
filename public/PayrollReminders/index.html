@@ -854,18 +854,27 @@
             openNext();
         }
         
-        // Broadcast Email Functions
-        function extractUniqueEmails(emailField) {
-            if (!payrollData || !payrollData.employees) return [];
+       function extractUniqueEmails(emailField) {
+            console.log('extractUniqueEmails called with:', emailField);
+            
+            if (!payrollData || !payrollData.employees) {
+                console.log('No payroll data!');
+                return [];
+            }
+            
+            console.log('Number of employees:', payrollData.employees.length);
             
             const emails = new Set();
-            payrollData.employees.forEach(emp => {
-                const email = emp[emailField];  // Use bracket notation to access property dynamically
+            payrollData.employees.forEach((emp, index) => {
+                const email = emp[emailField];
+                console.log(`Employee ${index}: ${emp.worker}, emailField=${emailField}, email=${email}`);
                 if (email && email.trim()) {
                     emails.add(email.trim().toLowerCase());
+                    console.log(`  Added: ${email.trim().toLowerCase()}`);
                 }
             });
             
+            console.log('Final emails array:', Array.from(emails));
             return Array.from(emails);
         }
         
