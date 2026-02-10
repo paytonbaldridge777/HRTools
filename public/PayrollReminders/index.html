@@ -478,12 +478,17 @@
 
         function groupByManager(employees) {
             const managerGroups = {};
+        
             employees.forEach(emp => {
-                if (!managerGroups[emp.managerEmail]) {
-                    managerGroups[emp.managerEmail] = [];
+                const managerKey = (emp.managerEmail || '').trim().toLowerCase();
+                if (!managerKey) return;
+        
+                if (!managerGroups[managerKey]) {
+                    managerGroups[managerKey] = [];
                 }
-                managerGroups[emp.managerEmail].push(emp);
+                managerGroups[managerKey].push(emp);
             });
+        
             return managerGroups;
         }
 
@@ -870,6 +875,14 @@
                 .replace(/{payDate}/g, formatPayDate(params.payDate));
         }
 
+        function dedupeEmails(emails) {
+            return [...new Set(
+                emails
+                    .map(email => (email || '').trim().toLowerCase())
+                    .filter(Boolean)
+            )];
+        }
+        
         async function generateBroadcastEmails(mode) {
             if (!workbookData) {
                 showStatus('Please select a file first!', 'error');
@@ -890,9 +903,8 @@
                 requireManagerEmail: false,
                 requireWorkerInfo: false
             });
-
-            const workerEmails = extractUniqueEmails('workerEmail', broadcastData);
-            const managerEmails = extractUniqueEmails('managerEmail', broadcastData);
+            const workerEmails = dedupeEmails(extractUniqueEmails('workerEmail', broadcastData));
+            const managerEmails = dedupeEmails(extractUniqueEmails('managerEmail', broadcastData));
 
             if (workerEmails.length === 0 && managerEmails.length === 0) {
                 showStatus('No worker or manager emails found in the file.', 'error');
@@ -1003,7 +1015,8 @@
             currentViewMode = 'broadcast';
             currentEmailIndex = 0;
             displayCurrentEmail();
-
+            document.getElementById('emailViewer').classList.remove('hidden');
+            document.getElementById('results').classList.remove('hidden');
             showStatus(
                 `Successfully generated ${broadcastEmails.length} broadcast emails! (${workerEmails.length} workers, ${managerEmails.length} managers)`,
                 'success'
