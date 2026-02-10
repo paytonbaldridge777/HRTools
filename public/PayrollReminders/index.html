@@ -49,17 +49,17 @@
             </div>
 
             <!-- Shared Fields -->
-            <div id="sharedFields>
+            <div id="sharedFields">
                 <div>
                     <label style="display: block; margin-bottom: 5px; font-weight: 600;">Pay Date:</label>
-                    <input type="date" id="payDateInput" class="date-input" style="width: 25%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <input type="date" id="payDateInput" class="date-input" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
                 <div>
                     <label style="display: block; margin-bottom: 5px; font-weight: 600;">HR Manager Email (for CC):</label>
-                    <input type="email" id="hrManagerEmail" value="pbaldridge@tamu.edu" placeholder="e.g., pbaldridge@tamu.edu" style="width: 25%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>
+                    <input type="email" id="hrManagerEmail" value="pbaldridge@tamu.edu" placeholder="e.g., pbaldridge@tamu.edu" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>          
             </div>
-
+        
             <!-- Manager Emails Tab -->
             <div id="managerTabPanel">                
                 <button id="processBtn" class="process-btn" onclick="generateEmails()" disabled>
@@ -71,15 +71,15 @@
             <div id="broadcastCurrentTabPanel" class="hidden">                
                 <div style="margin-bottom: 10px;">
                     <label style="display: block; margin-bottom: 5px; font-weight: 600;">Current Period Range:</label>
-                    <input type="text" id="currentPeriod" placeholder="e.g., January 25 - February 7, 2026" style="width: 25%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <input type="text" id="currentPeriod" placeholder="e.g., January 25 - February 7, 2026" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
                 <div style="margin-bottom: 10px;">
                     <label style="display: block; margin-bottom: 5px; font-weight: 600;">Worker Submission Deadline:</label>
-                    <input type="datetime-local" id="currentDueWorkerDateTime" style="width: 25%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <input type="datetime-local" id="currentDueWorkerDateTime" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 5px; font-weight: 600;">Manager Approval Deadline:</label>
-                    <input type="datetime-local" id="currentDueManagerDateTime" style="width: 25%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <input type="datetime-local" id="currentDueManagerDateTime" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
                 <button id="generateBroadcastCurrentBtn" class="process-btn" onclick="generateBroadcastEmails('current')" disabled style="background: #28a745;">
                     📢 Generate Broadcast – Current
@@ -90,15 +90,15 @@
             <div id="broadcastRetroTabPanel" class="hidden">               
                 <div style="margin-bottom: 10px;">
                     <label style="display: block; margin-bottom: 5px; font-weight: 600;">Retro Period Description:</label>
-                    <input type="text" id="retroPeriod" placeholder="e.g., Up to 6 prior pay periods" style="width: 25%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <input type="text" id="retroPeriod" placeholder="e.g., Up to 6 prior pay periods" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
                 <div style="margin-bottom: 10px;">
                     <label style="display: block; margin-bottom: 5px; font-weight: 600;">Worker Retro Deadline:</label>
-                    <input type="datetime-local" id="retroDueWorkerDateTime" style="width: 25%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <input type="datetime-local" id="retroDueWorkerDateTime" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 5px; font-weight: 600;">Manager Retro Deadline:</label>
-                    <input type="datetime-local" id="retroDueManagerDateTime" style="width: 25%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <input type="datetime-local" id="retroDueManagerDateTime" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
                 <button id="generateBroadcastRetroBtn" class="process-btn" onclick="generateBroadcastEmails('retro')" disabled style="background: #28a745;">
                     📢 Generate Broadcast – Retro
