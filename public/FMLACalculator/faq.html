@@ -179,15 +179,7 @@
   </div>
 
   <script>
-    const apiBase = (() => {
-      const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-      if (isLocal && window.location.port !== '3000') {
-        return 'http://localhost:3000';
-      }
-      return '';
-    })();
-
-    const API_URL = `${apiBase}/fmla-faq`;
+    const API_URL = '/fmla-faq';
 
     const state = {
       items: [],
