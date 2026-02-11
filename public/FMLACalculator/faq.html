@@ -156,7 +156,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>📘 FMLA-FAQ</h1>
+    <h1>📘 FMLA FAQ</h1>
     <p class="subtitle">Common FMLA questions and TAMU-specific guidance. Editable by HR staff.</p>
 
     <div class="info-box">
@@ -164,6 +164,10 @@
       <p>• FAQs are stored in a JSON file and loaded from the server.</p>
       <p>• You can add, edit, or remove questions below.</p>
       <p>• Click “Save Updates” to publish changes.</p>
+    </div>
+
+    <div class="button-group" style="margin-bottom: 10px;">
+      <button type="button" class="secondary-btn" id="backBtn">← Back to Calculator</button>
     </div>
 
     <div id="faqList" class="faq-list"></div>
@@ -292,6 +296,16 @@
 
     document.getElementById('saveBtn').addEventListener('click', saveFaq);
     document.getElementById('reloadBtn').addEventListener('click', loadFaq);
+
+    document.getElementById('backBtn').addEventListener('click', () => {
+      const parentDoc = window.parent && window.parent.document;
+      if (!parentDoc) return;
+
+      const tab = parentDoc.querySelector('.nav-tab[data-tab="calculator"]');
+      if (tab) {
+        tab.click();
+      }
+    });
 
     attachHandlers();
     loadFaq();
