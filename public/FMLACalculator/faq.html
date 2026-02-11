@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FMLA FAQ</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 30px;
+    }
+
+    h1 {
+      color: #500000;
+      margin-bottom: 6px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+
+    .info-box {
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+    }
+
+    .info-box p {
+      margin: 5px 0;
+      font-size: 14px;
+      color: #1976d2;
+    }
+
+    .faq-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .faq-item {
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 16px;
+      background: #fafafa;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #333;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #500000;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    button {
+      background: #500000;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 10px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #6a0000;
+    }
+
+    .secondary-btn {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .secondary-btn:hover {
+      background: #e0e0e0;
+    }
+
+    .danger-btn {
+      background: #d32f2f;
+    }
+
+    .danger-btn:hover {
+      background: #b71c1c;
+    }
+
+    .status {
+      font-size: 13px;
+      color: #555;
+      margin-top: 6px;
+    }
+
+    .status.error {
+      color: #d32f2f;
+    }
+
+    .status.success {
+      color: #2e7d32;
+    }
+
+    .meta {
+      font-size: 12px;
+      color: #777;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📘 FMLA FAQ</h1>
+    <p class="subtitle">Common FMLA questions and TAMU-specific guidance. Editable by HR staff.</p>
+
+    <div class="info-box">
+      <p><strong>How it works:</strong></p>
+      <p>• FAQs are stored in a JSON file and loaded from the server.</p>
+      <p>• You can add, edit, or remove questions below.</p>
+      <p>• Click “Save Updates” to publish changes.</p>
+    </div>
+
+    <div id="faqList" class="faq-list"></div>
+
+    <div class="button-group">
+      <button type="button" id="addBtn">➕ Add Question</button>
+      <button type="button" id="saveBtn">💾 Save Updates</button>
+      <button type="button" class="secondary-btn" id="reloadBtn">↻ Reload</button>
+    </div>
+
+    <div id="status" class="status"></div>
+    <div id="updatedAt" class="meta"></div>
+  </div>
+
+  <script>
+    const apiBase = (() => {
+      const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+      if (isLocal && window.location.port !== '3000') {
+        return 'http://localhost:3000';
+      }
+      return '';
+    })();
+
+    const API_URL = `${apiBase}/fmla-faq`;
+
+    const state = {
+      items: [],
+      updatedAt: null
+    };
+
+    const faqList = document.getElementById('faqList');
+    const statusEl = document.getElementById('status');
+    const updatedAtEl = document.getElementById('updatedAt');
+
+    function setStatus(message, type = '') {
+      statusEl.textContent = message || '';
+      statusEl.className = `status ${type}`.trim();
+    }
+
+    function render() {
+      faqList.innerHTML = '';
+
+      state.items.forEach((item, index) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'faq-item';
+        wrapper.innerHTML = `
+          <label>Question</label>
+          <input type="text" data-field="question" data-index="${index}" value="${item.question || ''}" />
+          <label style="margin-top:10px;">Answer</label>
+          <textarea data-field="answer" data-index="${index}">${item.answer || ''}</textarea>
+          <div class="button-group">
+            <button type="button" class="danger-btn" data-action="remove" data-index="${index}">Remove</button>
+          </div>
+        `;
+        faqList.appendChild(wrapper);
+      });
+
+      updatedAtEl.textContent = state.updatedAt ? `Last updated: ${state.updatedAt}` : '';
+    }
+
+    function attachHandlers() {
+      faqList.addEventListener('input', (event) => {
+        const target = event.target;
+        const index = Number(target.dataset.index);
+        const field = target.dataset.field;
+        if (!Number.isNaN(index) && field) {
+          state.items[index][field] = target.value;
+        }
+      });
+
+      faqList.addEventListener('click', (event) => {
+        const target = event.target;
+        if (target.dataset.action === 'remove') {
+          const index = Number(target.dataset.index);
+          if (!Number.isNaN(index)) {
+            state.items.splice(index, 1);
+            render();
+          }
+        }
+      });
+    }
+
+    async function loadFaq() {
+      setStatus('Loading FAQ...');
+      try {
+        const response = await fetch(API_URL);
+        if (!response.ok) {
+          throw new Error(`Failed to load FAQ (${response.status})`);
+        }
+        const data = await response.json();
+        state.items = Array.isArray(data.items) ? data.items : [];
+        state.updatedAt = data.updatedAt || null;
+        render();
+        setStatus('FAQ loaded.', 'success');
+      } catch (error) {
+        console.error(error);
+        setStatus('Failed to load FAQ. Check server connectivity.', 'error');
+      }
+    }
+
+    async function saveFaq() {
+      setStatus('Saving updates...');
+      try {
+        const payload = {
+          updatedAt: new Date().toISOString().split('T')[0],
+          items: state.items
+        };
+
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to save FAQ (${response.status})`);
+        }
+
+        const data = await response.json();
+        state.items = Array.isArray(data.items) ? data.items : [];
+        state.updatedAt = data.updatedAt || null;
+        render();
+        setStatus('FAQ saved successfully.', 'success');
+      } catch (error) {
+        console.error(error);
+        setStatus('Failed to save FAQ. Check server logs.', 'error');
+      }
+    }
+
+    document.getElementById('addBtn').addEventListener('click', () => {
+      state.items.push({ id: '', question: '', answer: '' });
+      render();
+    });
+
+    document.getElementById('saveBtn').addEventListener('click', saveFaq);
+    document.getElementById('reloadBtn').addEventListener('click', loadFaq);
+
+    attachHandlers();
+    loadFaq();
+  </script>
+</body>
+</html>

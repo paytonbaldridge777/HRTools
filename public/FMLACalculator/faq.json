@@ -1,0 +1,65 @@
+{
+  "updatedAt": "2026-02-11",
+  "items": [
+    {
+      "id": "what-is-fmla",
+      "question": "What is FMLA and who does it cover?",
+      "answer": "The Family and Medical Leave Act (FMLA) provides eligible employees with job‑protected leave for certain family and medical reasons. It applies to qualifying employees who meet service and hours requirements."
+    },
+    {
+      "id": "how-much-leave",
+      "question": "How much FMLA leave is available?",
+      "answer": "Eligible employees may take up to 12 workweeks (480 hours) of FMLA leave in a 12‑month period for qualifying reasons."
+    },
+    {
+      "id": "eligibility-requirements",
+      "question": "What are the eligibility requirements?",
+      "answer": "Generally, an employee must have worked for the employer for at least 12 months and have at least 1,250 hours worked during the 12 months immediately preceding the leave."
+    },
+    {
+      "id": "qualifying-reasons",
+      "question": "What reasons qualify for FMLA leave?",
+      "answer": "Common qualifying reasons include the employee’s serious health condition, caring for a spouse/child/parent with a serious health condition, bonding with a new child, and certain military family needs."
+    },
+    {
+      "id": "paid-or-unpaid",
+      "question": "Is FMLA paid or unpaid?",
+      "answer": "FMLA itself is unpaid, but employees may be required or allowed to use accrued paid leave (such as sick or vacation leave) to cover some or all of the FMLA period."
+    },
+    {
+      "id": "intermittent-leave",
+      "question": "What is intermittent FMLA leave?",
+      "answer": "Intermittent leave is FMLA taken in separate blocks of time rather than continuously. It must be tracked accurately in hours and approved by HR as appropriate."
+    },
+    {
+      "id": "medical-certification",
+      "question": "What documentation is required?",
+      "answer": "A medical certification is typically required for leave due to a serious health condition. Certifications are usually due within 15 calendar days of the request, unless otherwise specified by HR."
+    },
+    {
+      "id": "benefits-coverage",
+      "question": "Will benefits continue during FMLA leave?",
+      "answer": "Health insurance coverage generally continues on the same terms as if the employee were working, provided the employee continues to pay their share of premiums."
+    },
+    {
+      "id": "tamu-workday-tracking",
+      "question": "How does TAMU track FMLA leave hours?",
+      "answer": "TAMU typically tracks FMLA usage in Workday by recording leave hours. HR will provide guidance on how to record time and which leave codes to use."
+    },
+    {
+      "id": "tamu-holidays",
+      "question": "How are TAMU holidays and weekends treated in FMLA calculations?",
+      "answer": "FMLA calculations generally consider workdays. TAMU holidays and weekends are typically not counted as workdays unless the employee is normally scheduled to work those days."
+    },
+    {
+      "id": "contact-hr",
+      "question": "Who should I contact with FMLA questions at TAMU?",
+      "answer": "For TAMU School of Law employees, contact your HR office for guidance on eligibility, documentation, and time entry in Workday."
+    },
+    {
+      "id": "after-exhaustion",
+      "question": "What happens after FMLA is exhausted?",
+      "answer": "If an employee exhausts FMLA, HR can review other options such as available accrued leave or additional accommodations consistent with policy."
+    }
+  ]
+}

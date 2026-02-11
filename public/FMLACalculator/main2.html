@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FMLA Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .nav-tabs {
+            background: #500000;
+            display: flex;
+            padding: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .nav-tab {
+            padding: 15px 30px;
+            color: rgba(255,255,255,0.8);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .nav-tab:hover {
+            color: white;
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .nav-tab.active {
+            color: white;
+            border-bottom-color: white;
+            background: rgba(255,255,255,0.15);
+        }
+        
+        .tab-content {
+            display: none;
+            height: calc(100vh - 53px);
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav-tabs">
+        <button class="nav-tab active" data-tab="calculator">Workdays Calculator</button>
+        <button class="nav-tab" data-tab="email">Approval Email Generator</button>
+        <button class="nav-tab" data-tab="faq">FAQ</button>
+    </nav>
+    
+    <div id="calculator" class="tab-content active">
+        <iframe src="index.html" title="FMLA Workdays Calculator"></iframe>
+    </div>
+    
+    <div id="email" class="tab-content">
+        <iframe src="approval-email.html" title="FMLA Approval Email Generator"></iframe>
+    </div>
+
+    <div id="faq" class="tab-content">
+        <iframe src="faq.html" title="FMLA FAQ"></iframe>
+    </div>
+    
+    <script>
+        // Tab switching functionality
+        const tabs = document.querySelectorAll('.nav-tab');
+        const contents = document.querySelectorAll('.tab-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and contents
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                tab.classList.add('active');
+                
+                // Show corresponding content
+                const tabName = tab.getAttribute('data-tab');
+                document.getElementById(tabName).classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
