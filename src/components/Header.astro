@@ -13,9 +13,11 @@ const { currentPath = '' } = Astro.props;
       <!-- Desktop Navigation -->
       <nav class="hidden md:flex items-center gap-2" aria-label="Main">
         <a 
-          class={`tlw-link inline-flex items-center px-3 py-2 border border-transparent rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)] ${currentPath.startsWith('/FMLACalculator') ? 'bg-[rgba(255,255,255,0.2)] border-[rgba(255,255,255,0.3)]' : ''}`}
-          href="/FMLACalculator/"
-          aria-current={currentPath.startsWith('/FMLACalculator') ? 'page' : undefined}
+          class="tlw-link inline-flex items-center px-3 py-2 border border-transparent rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)]"
+          href="https://paytonbaldridge777.github.io/FMLACalculator/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="FMLA Calculator (opens in new tab)"
         >
           FMLA Calculator
         </a>
@@ -65,7 +67,7 @@ const { currentPath = '' } = Astro.props;
 
   <!-- Mobile menu -->
   <nav id="mobileMenu" class="tlw-mobile hidden border-t border-[rgba(255,255,255,0.2)] bg-gradient-to-b from-tamu-maroon to-tamu-maroon-700 flex-col gap-1 p-2 pb-4" aria-label="Mobile">
-    <a href="/FMLACalculator/" class="block px-4 py-3 rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)]">FMLA Calculator</a>
+    <a href="https://paytonbaldridge777.github.io/FMLACalculator/" target="_blank" rel="noopener noreferrer" aria-label="FMLA Calculator (opens in new tab)" class="block px-4 py-3 rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)]">FMLA Calculator</a>
     <a href="/TrainTraqReminders/" class="block px-4 py-3 rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)]">TrainTraq Reminders</a>
     <a href="/OnboardingTracker/" class="block px-4 py-3 rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)]">Onboarding Tracker</a>
     <a href="/Accessibility/" class="block px-4 py-3 rounded-lg text-white no-underline font-medium hover:bg-[rgba(255,255,255,0.1)]">Accessibility Checker</a>
