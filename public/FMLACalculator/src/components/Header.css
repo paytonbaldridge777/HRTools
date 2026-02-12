@@ -1,0 +1,129 @@
+/* ===== Shared TAMU Tools Header ===== */
+:root {
+  --tamu-maroon: #500000;
+  --tamu-maroon-700: #7d2926;
+  --ink: #111827;
+  --ink-2: #374151;
+  --line: #e5e7eb;
+  --bg: #fafafa;
+}
+
+.tlw-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 1px 0 rgba(17, 24, 39, 0.04);
+}
+
+.tlw-brandbar {
+  height: 6px;
+  background: var(--tamu-maroon);
+}
+
+.container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.tlw-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  padding: 1rem 0;
+}
+
+.tlw-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+}
+
+.tlw-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  color: #fff;
+  background: var(--tamu-maroon);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.tlw-brand-text {
+  line-height: 1.1;
+}
+
+.tlw-kicker {
+  font-size: 1.78rem;
+  color: var(--ink-2);
+}
+
+.tlw-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* Navigation Links (right-aligned) */
+.tlw-links {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.tlw-link {
+  text-decoration: none;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.tlw-link:hover {
+  text-decoration: underline;
+}
+
+/* Hamburger Menu Button (hidden by default) */
+.tlw-menu-button {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+/* Mobile Dropdown Styles */
+@media (max-width: 768px) {
+  .tlw-nav {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .tlw-menu-button {
+    display: block;
+    align-self: flex-end;
+  }
+
+  .tlw-links {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .tlw-links.show {
+    display: flex;
+  }
+
+  .tlw-link {
+    width: 100%;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--line);
+  }
+}
