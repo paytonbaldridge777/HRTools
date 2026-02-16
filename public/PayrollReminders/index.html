@@ -1,3 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payroll Reminders</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Payroll Reminders</h1>
+        <form id="payrollForm">
+            <div class="form-group" id="sharedFields">
+                <label for="hrManagerEmail">HR Manager Email:</label>
+                <input type="email" id="hrManagerEmail" required>
+                <div style="margin-top: 15px;">
+                    <button type="button" onclick="loadPaySchedule()" class="action-btn" style="background: #17a2b8; color: white; padding: 10px 20px;">
+                        📅 Load from Schedule
+                    </button>
+                    <p style="font-size: 12px; color: #666; margin-top: 5px;">Auto-populate fields based on current pay period</p>
+                </div>
+            </div>
+            <!-- Other fields and functionality here -->
+        </form>
+    </div>
+    <script src="script.js"></script>
+    <script>
         // Load Pay Schedule from JSON
         let payScheduleData = null;
 
@@ -5,16 +32,11 @@
             try {
                 showStatus('Loading pay schedule...', 'info');
                 
-                // Fetch the JSON file
                 const response = await fetch('./Pay_Schedule_FY2026.json');
                 if (!response.ok) throw new Error('Failed to load pay schedule');
                 
                 payScheduleData = await response.json();
-                
-                // Get today's date
                 const today = new Date();
-                
-                // Find the current pay period
                 const currentPeriod = findCurrentPayPeriod(today, payScheduleData);
                 
                 if (!currentPeriod) {
@@ -22,12 +44,8 @@
                     return;
                 }
                 
-                // Find the retro period (6 periods back)
                 const retroPeriod = findRetroPeriod(currentPeriod.payPeriod, payScheduleData);
-                
-                // Populate the form fields
                 populateFormFields(currentPeriod, retroPeriod);
-                
                 showStatus('Pay schedule loaded successfully!', 'success');
                 
             } catch (error) {
@@ -37,19 +55,16 @@
         }
 
         function findCurrentPayPeriod(date, scheduleData) {
-            // Find the pay period where today falls within or after the period
             for (let i = 0; i < scheduleData.payPeriods.length; i++) {
                 const period = scheduleData.payPeriods[i];
                 const payDate = new Date(period.payDate);
                 const periodFrom = new Date(period.periodFrom);
                 const periodThru = new Date(period.periodThru);
                 
-                // If today is within the period or before the pay date but after period start
                 if (date >= periodFrom && date <= payDate) {
                     return period;
                 }
                 
-                // Check if we're between this pay date and next period start
                 if (i < scheduleData.payPeriods.length - 1) {
                     const nextPeriod = scheduleData.payPeriods[i + 1];
                     const nextPeriodFrom = new Date(nextPeriod.periodFrom);
@@ -60,12 +75,10 @@
                 }
             }
             
-            // If we're past all periods, return the last one
             return scheduleData.payPeriods[scheduleData.payPeriods.length - 1];
         }
 
         function findRetroPeriod(currentPayPeriodNumber, scheduleData) {
-            // Find the period 6 periods back
             const retroPayPeriodNumber = Math.max(1, currentPayPeriodNumber - 6);
             const currentIndex = scheduleData.payPeriods.findIndex(p => p.payPeriod === currentPayPeriodNumber);
             const retroIndex = scheduleData.payPeriods.findIndex(p => p.payPeriod === retroPayPeriodNumber);
@@ -79,23 +92,19 @@
         }
 
         function populateFormFields(currentPeriod, retroPeriod) {
-            // Populate Pay Date
             document.getElementById('payDateInput').value = currentPeriod.payDate;
             
-            // Populate Current Period fields
             const periodFromDate = new Date(currentPeriod.periodFrom);
             const periodThruDate = new Date(currentPeriod.periodThru);
             const currentPeriodText = `${periodFromDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${periodThruDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
             document.getElementById('currentPeriod').value = currentPeriodText;
             
-            // Populate Current Due dates (convert ISO to datetime-local format)
             const employeeDueDate = new Date(currentPeriod.currentDue.employee);
             const supervisorDueDate = new Date(currentPeriod.currentDue.supervisor);
             
             document.getElementById('currentDueWorkerDateTime').value = formatDateTimeLocal(employeeDueDate);
             document.getElementById('currentDueManagerDateTime').value = formatDateTimeLocal(supervisorDueDate);
             
-            // Populate Retro Period fields
             if (retroPeriod) {
                 const retroStartDate = new Date(retroPeriod.start);
                 const retroEndDate = new Date(retroPeriod.end);
@@ -103,7 +112,6 @@
                 document.getElementById('retroPeriod').value = retroPeriodText;
             }
             
-            // Populate Retro Due dates
             const retroEmployeeDueDate = new Date(currentPeriod.retroDue.employee);
             const retroSupervisorDueDate = new Date(currentPeriod.retroDue.supervisor);
             
@@ -112,7 +120,6 @@
         }
 
         function formatDateTimeLocal(date) {
-            // Format date as YYYY-MM-DDTHH:MM for datetime-local input
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
@@ -121,3 +128,6 @@
             
             return `${year}-${month}-${day}T${hours}:${minutes}`;
         }
+    </script>
+</body>
+</html>
