@@ -1,1025 +1,123 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payroll Reminders Processor</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="./styles.css?v=20260204" />
-</head>
-<body>
-    <div class="container">
-        <h1>💼 Payroll Reminders</h1>
-        <p class="subtitle">Upload your Excel file to generate manager reminder emails for unsubmitted and unapproved hours</p>
-        
-        <div class="instructions">
-            <h3>📝 What this tool does:</h3>
-            <ol>
-                <li>Reads your Excel file with employee timesheet data</li>
-                <li>Required columns: Worker, UIN, Manager Email, Unsubmitted Hours Worked, Unapproved Hours Worked</li>
-                <li>Groups employees by Manager Email</li>
-                <li>Generates one email per manager with their employees who need attention</li>
-                <li>Includes unsubmitted hours section and/or unapproved hours section as needed</li>
-                <li>Employees with both types of hours appear in both sections</li>
-            </ol>
-            <p><strong>Result:</strong> Professional email reminders for each manager about their employees' pending timesheet actions.</p>
-        </div>
-        
-        <div class="upload-section">
-            <div id="upload-area">
-                <h3>📁 Upload Your Excel File</h3>
-                <p>Select your .xlsx file with employee timesheet data</p>
-                <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls">
-                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                    Choose File
-                </button>
-                <p id="fileName" style="margin-top: 15px; font-weight: 600; color: #28a745;"></p>
-            </div>
-        </div>
+        // Load Pay Schedule from JSON
+        let payScheduleData = null;
 
-        <!-- Parameters Section with Tabs -->
-        <div id="parametersSection" class="hidden" style="background: #f8f9fa; border: 2px solid #0d6efd; border-radius: 8px; padding: 20px; margin: 20px 0;">
-            <h3 style="margin-top: 0;">⚙️ Email Parameters</h3>
-
-            <!-- Tab Buttons -->
-            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                <button type="button" id="managerTabBtn" class="action-btn" onclick="switchParameterTab('manager')" style="flex: 1;">Manager Emails</button>
-                <button type="button" id="broadcastCurrentTabBtn" class="action-btn" onclick="switchParameterTab('broadcastCurrent')" style="flex: 1;">Broadcast – Current</button>
-                <button type="button" id="broadcastRetroTabBtn" class="action-btn" onclick="switchParameterTab('broadcastRetro')" style="flex: 1;">Broadcast – Retro</button>
-            </div>
-
-            <!-- Shared Fields -->
-            <div id="sharedFields">
-                <div>
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Pay Date:</label>
-                    <input type="date" id="payDateInput" class="date-input" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>
-                <div>
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">HR Manager Email (for CC):</label>
-                    <input type="email" id="hrManagerEmail" value="ndharris@law.tamu.edu" placeholder="e.g., ndharris@law.tamu.edu" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>   
-            </br>
-            </div>
-        
-            <!-- Manager Emails Tab -->
-            <div id="managerTabPanel">                
-                <button id="processBtn" class="process-btn" onclick="generateEmails()" disabled>
-                    ✉️ Generate Manager Emails
-                </button>
-            </div>
-
-            <!-- Broadcast Current Tab -->
-            <div id="broadcastCurrentTabPanel" class="hidden">                
-                <div style="margin-bottom: 10px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Current Period Range:</label>
-                    <input type="text" id="currentPeriod" placeholder="e.g., January 25 - February 7, 2026" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>
-                <div style="margin-bottom: 10px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Worker Submission Deadline:</label>
-                    <input type="datetime-local" id="currentDueWorkerDateTime" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Manager Approval Deadline:</label>
-                    <input type="datetime-local" id="currentDueManagerDateTime" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>
-                <button id="generateBroadcastCurrentBtn" class="process-btn" onclick="generateBroadcastEmails('current')" disabled style="background: #28a745;">
-                    📢 Generate Broadcast – Current
-                </button>
-            </div>
-
-            <!-- Broadcast Retro Tab -->
-            <div id="broadcastRetroTabPanel" class="hidden">               
-                <div style="margin-bottom: 10px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Retro Period Description:</label>
-                    <input type="text" id="retroPeriod" placeholder="e.g., Up to 6 prior pay periods" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>
-                <div style="margin-bottom: 10px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Worker Retro Deadline:</label>
-                    <input type="datetime-local" id="retroDueWorkerDateTime" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Manager Retro Deadline:</label>
-                    <input type="datetime-local" id="retroDueManagerDateTime" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>
-                <button id="generateBroadcastRetroBtn" class="process-btn" onclick="generateBroadcastEmails('retro')" disabled style="background: #28a745;">
-                    📢 Generate Broadcast – Retro
-                </button>
-            </div>
-        </div>
-
-        <div id="status" class="status hidden"></div>
-        <div id="loading" class="spinner hidden"></div>
-        
-        <div id="results" class="results hidden">
-            <h3>📊 Processing Results</h3>
-            <div class="stat-grid">
-                <div class="stat-card">
-                    <div id="totalEmployees" class="stat-number">-</div>
-                    <div class="stat-label">Total Employees</div>
-                </div>
-                <div class="stat-card">
-                    <div id="totalManagers" class="stat-number">-</div>
-                    <div class="stat-label">Managers to Email</div>
-                </div>
-                <div class="stat-card">
-                    <div id="employeesWithIssues" class="stat-number">-</div>
-                    <div class="stat-label">Employees Needing Action</div>
-                </div>
-            </div>
-            <div id="warningMessages"></div>
-        </div>
-        
-        <!-- Email Viewer -->
-        <div id="emailViewer" class="hidden" style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0;">
-            <h3 style="text-align: center; color: #2c3e50;">📧 Email Generator</h3>
-            
-            <!-- View Mode Tabs -->
-            <div style="display: flex; justify-content: center; gap: 10px; margin: 15px 0;">
-                <button onclick="switchViewMode('individual')" id="individualTab" class="action-btn" style="flex: 1; max-width: 200px;">
-                    Individual Emails
-                </button>
-                <button onclick="switchViewMode('broadcast')" id="broadcastTab" class="action-btn" style="flex: 1; max-width: 200px;">
-                    Broadcast Emails
-                </button>
-            </div>
-            
-            <div style="text-align: center; margin: 15px 0;">
-                <span id="emailCounter" style="font-weight: 600; color: #666;"></span>
-            </div>
-            
-            <!-- Email metadata (To, BCC, CC, Subject) -->
-            <div id="emailMetadata" style="background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; padding: 15px; margin-bottom: 15px; display: none;">
-                <div style="margin-bottom: 8px;">
-                    <strong>To:</strong> <span id="emailTo" style="margin-left: 10px;"></span>
-                </div>
-                <div id="emailBccContainer" style="margin-bottom: 8px; display: none;">
-                    <strong>BCC:</strong> <span id="emailBcc" style="margin-left: 10px; font-size: 12px;"></span>
-                </div>
-                <div id="emailCcContainer" style="margin-bottom: 8px; display: none;">
-                    <strong>CC:</strong> <span id="emailCc" style="margin-left: 10px;"></span>
-                </div>
-                <div style="margin-bottom: 0;">
-                    <strong>Subject:</strong> <span id="emailSubject" style="margin-left: 10px;"></span>
-                </div>
-            </div>
-            
-            <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
-                <button onclick="previousEmail()" id="prevEmailBtn" class="action-btn">⬅️ Previous</button>
-                <button onclick="openInOutlook()" class="action-btn success">📧 Open in Outlook</button>
-                <button onclick="copyEmailText()" class="action-btn primary">📋 Copy Email</button>
-                <button onclick="nextEmail()" id="nextEmailBtn" class="action-btn">Next ➡️</button>
-            </div>
-            <div style="text-align: center; margin-bottom: 15px;" id="openAllContainer">
-                <button onclick="openAllInOutlook()" class="action-btn" style="background: #6f42c1; color: white; padding: 10px 20px;">📬 Open All Emails in Outlook</button>
-                <p style="font-size: 12px; color: #666; margin-top: 5px;">Opens all emails one by one in your default email client</p>
-            </div>
-            <div id="emailContent" style="background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; padding: 20px; font-family: Arial, sans-serif; line-height: 1.6; max-height: 600px; overflow-y: auto;"></div>
-        </div>
-    </div>
-
-    <script>
-        // Email Templates - Full HTML documents from template files
-        const WORKER_CURRENT_TEMPLATE = `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-</head>
-<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-    <p style="margin-bottom: 15px;">Howdy,</p>
-    <p style="margin-bottom: 15px;">This is a friendly reminder to submit your timesheet for the current pay period <strong>{currentPeriod}</strong>.</p>
-    <p style="margin-bottom: 15px;">Please ensure your hours are submitted in Workday by <strong>{currentDueWorkerDay}, {currentDueWorker}</strong> for payment on <strong>{payDate}</strong>.</p>
-    <p style="margin-bottom: 15px;"><strong>What you need to do:</strong></p>
-    <ol style="margin-bottom: 20px; padding-left: 25px;">
-        <li style="margin-bottom: 8px;">Log into Workday</li>
-        <li style="margin-bottom: 8px;">Review your time entries for accuracy</li>
-        <li style="margin-bottom: 8px;">Submit your timesheet for approval</li>
-    </ol>
-    <p style="margin-bottom: 15px;">If you have any questions or need assistance with timesheet submission, please reach out to your supervisor or contact HR at <a href="mailto:{HRManager}" style="color: #500000;">{HRManager}</a>.</p>
-    <p style="margin-top: 20px; margin-bottom: 5px;">Thank you for your prompt attention to this matter.</p>
-    <p style="margin-top: 5px; margin-bottom: 15px;">Thanks!<br>TAMU School of Law HR</p>
-</body>
-</html>`;
-
-        const MANAGER_CURRENT_TEMPLATE = `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-</head>
-<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-    <p style="margin-bottom: 15px;">Howdy,</p>
-    <p style="margin-bottom: 15px;">This is a reminder to review and approve timesheets for your direct reports for the current pay period <strong>{currentPeriod}</strong>.</p>
-    <p style="margin-bottom: 15px;">Please ensure all timesheet approvals are completed in Workday by <strong>{currentDueManagerDay}, {currentDueManager} by {currentDueManagerTime}</strong> for payment on <strong>{payDate}</strong>.</p>
-    <p style="margin-bottom: 15px;"><strong>What you need to do:</strong></p>
-    <ol style="margin-bottom: 20px; padding-left: 25px;">
-        <li style="margin-bottom: 8px;">Log into Workday</li>
-        <li style="margin-bottom: 8px;">Navigate to your inbox for pending approvals</li>
-        <li style="margin-bottom: 8px;">Review each timesheet for accuracy</li>
-        <li style="margin-bottom: 8px;">Approve or send back for corrections as needed</li>
-    </ol>
-    <p style="margin-bottom: 15px;">Timely approval ensures your employees are paid correctly and on schedule. If you have employees who have not yet submitted their timesheets, please follow up with them directly.</p>
-    <p style="margin-bottom: 15px;">If you have any questions or need assistance with the approval process, please contact HR at <a href="mailto:{HRManager}" style="color: #500000;">{HRManager}</a>.</p>
-    <p style="margin-top: 20px; margin-bottom: 5px;">Thank you for your prompt attention to this matter.</p>
-    <p style="margin-top: 5px; margin-bottom: 15px;">Thanks!<br>TAMU School of Law HR</p>
-</body>
-</html>`;
-
-        const WORKER_RETRO_TEMPLATE = `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-</head>
-<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-    <p style="margin-bottom: 15px;">Howdy,</p>
-    <p style="margin-bottom: 15px;">This is a reminder to review and submit any corrections to your timesheets for <strong>prior pay periods ({retroPeriod})</strong>.</p>
-    <p style="margin-bottom: 15px;">If you have any time entry corrections or missed hours from previous pay periods, please submit them in Workday by <strong>{retroDueWorkerDay}, {retroDueWorker}</strong> for payment on <strong>{payDate}</strong>.</p>
-    <p style="margin-bottom: 15px;"><strong>What you need to do:</strong></p>
-    <ol style="margin-bottom: 20px; padding-left: 25px;">
-        <li style="margin-bottom: 8px;">Log into Workday</li>
-        <li style="margin-bottom: 8px;">Review your timesheets for the specified retro period</li>
-        <li style="margin-bottom: 8px;">Submit any corrections or missed hours</li>
-        <li style="margin-bottom: 8px;">Ensure all entries are submitted for approval</li>
-    </ol>
-    <p style="margin-bottom: 15px;"><strong>Important:</strong> Retro corrections must be submitted by the deadline to be included in the upcoming payroll cycle. Late submissions will be processed in the following pay period.</p>
-    <p style="margin-bottom: 15px;">If you have any questions or need assistance with timesheet corrections, please reach out to your supervisor or contact HR at <a href="mailto:{HRManager}" style="color: #500000;">{HRManager}</a>.</p>
-    <p style="margin-top: 20px; margin-bottom: 5px;">Thank you for your prompt attention to this matter.</p>
-    <p style="margin-top: 5px; margin-bottom: 15px;">Thanks!<br>TAMU School of Law HR</p>
-</body>
-</html>`;
-
-        const MANAGER_RETRO_TEMPLATE = `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-</head>
-<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-    <p style="margin-bottom: 15px;">Howdy,</p>
-    <p style="margin-bottom: 15px;">This is a reminder to review and approve any timesheet corrections submitted by your direct reports for <strong>prior pay periods ({retroPeriod})</strong>.</p>
-    <p style="margin-bottom: 15px;">Please ensure all retro timesheet approvals are completed in Workday by <strong>{retroDueManagerDay}, {retroDueManager}</strong> for payment on <strong>{payDate}</strong>.</p>
-    <p style="margin-bottom: 15px;"><strong>What you need to do:</strong></p>
-    <ol style="margin-bottom: 20px; padding-left: 25px;">
-        <li style="margin-bottom: 8px;">Log into Workday</li>
-        <li style="margin-bottom: 8px;">Navigate to your inbox for pending retro approvals</li>
-        <li style="margin-bottom: 8px;">Review each timesheet correction for accuracy</li>
-        <li style="margin-bottom: 8px;">Approve or send back for corrections as needed</li>
-    </ol>
-    <p style="margin-bottom: 15px;"><strong>Important:</strong> Retro approvals must be completed by the deadline to ensure corrections are included in the upcoming payroll cycle. Late approvals will be processed in the following pay period.</p>
-    <p style="margin-bottom: 15px;">If you have employees who have submitted corrections that require clarification, please follow up with them directly before the approval deadline.</p>
-    <p style="margin-bottom: 15px;">If you have any questions or need assistance with the approval process, please contact HR at <a href="mailto:{HRManager}" style="color: #500000;">{HRManager}</a>.</p>
-    <p style="margin-top: 20px; margin-bottom: 5px;">Thank you for your prompt attention to this matter.</p>
-    <p style="margin-top: 5px; margin-bottom: 15px;">Thanks!<br>TAMU School of Law HR</p>
-</body>
-</html>`;
-
-        let workbookData = null;
-        let generatedEmails = [];
-        let broadcastEmails = [];
-        let currentEmailIndex = 0;
-        let currentViewMode = 'individual';
-        let payrollData = null;
-
-        let templateCache = {};
-
-        async function loadTemplate(filename) {
-            if (templateCache[filename]) {
-                return templateCache[filename];
-            }
+        async function loadPaySchedule() {
             try {
-                const response = await fetch(`./${filename}`);
-                if (!response.ok) throw new Error(`Failed to load ${filename}`);
-                const html = await response.text();
-                templateCache[filename] = html;
-                return html;
+                showStatus('Loading pay schedule...', 'info');
+                
+                // Fetch the JSON file
+                const response = await fetch('./Pay_Schedule_FY2026.json');
+                if (!response.ok) throw new Error('Failed to load pay schedule');
+                
+                payScheduleData = await response.json();
+                
+                // Get today's date
+                const today = new Date();
+                
+                // Find the current pay period
+                const currentPeriod = findCurrentPayPeriod(today, payScheduleData);
+                
+                if (!currentPeriod) {
+                    showStatus('Could not determine current pay period', 'error');
+                    return;
+                }
+                
+                // Find the retro period (6 periods back)
+                const retroPeriod = findRetroPeriod(currentPeriod.payPeriod, payScheduleData);
+                
+                // Populate the form fields
+                populateFormFields(currentPeriod, retroPeriod);
+                
+                showStatus('Pay schedule loaded successfully!', 'success');
+                
             } catch (error) {
-                console.error('Error loading template:', error);
-                showStatus(`Error loading template: ${filename}`, 'error');
-                return '';
+                console.error('Error loading pay schedule:', error);
+                showStatus('Error loading pay schedule: ' + error.message, 'error');
             }
         }
 
-        const BCC_DISPLAY_LIMIT = 100;
-
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                document.getElementById('fileName').textContent = `Selected: ${file.name}`;
-
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        workbookData = XLSX.read(e.target.result, {
-                            cellStyles: true,
-                            cellFormulas: true,
-                            cellDates: true,
-                            cellNF: true,
-                            sheetStubs: true
-                        });
-                        showStatus('File loaded successfully!', 'success');
-
-                        document.getElementById('parametersSection').classList.remove('hidden');
-                        switchParameterTab('manager');
-
-                        const today = new Date().toISOString().split('T')[0];
-                        document.getElementById('payDateInput').value = today;
-
-                        document.getElementById('processBtn').disabled = false;
-                        document.getElementById('generateBroadcastCurrentBtn').disabled = false;
-                        document.getElementById('generateBroadcastRetroBtn').disabled = false;
-                    } catch (error) {
-                        showStatus('Error reading file: ' + error.message, 'error');
+        function findCurrentPayPeriod(date, scheduleData) {
+            // Find the pay period where today falls within or after the period
+            for (let i = 0; i < scheduleData.payPeriods.length; i++) {
+                const period = scheduleData.payPeriods[i];
+                const payDate = new Date(period.payDate);
+                const periodFrom = new Date(period.periodFrom);
+                const periodThru = new Date(period.periodThru);
+                
+                // If today is within the period or before the pay date but after period start
+                if (date >= periodFrom && date <= payDate) {
+                    return period;
+                }
+                
+                // Check if we're between this pay date and next period start
+                if (i < scheduleData.payPeriods.length - 1) {
+                    const nextPeriod = scheduleData.payPeriods[i + 1];
+                    const nextPeriodFrom = new Date(nextPeriod.periodFrom);
+                    
+                    if (date > payDate && date < nextPeriodFrom) {
+                        return nextPeriod;
                     }
-                };
-                reader.readAsArrayBuffer(file);
+                }
             }
-        });
-
-        function showStatus(message, type) {
-            const status = document.getElementById('status');
-            status.textContent = message;
-            status.className = `status ${type}`;
-            status.classList.remove('hidden');
+            
+            // If we're past all periods, return the last one
+            return scheduleData.payPeriods[scheduleData.payPeriods.length - 1];
         }
 
-        function switchParameterTab(tabName) {
-            const tabs = {
-                manager: { btn: 'managerTabBtn', panel: 'managerTabPanel' },
-                broadcastCurrent: { btn: 'broadcastCurrentTabBtn', panel: 'broadcastCurrentTabPanel' },
-                broadcastRetro: { btn: 'broadcastRetroTabBtn', panel: 'broadcastRetroTabPanel' }
+        function findRetroPeriod(currentPayPeriodNumber, scheduleData) {
+            // Find the period 6 periods back
+            const retroPayPeriodNumber = Math.max(1, currentPayPeriodNumber - 6);
+            const currentIndex = scheduleData.payPeriods.findIndex(p => p.payPeriod === currentPayPeriodNumber);
+            const retroIndex = scheduleData.payPeriods.findIndex(p => p.payPeriod === retroPayPeriodNumber);
+            
+            if (retroIndex === -1 || currentIndex === -1) return null;
+            
+            return {
+                start: scheduleData.payPeriods[retroIndex].periodFrom,
+                end: scheduleData.payPeriods[currentIndex - 1]?.periodThru || scheduleData.payPeriods[currentIndex].periodFrom
             };
-
-            Object.keys(tabs).forEach(key => {
-                const isActive = key === tabName;
-                document.getElementById(tabs[key].panel).classList.toggle('hidden', !isActive);
-                document.getElementById(tabs[key].btn).style.background = isActive ? '#0d6efd' : '#6c757d';
-                document.getElementById(tabs[key].btn).style.color = 'white';
-            });
         }
 
-        function parsePayrollData(workbook, options = {}) {
-            const {
-                requireColumns = ['worker', 'uin', 'managerEmail', 'unsubmitted', 'unapproved', 'workerEmail'],
-                excludeZeroHours = true,
-                requireManagerEmail = true,
-                requireWorkerInfo = true
-            } = options;
-
-            const sheetName = workbook.SheetNames[0];
-            const sheet = workbook.Sheets[sheetName];
-            const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-            if (data.length < 2) {
-                throw new Error('Excel file appears to be empty or has insufficient data');
+        function populateFormFields(currentPeriod, retroPeriod) {
+            // Populate Pay Date
+            document.getElementById('payDateInput').value = currentPeriod.payDate;
+            
+            // Populate Current Period fields
+            const periodFromDate = new Date(currentPeriod.periodFrom);
+            const periodThruDate = new Date(currentPeriod.periodThru);
+            const currentPeriodText = `${periodFromDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${periodThruDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+            document.getElementById('currentPeriod').value = currentPeriodText;
+            
+            // Populate Current Due dates (convert ISO to datetime-local format)
+            const employeeDueDate = new Date(currentPeriod.currentDue.employee);
+            const supervisorDueDate = new Date(currentPeriod.currentDue.supervisor);
+            
+            document.getElementById('currentDueWorkerDateTime').value = formatDateTimeLocal(employeeDueDate);
+            document.getElementById('currentDueManagerDateTime').value = formatDateTimeLocal(supervisorDueDate);
+            
+            // Populate Retro Period fields
+            if (retroPeriod) {
+                const retroStartDate = new Date(retroPeriod.start);
+                const retroEndDate = new Date(retroPeriod.end);
+                const retroPeriodText = `${retroStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${retroEndDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+                document.getElementById('retroPeriod').value = retroPeriodText;
             }
-
-            let headerRow = -1;
-            let columnIndices = {};
-
-            for (let i = 0; i < Math.min(10, data.length); i++) {
-                const row = data[i];
-                const headers = row.map(h => (h || '').toString().toLowerCase().trim());
-
-                if (headers.some(h => h.includes('worker') || h.includes('employee'))) {
-                    headerRow = i;
-
-                    for (let j = 0; j < headers.length; j++) {
-                        const header = headers[j];
-                        if ((header.includes('worker') || header.includes('employee')) && header.includes('email') && !header.includes('manager')) {
-                            columnIndices.workerEmail = j;
-                        } else if ((header.includes('worker') || header.includes('employee name')) && !header.includes('email')) {
-                            columnIndices.worker = j;
-                        } else if (header.includes('uin')) {
-                            columnIndices.uin = j;
-                        } else if (header.includes('manager') && header.includes('email')) {
-                            columnIndices.managerEmail = j;
-                        } else if (header.includes('unsubmitted')) {
-                            columnIndices.unsubmitted = j;
-                        } else if (header.includes('unapproved')) {
-                            columnIndices.unapproved = j;
-                        } else if (header.includes('approved') && !header.includes('unapproved')) {
-                            columnIndices.approved = j;
-                        }
-                    }
-                    break;
-                }
-            }
-
-            if (headerRow === -1) {
-                throw new Error('Could not find header row with required columns');
-            }
-
-            const missing = requireColumns.filter(col => columnIndices[col] === undefined);
-            if (missing.length > 0) {
-                throw new Error(`Missing required columns: ${missing.join(', ')}`);
-            }
-
-            const employees = [];
-            const warnings = [];
-
-            for (let i = headerRow + 1; i < data.length; i++) {
-                const row = data[i];
-                if (!row || row.length === 0) continue;
-
-                const worker = columnIndices.worker !== undefined ? row[columnIndices.worker] : '';
-                const uin = columnIndices.uin !== undefined ? row[columnIndices.uin] : '';
-                const workerEmail = columnIndices.workerEmail !== undefined ? row[columnIndices.workerEmail] : null;
-                const managerEmail = columnIndices.managerEmail !== undefined ? row[columnIndices.managerEmail] : null;
-                const unsubmitted = columnIndices.unsubmitted !== undefined ? parseFloat(row[columnIndices.unsubmitted]) || 0 : 0;
-                const unapproved = columnIndices.unapproved !== undefined ? parseFloat(row[columnIndices.unapproved]) || 0 : 0;
-
-                if (requireManagerEmail && (!managerEmail || managerEmail.toString().trim() === '')) continue;
-                if (requireWorkerInfo && (!worker || !uin)) continue;
-
-                if (excludeZeroHours && unsubmitted === 0 && unapproved === 0) {
-                    warnings.push(`${worker} (UIN: ${uin}) has 0 hours in both Unsubmitted and Unapproved columns`);
-                    continue;
-                }
-
-                employees.push({
-                    worker: worker.toString().trim(),
-                    uin: uin.toString().trim(),
-                    managerEmail: managerEmail ? managerEmail.toString().trim().toLowerCase() : '',
-                    workerEmail: workerEmail ? workerEmail.toString().trim().toLowerCase() : '',
-                    unsubmitted,
-                    unapproved
-                });
-            }
-
-            return { employees, warnings, columnIndices };
+            
+            // Populate Retro Due dates
+            const retroEmployeeDueDate = new Date(currentPeriod.retroDue.employee);
+            const retroSupervisorDueDate = new Date(currentPeriod.retroDue.supervisor);
+            
+            document.getElementById('retroDueWorkerDateTime').value = formatDateTimeLocal(retroEmployeeDueDate);
+            document.getElementById('retroDueManagerDateTime').value = formatDateTimeLocal(retroSupervisorDueDate);
         }
 
-        function extractUniqueEmails(emailField, data = payrollData) {
-            if (!data || !data.employees) {
-                return [];
-            }
-            const emails = new Set();
-            data.employees.forEach(emp => {
-                const email = emp[emailField];
-                if (email && email.trim()) {
-                    emails.add(email.trim().toLowerCase());
-                }
-            });
-            return Array.from(emails);
+        function formatDateTimeLocal(date) {
+            // Format date as YYYY-MM-DDTHH:MM for datetime-local input
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
         }
-
-        function parseDateTimeInput(datetimeValue) {
-            if (!datetimeValue) return { date: '', day: '', time: '' };
-            const dt = new Date(datetimeValue);
-            const dateStr = dt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-            const dayStr = dt.toLocaleDateString('en-US', { weekday: 'long' });
-            const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-            return { fullDate: dateStr, dayName: dayStr, time: timeStr };
-        }
-
-        function formatPayDate(dateString) {
-            const date = new Date(dateString + 'T00:00:00');
-            return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' });
-        }
-
-        function groupByManager(employees) {
-            const managerGroups = {};
-        
-            employees.forEach(emp => {
-                const managerKey = (emp.managerEmail || '').trim().toLowerCase();
-                if (!managerKey) return;
-        
-                if (!managerGroups[managerKey]) {
-                    managerGroups[managerKey] = [];
-                }
-                managerGroups[managerKey].push(emp);
-            });
-        
-            return managerGroups;
-        }
-
-        function createEmailHTML(managerEmail, employees, payDate) {
-            const formattedPayDate = formatPayDate(payDate);
-            const unsubmittedEmployees = employees.filter(e => e.unsubmitted > 0);
-            const unapprovedEmployees = employees.filter(e => e.unapproved > 0);
-
-            let emailHTML = `
-                <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-                    <p style="margin-bottom: 15px;">Howdy,</p>
-            `;
-
-            if (unsubmittedEmployees.length > 0) {
-                emailHTML += `
-                    <p style="margin-bottom: 15px;">The following employee(s) has entered hours for this pay period but has not yet submitted them. Please remind these employees to submit their hours in Workday as soon as possible for payment on ${formattedPayDate}.</p>
-                    <table style="border-collapse: collapse; width: 100%; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        <thead>
-                            <tr style="background-color: #500000; color: white;" bgcolor="#500000">
-                                <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: left; font-weight: 600; background-color: #500000; color: white;">Worker</th>
-                                <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: left; font-weight: 600; background-color: #500000; color: white;">UIN</th>
-                                <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: center; font-weight: 600; background-color: #500000; color: white;">Unsubmitted Hours</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                `;
-
-                unsubmittedEmployees.forEach((emp, index) => {
-                    const bgColor = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
-                    emailHTML += `
-                        <tr style="background-color: ${bgColor};">
-                            <td style="border: 1px solid #ddd; padding: 10px 8px;">${emp.worker}</td>
-                            <td style="border: 1px solid #ddd; padding: 10px 8px;">${emp.uin}</td>
-                            <td style="border: 1px solid #ddd; padding: 10px 8px; text-align: center; font-weight: 600; color: #c00000;">${emp.unsubmitted.toFixed(2)}</td>
-                        </tr>
-                    `;
-                });
-
-                emailHTML += `
-                        </tbody>
-                    </table>
-                `;
-            }
-
-            if (unapprovedEmployees.length > 0) {
-                emailHTML += `
-                    <p style="margin-bottom: 15px;">The following employee(s) has entered hours for this pay period that are awaiting approval. Please approve these hours in Workday as soon as possible for payment on ${formattedPayDate}.</p>
-                    <table style="border-collapse: collapse; width: 100%; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        <thead>
-                            <tr style="background-color: #500000; color: white;" bgcolor="#500000">
-                                <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: left; font-weight: 600; background-color: #500000; color: white;">Worker</th>
-                                <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: left; font-weight: 600; background-color: #500000; color: white;">UIN</th>
-                                <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: center; font-weight: 600; background-color: #500000; color: white;">Unapproved Hours</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                `;
-
-                unapprovedEmployees.forEach((emp, index) => {
-                    const bgColor = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
-                    emailHTML += `
-                        <tr style="background-color: ${bgColor};">
-                            <td style="border: 1px solid #ddd; padding: 10px 8px;">${emp.worker}</td>
-                            <td style="border: 1px solid #ddd; padding: 10px 8px;">${emp.uin}</td>
-                            <td style="border: 1px solid #ddd; padding: 10px 8px; text-align: center; font-weight: 600; color: #c00000;">${emp.unapproved.toFixed(2)}</td>
-                        </tr>
-                    `;
-                });
-
-                emailHTML += `
-                        </tbody>
-                    </table>
-                `;
-            }
-
-            emailHTML += `
-                    <p style="margin-top: 20px; margin-bottom: 5px;">Please don't hesitate to reach out if you have any questions.</p>
-                    <p style="margin-top: 5px; margin-bottom: 15px;">Thanks!<br>Payton</p>
-                </div>
-            `;
-
-            return emailHTML;
-        }
-
-        function createEmailText(managerEmail, employees, payDate) {
-            const formattedPayDate = formatPayDate(payDate);
-            const unsubmittedEmployees = employees.filter(e => e.unsubmitted > 0);
-            const unapprovedEmployees = employees.filter(e => e.unapproved > 0);
-
-            let emailText = 'Howdy,\n\n';
-
-            if (unsubmittedEmployees.length > 0) {
-                emailText += `The following employee(s) has entered hours for this pay period but has not yet submitted them. Please remind these employees to submit their hours in Workday as soon as possible for payment on ${formattedPayDate}.\n\n`;
-                emailText += 'Worker\tUIN\tUnsubmitted Hours\n';
-                unsubmittedEmployees.forEach(emp => {
-                    emailText += `${emp.worker}\t${emp.uin}\t${emp.unsubmitted.toFixed(2)}\n`;
-                });
-                emailText += '\n';
-            }
-
-            if (unapprovedEmployees.length > 0) {
-                emailText += `The following employee(s) has entered hours for this pay period that are awaiting approval. Please approve these hours in Workday as soon as possible for payment on ${formattedPayDate}.\n\n`;
-                emailText += 'Worker\tUIN\tUnapproved Hours\n';
-                unapprovedEmployees.forEach(emp => {
-                    emailText += `${emp.worker}\t${emp.uin}\t${emp.unapproved.toFixed(2)}\n`;
-                });
-                emailText += '\n';
-            }
-
-            emailText += 'Please don\'t hesitate to reach out if you have any questions.\n\n';
-            emailText += 'Thanks!\nPayton';
-            return emailText;
-        }
-
-        function generateEmails() {
-            if (!workbookData) {
-                showStatus('Please select a file first!', 'error');
-                return;
-            }
-
-            const payDate = document.getElementById('payDateInput').value;
-            const hrManager = document.getElementById('hrManagerEmail').value;
-            if (!payDate || !hrManager) {
-                showStatus('Please fill in Pay Date and HR Manager Email!', 'error');
-                return;
-            }
-
-            document.getElementById('loading').classList.remove('hidden');
-            showStatus('Processing file and generating emails...', 'info');
-
-            setTimeout(() => {
-                try {
-                    payrollData = parsePayrollData(workbookData);
-
-                    if (payrollData.employees.length === 0) {
-                        throw new Error('No valid employee records found in the file');
-                    }
-
-                    const managerGroups = groupByManager(payrollData.employees);
-
-                    generatedEmails = [];
-                    Object.keys(managerGroups).forEach(managerEmail => {
-                        const employees = managerGroups[managerEmail];
-                        generatedEmails.push({
-                            to: managerEmail,
-                            subject: `Action Required: Employee Timesheet Reminders for Payment on ${formatPayDate(payDate)}`,
-                            htmlBody: createEmailHTML(managerEmail, employees, payDate),
-                            textBody: createEmailText(managerEmail, employees, payDate),
-                            employees: employees
-                        });
-                    });
-
-                    document.getElementById('totalEmployees').textContent = payrollData.employees.length;
-                    document.getElementById('totalManagers').textContent = generatedEmails.length;
-                    document.getElementById('employeesWithIssues').textContent = payrollData.employees.length;
-
-                    const warningDiv = document.getElementById('warningMessages');
-                    if (payrollData.warnings.length > 0) {
-                        let warningHTML = '<div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 15px; margin-top: 15px;">';
-                        warningHTML += '<h4 style="margin-top: 0; color: #856404;">⚠️ Warning: Employees Excluded</h4>';
-                        warningHTML += '<p style="color: #856404; margin-bottom: 10px;">The following employees had 0 hours in both Unsubmitted and Unapproved columns and were excluded:</p>';
-                        warningHTML += '<ul style="color: #856404; margin: 0;">';
-                        payrollData.warnings.forEach(warning => {
-                            warningHTML += `<li>${warning}</li>`;
-                        });
-                        warningHTML += '</ul></div>';
-                        warningDiv.innerHTML = warningHTML;
-                    } else {
-                        warningDiv.innerHTML = '';
-                    }
-
-                    document.getElementById('results').classList.remove('hidden');
-
-                    currentEmailIndex = 0;
-                    displayCurrentEmail();
-                    document.getElementById('emailViewer').classList.remove('hidden');
-
-                    document.getElementById('loading').classList.add('hidden');
-                    showStatus(`Successfully generated ${generatedEmails.length} emails for managers!`, 'success');
-                } catch (error) {
-                    document.getElementById('loading').classList.add('hidden');
-                    showStatus('Error processing file: ' + error.message, 'error');
-                }
-            }, 500);
-        }
-
-        function displayCurrentEmail() {
-            const emails = currentViewMode === 'individual' ? generatedEmails : broadcastEmails;
-            if (emails.length === 0) return;
-
-            const email = emails[currentEmailIndex];
-
-            document.getElementById('individualTab').style.background = currentViewMode === 'individual' ? '#007bff' : '#6c757d';
-            document.getElementById('individualTab').style.color = 'white';
-            document.getElementById('broadcastTab').style.background = currentViewMode === 'broadcast' ? '#28a745' : '#6c757d';
-            document.getElementById('broadcastTab').style.color = 'white';
-
-            if (currentViewMode === 'individual') {
-                document.getElementById('emailCounter').textContent = `Email ${currentEmailIndex + 1} of ${emails.length} | To: ${email.to}`;
-            } else {
-                document.getElementById('emailCounter').textContent = `Broadcast Email ${currentEmailIndex + 1} of ${emails.length} | ${email.label}`;
-            }
-
-            const metadataDiv = document.getElementById('emailMetadata');
-            if (currentViewMode === 'broadcast') {
-                metadataDiv.style.display = 'block';
-                document.getElementById('emailTo').textContent = email.to || '(Empty - using BCC)';
-
-                const bccContainer = document.getElementById('emailBccContainer');
-                if (email.bcc) {
-                    bccContainer.style.display = 'block';
-                    const bccEmails = email.bcc.split('; ');
-                    document.getElementById('emailBcc').textContent = `${bccEmails.length} recipients: ${email.bcc.substring(0, BCC_DISPLAY_LIMIT)}${email.bcc.length > BCC_DISPLAY_LIMIT ? '...' : ''}`;
-                } else {
-                    bccContainer.style.display = 'none';
-                }
-
-                const ccContainer = document.getElementById('emailCcContainer');
-                if (email.cc) {
-                    ccContainer.style.display = 'block';
-                    document.getElementById('emailCc').textContent = email.cc;
-                } else {
-                    ccContainer.style.display = 'none';
-                }
-
-                document.getElementById('emailSubject').textContent = email.subject;
-            } else {
-                metadataDiv.style.display = 'none';
-            }
-
-            document.getElementById('emailContent').innerHTML = email.htmlBody;
-            document.getElementById('prevEmailBtn').disabled = currentEmailIndex === 0;
-            document.getElementById('nextEmailBtn').disabled = currentEmailIndex === emails.length - 1;
-            document.getElementById('openAllContainer').style.display = currentViewMode === 'individual' ? 'block' : 'none';
-        }
-
-        function switchViewMode(mode) {
-            if (mode === 'individual' && generatedEmails.length === 0) {
-                showStatus('No individual emails generated yet. Generate manager emails first.', 'error');
-                return;
-            }
-            if (mode === 'broadcast' && broadcastEmails.length === 0) {
-                showStatus('No broadcast emails generated yet. Generate broadcast emails first.', 'error');
-                return;
-            }
-            currentViewMode = mode;
-            currentEmailIndex = 0;
-            displayCurrentEmail();
-        }
-
-        function previousEmail() {
-            const emails = currentViewMode === 'individual' ? generatedEmails : broadcastEmails;
-            if (currentEmailIndex > 0) {
-                currentEmailIndex--;
-                displayCurrentEmail();
-            }
-        }
-
-        function nextEmail() {
-            const emails = currentViewMode === 'individual' ? generatedEmails : broadcastEmails;
-            if (currentEmailIndex < emails.length - 1) {
-                currentEmailIndex++;
-                displayCurrentEmail();
-            }
-        }
-
-        async function copyEmailText() {
-            const emails = currentViewMode === 'individual' ? generatedEmails : broadcastEmails;
-            const email = emails[currentEmailIndex];
-
-            try {
-                let htmlToCopy = email.htmlBody;
-
-                if (htmlToCopy.includes('<!DOCTYPE') || htmlToCopy.includes('<html')) {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(htmlToCopy, 'text/html');
-
-                    const styleNodes = doc.head ? doc.head.querySelectorAll('style') : [];
-                    let styles = '';
-                    styleNodes.forEach(styleTag => {
-                        styles += styleTag.outerHTML;
-                    });
-
-                    if (doc.body) {
-                        doc.body.setAttribute('style', 'margin: 0; padding: 0; width: 100%;');
-                    }
-
-                    const bodyHtml = doc.body ? doc.body.outerHTML : htmlToCopy;
-                    htmlToCopy = `${styles}${bodyHtml}`;
-                }
-
-                const htmlBlob = new Blob([htmlToCopy], { type: 'text/html' });
-                const textBlob = new Blob([email.textBody], { type: 'text/plain' });
-
-                const clipboardItem = new ClipboardItem({
-                    'text/html': htmlBlob,
-                    'text/plain': textBlob
-                });
-
-                await navigator.clipboard.write([clipboardItem]);
-                showStatus('Email body copied with formatting!', 'success');
-            } catch (err) {
-                try {
-                    await navigator.clipboard.writeText(email.textBody);
-                    showStatus('Email body copied (plain text)', 'success');
-                } catch (fallbackErr) {
-                    showStatus('Failed to copy email: ' + fallbackErr.message, 'error');
-                }
-            }
-        }
-
-        function openInOutlook() {
-            const emails = currentViewMode === 'individual' ? generatedEmails : broadcastEmails;
-            const email = emails[currentEmailIndex];
-
-            const subject = encodeURIComponent(email.subject);
-            const body = encodeURIComponent(email.textBody);
-            const to = encodeURIComponent(email.to || '');
-
-            let mailtoLink = `mailto:${to}?subject=${subject}&body=${body}`;
-            if (currentViewMode === 'broadcast') {
-                if (email.bcc) {
-                    mailtoLink += `&bcc=${encodeURIComponent(email.bcc)}`;
-                }
-                if (email.cc) {
-                    mailtoLink += `&cc=${encodeURIComponent(email.cc)}`;
-                }
-            }
-
-            window.location.href = mailtoLink;
-        }
-
-        function openAllInOutlook() {
-            if (generatedEmails.length === 0) return;
-            let currentIndex = 0;
-
-            function openNext() {
-                if (currentIndex >= generatedEmails.length) {
-                    showStatus('All emails opened!', 'success');
-                    return;
-                }
-
-                const email = generatedEmails[currentIndex];
-                const subject = encodeURIComponent(email.subject);
-                const body = encodeURIComponent(email.textBody);
-                const to = encodeURIComponent(email.to);
-
-                const mailtoLink = `mailto:${to}?subject=${subject}&body=${body}`;
-                window.location.href = mailtoLink;
-
-                currentIndex++;
-
-                if (currentIndex < generatedEmails.length) {
-                    setTimeout(openNext, 1000);
-                } else {
-                    showStatus('All emails opened!', 'success');
-                }
-            }
-
-            showStatus(`Opening ${generatedEmails.length} emails...`, 'info');
-            openNext();
-        }
-
-        function stripHtml(html) {
-            const tmp = document.createElement('div');
-            tmp.innerHTML = html;
-            return tmp.textContent || tmp.innerText || '';
-        }
-
-        function fillTemplate(template, params) {
-            return template
-                .replace(/{currentPeriod}/g, params.currentPeriod)
-                .replace(/{currentDueWorker}/g, params.currentDueWorker)
-                .replace(/{currentDueWorkerDay}/g, params.currentDueWorkerDay)
-                .replace(/{currentDueManager}/g, params.currentDueManager)
-                .replace(/{currentDueManagerDay}/g, params.currentDueManagerDay)
-                .replace(/{currentDueManagerTime}/g, params.currentDueManagerTime)
-                .replace(/{retroPeriod}/g, params.retroPeriod)
-                .replace(/{retroDueWorker}/g, params.retroDueWorker)
-                .replace(/{retroDueWorkerDay}/g, params.retroDueWorkerDay)
-                .replace(/{retroDueManager}/g, params.retroDueManager)
-                .replace(/{retroDueManagerDay}/g, params.retroDueManagerDay)
-                .replace(/{HRManager}/g, params.hrManager)
-                .replace(/{payDate}/g, formatPayDate(params.payDate));
-        }
-
-        function dedupeEmails(emails) {
-            return [...new Set(
-                emails
-                    .map(email => (email || '').trim().toLowerCase())
-                    .filter(Boolean)
-            )];
-        }
-        
-        async function generateBroadcastEmails(mode) {
-            if (!workbookData) {
-                showStatus('Please select a file first!', 'error');
-                return;
-            }
-
-            const payDate = document.getElementById('payDateInput').value;
-            const hrManager = document.getElementById('hrManagerEmail').value;
-
-            if (!payDate || !hrManager) {
-                showStatus('Please fill in Pay Date and HR Manager Email!', 'error');
-                return;
-            }
-
-            const broadcastData = parsePayrollData(workbookData, {
-                requireColumns: ['workerEmail', 'managerEmail'],
-                excludeZeroHours: false,
-                requireManagerEmail: false,
-                requireWorkerInfo: false
-            });
-            const workerEmails = dedupeEmails(extractUniqueEmails('workerEmail', broadcastData));
-            const managerEmails = dedupeEmails(extractUniqueEmails('managerEmail', broadcastData));
-
-            if (workerEmails.length === 0 && managerEmails.length === 0) {
-                showStatus('No worker or manager emails found in the file.', 'error');
-                return;
-            }
-
-            let params = {
-                payDate: formatPayDate(payDate)
-            };
-
-            if (mode === 'current') {
-                const currentPeriod = document.getElementById('currentPeriod').value;
-                const currentWorkerDT = document.getElementById('currentDueWorkerDateTime').value;
-                const currentManagerDT = document.getElementById('currentDueManagerDateTime').value;
-
-                if (!currentPeriod || !currentWorkerDT || !currentManagerDT) {
-                    showStatus('Please fill in all Current broadcast parameters!', 'error');
-                    return;
-                }
-
-                const currentWorker = parseDateTimeInput(currentWorkerDT);
-                const currentManager = parseDateTimeInput(currentManagerDT);
-
-                params = {
-                    ...params,
-                    currentPeriod,
-                    currentDueWorker: currentWorker.fullDate,
-                    currentDueWorkerDay: currentWorker.dayName,
-                    currentDueManager: currentManager.fullDate,
-                    currentDueManagerDay: currentManager.dayName,
-                    currentDueManagerTime: currentManager.time
-                };
-
-                const [currentEmployeeTemplate, currentSupervisorTemplate] = await Promise.all([
-                    loadTemplate('Current_LAW_employee_reminder.html'),
-                    loadTemplate('Current_LAW_supervisor_reminder.html')
-                ]);
-
-                broadcastEmails = [
-                    {
-                        label: 'Worker Current Reminder',
-                        to: '',
-                        bcc: workerEmails.join('; '),
-                        cc: hrManager,
-                        subject: `Timesheet submissions due by ${params.currentDueWorker}`,
-                        htmlBody: fillTemplate(currentEmployeeTemplate, params),
-                        textBody: stripHtml(fillTemplate(currentEmployeeTemplate, params))
-                    },
-                    {
-                        label: 'Manager Current Reminder',
-                        to: '',
-                        bcc: managerEmails.join('; '),
-                        cc: hrManager,
-                        subject: `Timesheet approvals due by ${params.currentDueManagerDay}, ${params.currentDueManager} by 11 am`,
-                        htmlBody: fillTemplate(currentSupervisorTemplate, params),
-                        textBody: stripHtml(fillTemplate(currentSupervisorTemplate, params))
-                    }
-                ];
-            } else if (mode === 'retro') {
-                const retroPeriod = document.getElementById('retroPeriod').value;
-                const retroWorkerDT = document.getElementById('retroDueWorkerDateTime').value;
-                const retroManagerDT = document.getElementById('retroDueManagerDateTime').value;
-
-                if (!retroPeriod || !retroWorkerDT || !retroManagerDT) {
-                    showStatus('Please fill in all Retro broadcast parameters!', 'error');
-                    return;
-                }
-
-                const retroWorker = parseDateTimeInput(retroWorkerDT);
-                const retroManager = parseDateTimeInput(retroManagerDT);
-
-                params = {
-                    ...params,
-                    retroPeriod,
-                    retroDueWorker: retroWorker.fullDate,
-                    retroDueWorkerDay: retroWorker.dayName,
-                    retroDueManager: retroManager.fullDate,
-                    retroDueManagerDay: retroManager.dayName
-                };
-
-                const [retroEmployeeTemplate, retroSupervisorTemplate] = await Promise.all([
-                    loadTemplate('LAW_Retro_employee_reminder.html'),
-                    loadTemplate('LAW_Retro_supervisor_reminder.html')
-                ]);
-
-                broadcastEmails = [
-                    {
-                        label: 'Worker Retro Reminder',
-                        to: '',
-                        bcc: workerEmails.join('; '),
-                        cc: hrManager,
-                        subject: `Timesheet corrections for prior pay periods due by ${params.retroDueWorker}`,
-                        htmlBody: fillTemplate(retroEmployeeTemplate, params),
-                        textBody: stripHtml(fillTemplate(retroEmployeeTemplate, params))
-                    },
-                    {
-                        label: 'Manager Retro Reminder',
-                        to: '',
-                        bcc: managerEmails.join('; '),
-                        cc: hrManager,
-                        subject: `Timesheet approvals for prior pay periods due by ${params.retroDueManager}`,
-                        htmlBody: fillTemplate(retroSupervisorTemplate, params),
-                        textBody: stripHtml(fillTemplate(retroSupervisorTemplate, params))
-                    }
-                ];
-            }
-
-            currentViewMode = 'broadcast';
-            currentEmailIndex = 0;
-            displayCurrentEmail();
-            document.getElementById('emailViewer').classList.remove('hidden');
-            document.getElementById('results').classList.remove('hidden');
-            showStatus(
-                `Successfully generated ${broadcastEmails.length} broadcast emails! (${workerEmails.length} workers, ${managerEmails.length} managers)`,
-                'success'
-            );
-        }
-    </script>
-</body>
-</html>
