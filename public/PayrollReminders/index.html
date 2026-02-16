@@ -241,7 +241,9 @@
             }
             
             // Populate Current Period fields
-            const currentPeriodText = `${formatDateForDisplay(payPeriod.periodFrom)} - ${formatDateForDisplay(payPeriod.periodThru)}, 2026`;
+            const periodThruDate = new Date(payPeriod.periodThru + 'T00:00:00');
+            const year = periodThruDate.getFullYear();
+            const currentPeriodText = `${formatDateForDisplay(payPeriod.periodFrom)} - ${formatDateForDisplay(payPeriod.periodThru)}, ${year}`;
             document.getElementById('currentPeriod').value = currentPeriodText;
             
             // Worker deadline is the thru_date at 5pm (last day of period)
@@ -249,7 +251,6 @@
             document.getElementById('currentDueWorkerDateTime').value = workerDeadlineDateTime;
             
             // Manager deadline is from currentDue.supervisor field (parse date and time)
-            const managerCurrentDue = new Date(payPeriod.currentDue.supervisor);
             const managerCurrentDateStr = payPeriod.currentDue.supervisor.split('T')[0];
             const managerCurrentTimeStr = payPeriod.currentDue.supervisor.split('T')[1].substring(0, 5);
             document.getElementById('currentDueManagerDateTime').value = createDateTimeString(managerCurrentDateStr, managerCurrentTimeStr);
