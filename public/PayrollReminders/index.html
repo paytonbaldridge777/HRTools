@@ -13,14 +13,54 @@
             <div class="form-group" id="sharedFields">
                 <label for="hrManagerEmail">HR Manager Email:</label>
                 <input type="email" id="hrManagerEmail" required>
+                
+                <label for="payDateInput" style="margin-top: 20px; display: block;">Pay Date:</label>
+                <input type="date" id="payDateInput" required style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 100%; max-width: 300px;">
+                
+                <div style="margin-top: 10px;">
+                    <button type="button" id="populateFromScheduleBtn" class="action-btn" onclick="populateFromPaySchedule()" style="background: #17a2b8; color: white;">
+                        📅 Populate from Pay Schedule
+                    </button>
+                    <span id="populateStatus" style="margin-left: 10px; font-size: 12px; color: #666;"></span>
+                </div>
+                
                 <div style="margin-top: 15px;">
-                    <button type="button" onclick="loadPaySchedule()" class="action-btn" style="background: #17a2b8; color: white; padding: 10px 20px;">
-                        📅 Load from Schedule
+                    <button type="button" onclick="loadPaySchedule()" class="action-btn" style="background: #28a745; color: white; padding: 10px 20px;">
+                        📅 Load from Current Date
                     </button>
                     <p style="font-size: 12px; color: #666; margin-top: 5px;">Auto-populate fields based on current pay period</p>
                 </div>
             </div>
-            <!-- Other fields and functionality here -->
+            
+            <div class="form-group" style="margin-top: 30px;">
+                <h3 style="color: #500000; border-bottom: 2px solid #500000; padding-bottom: 10px;">Current Pay Period</h3>
+                
+                <label for="currentPeriod">Period Range:</label>
+                <input type="text" id="currentPeriod" placeholder="e.g., January 24 - February 6, 2026">
+                
+                <label for="currentDueWorkerDateTime">Worker Submission Deadline:</label>
+                <input type="datetime-local" id="currentDueWorkerDateTime">
+                
+                <label for="currentDueManagerDateTime">Manager Approval Deadline:</label>
+                <input type="datetime-local" id="currentDueManagerDateTime">
+            </div>
+            
+            <div class="form-group" style="margin-top: 30px;">
+                <h3 style="color: #500000; border-bottom: 2px solid #500000; padding-bottom: 10px;">Retro Pay Period</h3>
+                
+                <label for="retroPeriod">Retro Period Description:</label>
+                <input type="text" id="retroPeriod" placeholder="e.g., September 6 - December 26 (up to 6 prior pay periods)">
+                
+                <label for="retroDueWorkerDateTime">Worker Retro Deadline:</label>
+                <input type="datetime-local" id="retroDueWorkerDateTime">
+                
+                <label for="retroDueManagerDateTime">Manager Retro Deadline:</label>
+                <input type="datetime-local" id="retroDueManagerDateTime">
+            </div>
+            
+            <div style="margin-top: 30px;">
+                <div id="statusMessage" style="padding: 10px; border-radius: 4px; display: none;"></div>
+            </div>
         </form>
     </div>
     <script src="script.js"></script>
@@ -127,6 +167,156 @@
             const minutes = String(date.getMinutes()).padStart(2, '0');
             
             return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        // New functions for populating from selected pay date
+        function findPayPeriodByDate(schedule, payDateString) {
+            // Convert pay date string to Date object
+            const payDate = new Date(payDateString + 'T00:00:00');
+            
+            // Find matching pay period
+            for (const period of schedule.payPeriods) {
+                const periodPayDate = new Date(period.payDate + 'T00:00:00');
+                if (periodPayDate.getTime() === payDate.getTime()) {
+                    return period;
+                }
+            }
+            return null;
+        }
+
+        function calculateRetroPeriod(schedule, currentPeriod) {
+            // Find periods that are 6 periods before current
+            const currentIndex = schedule.payPeriods.findIndex(p => p.payPeriod === currentPeriod.payPeriod);
+            
+            if (currentIndex < 6) {
+                // Not enough prior periods
+                return null;
+            }
+            
+            // Get the period 6 periods back
+            const startPeriod = schedule.payPeriods[currentIndex - 6];
+            const endPeriod = schedule.payPeriods[currentIndex - 1];
+            
+            return {
+                startDate: startPeriod.periodFrom,
+                endDate: endPeriod.periodThru,
+                description: `${formatDateForDisplay(startPeriod.periodFrom)} - ${formatDateForDisplay(endPeriod.periodThru)}`
+            };
+        }
+
+        function formatDateForDisplay(dateString) {
+            const date = new Date(dateString + 'T00:00:00');
+            return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+        }
+
+        function createDateTimeString(dateString, timeString) {
+            // dateString format: "2026-02-01"
+            // timeString format: "17:00" (5:00 PM)
+            return `${dateString}T${timeString}`;
+        }
+
+        async function populateFromPaySchedule() {
+            const payDateInput = document.getElementById('payDateInput').value;
+            
+            if (!payDateInput) {
+                showStatus('Please select a Pay Date first!', 'error');
+                document.getElementById('populateStatus').textContent = '❌ No pay date selected';
+                return;
+            }
+            
+            document.getElementById('populateStatus').textContent = '⏳ Loading...';
+            
+            const schedule = await loadScheduleData();
+            if (!schedule) {
+                document.getElementById('populateStatus').textContent = '❌ Failed to load schedule';
+                return;
+            }
+            
+            const payPeriod = findPayPeriodByDate(schedule, payDateInput);
+            
+            if (!payPeriod) {
+                showStatus('No pay period found for selected date', 'error');
+                document.getElementById('populateStatus').textContent = '❌ Pay period not found';
+                return;
+            }
+            
+            // Populate Current Period fields
+            const currentPeriodText = `${formatDateForDisplay(payPeriod.periodFrom)} - ${formatDateForDisplay(payPeriod.periodThru)}, 2026`;
+            document.getElementById('currentPeriod').value = currentPeriodText;
+            
+            // Worker deadline is the thru_date at 5pm (last day of period)
+            const workerDeadlineDateTime = createDateTimeString(payPeriod.periodThru, '17:00');
+            document.getElementById('currentDueWorkerDateTime').value = workerDeadlineDateTime;
+            
+            // Manager deadline is from currentDue.supervisor field (parse date and time)
+            const managerCurrentDue = new Date(payPeriod.currentDue.supervisor);
+            const managerCurrentDateStr = payPeriod.currentDue.supervisor.split('T')[0];
+            const managerCurrentTimeStr = payPeriod.currentDue.supervisor.split('T')[1].substring(0, 5);
+            document.getElementById('currentDueManagerDateTime').value = createDateTimeString(managerCurrentDateStr, managerCurrentTimeStr);
+            
+            // Populate Retro Period fields
+            const retroPeriod = calculateRetroPeriod(schedule, payPeriod);
+            
+            if (retroPeriod) {
+                document.getElementById('retroPeriod').value = `${retroPeriod.description} (up to 6 prior pay periods)`;
+                
+                // Worker retro deadline is one day before manager retro deadline at 5pm
+                const managerRetroDue = new Date(payPeriod.retroDue.supervisor);
+                const workerRetroDue = new Date(managerRetroDue);
+                workerRetroDue.setDate(workerRetroDue.getDate() - 1);
+                
+                const workerRetroDateStr = workerRetroDue.toISOString().split('T')[0];
+                document.getElementById('retroDueWorkerDateTime').value = createDateTimeString(workerRetroDateStr, '17:00');
+                
+                // Manager retro deadline from retroDue.supervisor field
+                const managerRetroDateStr = payPeriod.retroDue.supervisor.split('T')[0];
+                const managerRetroTimeStr = payPeriod.retroDue.supervisor.split('T')[1].substring(0, 5);
+                document.getElementById('retroDueManagerDateTime').value = createDateTimeString(managerRetroDateStr, managerRetroTimeStr);
+            }
+            
+            showStatus(`Successfully populated fields for Pay Period ${payPeriod.payPeriod}`, 'success');
+            document.getElementById('populateStatus').textContent = `✅ Populated for PP ${payPeriod.payPeriod}`;
+        }
+
+        async function loadScheduleData() {
+            if (payScheduleData) return payScheduleData;
+            
+            try {
+                const response = await fetch('./Pay_Schedule_FY2026.json');
+                if (!response.ok) throw new Error('Failed to load pay schedule');
+                payScheduleData = await response.json();
+                return payScheduleData;
+            } catch (error) {
+                console.error('Error loading pay schedule:', error);
+                showStatus('Error loading pay schedule: ' + error.message, 'error');
+                return null;
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.textContent = message;
+            statusDiv.style.display = 'block';
+            
+            // Set color based on type
+            if (type === 'success') {
+                statusDiv.style.backgroundColor = '#d4edda';
+                statusDiv.style.color = '#155724';
+                statusDiv.style.border = '1px solid #c3e6cb';
+            } else if (type === 'error') {
+                statusDiv.style.backgroundColor = '#f8d7da';
+                statusDiv.style.color = '#721c24';
+                statusDiv.style.border = '1px solid #f5c6cb';
+            } else if (type === 'info') {
+                statusDiv.style.backgroundColor = '#d1ecf1';
+                statusDiv.style.color = '#0c5460';
+                statusDiv.style.border = '1px solid #bee5eb';
+            }
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
         }
     </script>
 </body>
