@@ -167,6 +167,8 @@
                     <strong>Subject:</strong> <span id="emailSubject" style="margin-left: 10px;"></span>
                 </div>
             </div>
+
+            <div id="payPeriodIndicator" style="text-align: center; margin-bottom: 10px; font-weight: 700;"></div>
             
             <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
                 <button onclick="previousEmail()" id="prevEmailBtn" class="action-btn">⬅️ Previous</button>
@@ -370,6 +372,8 @@
             }
             
             // Populate Current Period
+            currentPayPeriodEstimated = !!period.estimated;
+            updatePayPeriodIndicator();
             const year = new Date(period.periodThru + 'T00:00:00').getFullYear();
             const currentRange = `${formatDisplayDate(period.periodFrom)} - ${formatDisplayDate(period.periodThru)}, ${year}`;
             document.getElementById('currentPeriod').value = currentRange;
@@ -466,6 +470,26 @@
             });
         }
 
+        let currentPayPeriodEstimated = null;
+        
+        function updatePayPeriodIndicator() {
+            const indicator = document.getElementById('payPeriodIndicator');
+            if (!indicator) return;
+        
+            if (currentPayPeriodEstimated === null) {
+                indicator.textContent = '';
+                return;
+            }
+        
+            if (currentPayPeriodEstimated) {
+                indicator.textContent = 'Estimated Pay Period';
+                indicator.style.color = '#dc3545';
+            } else {
+                indicator.textContent = 'Regular Pay Period';
+                indicator.style.color = '#198754';
+            }
+        }
+        
         function parsePayrollData(workbook, options = {}) {
             const {
                 requireColumns = ['worker', 'uin', 'managerEmail', 'unsubmitted', 'unapproved', 'workerEmail'],
@@ -833,6 +857,7 @@
             document.getElementById('prevEmailBtn').disabled = currentEmailIndex === 0;
             document.getElementById('nextEmailBtn').disabled = currentEmailIndex === emails.length - 1;
             document.getElementById('openAllContainer').style.display = currentViewMode === 'individual' ? 'block' : 'none';
+            updatePayPeriodIndicator();
         }
 
         function switchViewMode(mode) {
