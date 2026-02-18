@@ -1595,9 +1595,20 @@ function updateEmailEmployeeList() {
 			<p>Howdy ${firstName}!</br></br>
 				To begin the hire process, please provide your <strong>UIN</strong> and <strong>year of study</strong> (e.g., 1L, 2L, 3L, LLM).</br></br>
 				
-				Your offer of employment is contingent upon successful completion of a <strong>criminal background check</strong> and the <strong>Form I-9</strong>. Please remember that you may <strong>not begin 
-				working</strong> until all hiring requirements 
-				are fully completed.</br></br>
+				Your offer of employment is contingent upon:</br></br>
+				<ol>
+					<li>Successful completion of a criminal background check, which includes the absence of any disqualifying information,</li>
+					<li>Maintaining student status,</li>
+					<li>Continued satisfactory academic performance toward your degree,</li>
+					<li>Maintenance of your work authorization and, if applicable, your immigration status,</li>
+					<li>Attestation that you are not employed by, nor have continuous connections to, any foreign government or political apparatus listed in 15 C.F.R. § 791.4, in accordance with Executive Order GA-48 issued by Texas Governor Abbott. In addition to the attestation requirement, certain positions that research, work on, or have access to critical infrastructure will undergo a criminal background check and foreign adversary screening at the time of hire as well as on a biennial basis,</li>
+					<li>Satisfactory completion of assigned duties, including timely completion of required training,</li>
+					<li>Availability to work the schedule set by the employing department, understanding that work hours may not always adjust to changes in your class schedule, <strong>and</strong></li>
+					<li>Continuation of employment is also contingent upon the availability of funding.</li>					
+				</ol>
+				</br></br>
+				Please remember that you may <strong>not begin working</strong> until all hiring requirements are fully completed.</br></br>
+				
 				Below is a breakdown of what to expect next:</br>
 				________________________________________</br></br>
 				<strong>Next Steps in the Hiring Process</strong></br>
@@ -1651,13 +1662,24 @@ function updateEmailEmployeeList() {
 				    </ul>
 				  </li>
 				</ol>
-				________________________________________</br></br>
+				_________________________________________</br></br>
 				
 				Please keep an eye out for the <strong>Prospective Hire Form</strong>, as it must be completed before everything else can proceed.</br></br>
+					<div style="margin-left: 40px;">
+					<strong>Notice Regarding H1-B Sponsorship:</strong></br></br>
+					
+					A Presidential proclamation issued on September 19, 2025, imposes a $100,000 fee on <strong>new H-1B petitions</strong> filed after September 21, 2025. Please be advised that Texas A&M University 
+					will NOT pay this fee. Therefore, <strong>if you need immigration sponsorship for your employment</strong>, we recommend that you consult with your private immigration counsel at your own expense 
+					to ascertain whether your current immigration status would make a potential offer of employment from Texas A&M University subject to this fee.</br></br>
+					
+					In addition, on January 27, 2026, Texas Governor Abbot issued a moratorium on the filing of <strong>any new H-1B</strong> unless approved by the Texas Workforce Commission. Accordingly, <strong>if you will 
+					now or in the future require sponsorship for employment visa status</strong>, this moratorium <strong>may affect our ability to employ you should you</strong> be selected as the final candidate.</br></br>
+					</div>
 				
 				Let me know if you have any questions, I'm here to help!</br></br>
-				Thanks,</br>
-				Payton
+				
+				Cheers,</br>
+				Payton</br>
 			</p>
 		  `;
 		}	
@@ -1676,7 +1698,8 @@ function updateEmailEmployeeList() {
 			
 			Thanks in advance for your attention to this!</br></br>
 			
-			Cheers,</br></p>
+			Cheers,</br>
+			Payton</br></p>
 		  `;
 		}		
 		if (emailType === "i9Reminder") {
@@ -1689,7 +1712,8 @@ function updateEmailEmployeeList() {
 			
 			Let me know if you have any trouble locating the message or if you have any questions about the process, I’m happy to help.</br></br>
 			
-			Cheers,</br></p>
+			Cheers,</br>
+			Payton</br></p>
 		  `;
 		}			
 		if (emailType === "WDOnboardingNotice") {
@@ -1705,7 +1729,8 @@ function updateEmailEmployeeList() {
 			
 			Please don't hesitate to reach out if you have any questions on the onboarding.</br></br>
 			
-			Cheers,</br>Payton</p>
+			Cheers,</br>
+			Payton</br></p>
 		  `;
 		}			
 		if (emailType === "WDOnboardingReminder") {
@@ -1716,7 +1741,8 @@ function updateEmailEmployeeList() {
 						
 			Please don't hesitate to reach out if you have any questions on the onboarding.</br></br>
 			
-			Cheers,</br>Payton</p>
+			Cheers,</br>
+			Payton</br></p>
 		  `;
 		}		
 		if (emailType === "SSNReminder") {
@@ -1733,9 +1759,8 @@ function updateEmailEmployeeList() {
 			</br>
 			Thank you for your prompt attention to this matter.
 			</br>
-			Cheers, 
-			</br>
-			Payton</p></br>
+			Cheers,</br>
+			Payton</br></p>
 		  `;
 		}	
 		if (emailType === "SSNGuardianReminder") {
@@ -1748,9 +1773,8 @@ function updateEmailEmployeeList() {
 			</br>
 			Thank you for your prompt attention to this matter.
 			</br>
-			Cheers, 
-			</br>
-			Payton</p></br>
+			Cheers,</br>
+			Payton</br></p>
 		  `;
 		}	
 		// When generating email
@@ -2287,6 +2311,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </body>
 
 </html>
+
 
 
 
