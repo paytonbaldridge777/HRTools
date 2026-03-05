@@ -1115,7 +1115,7 @@
                     emailHTML += `<td style="border: 1px solid #ddd; padding: 6px;">${course['email'] || ''}</td>`;
                     emailHTML += `<td style="border: 1px solid #ddd; padding: 6px;">${course['course number'] || ''}</td>`;
                     emailHTML += `<td style="border: 1px solid #ddd; padding: 6px;">${course['course name'] || ''}</td>`;
-                    emailHTML += `<td style="border: 1px solid #ddd; padding: 6px;">${formatDate(course['last paid date']) || ''}</td>`;
+                    emailHTML += `<td style="border: 1px solid #ddd; padding: 6px;">${formatDate(course['due date']) || ''}</td>`;
                     emailHTML += `<td style="border: 1px solid #ddd; padding: 6px;">${formatDate(course['date assigned']) || ''}</td>`;
                     emailHTML += `<td style="border: 1px solid #ddd; padding: 6px;">${course['primary supervisor name'] || ''}</td>`;
                     emailHTML += `<td style="border: 1px solid #ddd; padding: 6px;">${course['number of notifications'] || ''}</td>`;
@@ -1448,4 +1448,5 @@
         document.body.setAttribute('data-theme', savedTheme);
     </script>
 </body>
+
 </html>
