@@ -660,6 +660,7 @@
               <!-- <option value="welcome">Welcome Message</option> -->
 			  <option value="prospectiveWelcome">Prospective Employee Welcome</option>
 			  <option value="PHFReminder">Prospective Hire Form Reminder</option>
+			  <option value="BCReminder">Background Check Reminder</option>	
               <option value="i9verification">I-9 Verification</option>			  
 			  <option value="i9Reminder">I-9 Section 1 Reminder</option>
 			  <option value="WDOnboardingNotice">WD Onboarding Process Notification</option>
@@ -1692,6 +1693,20 @@ function updateEmailEmployeeList() {
 			Payton</br></p>
 		  `;
 		}		
+		if (emailType === "BCReminder") {
+		  template = `
+			<p>Howdy ${firstName}!</br></br>
+			
+			<p>You should have received an email from Sterling requesting you to submit information for your background check. Please complete this step as soon as possible so we can keep your hire process moving forward. A delayed background check could result in a delay of your starting date. </br></br>
+			
+			If you haven’t seen the email, try searching all folders, including spam and trash, for "Sterling" to make sure it didn’t get filtered.</br></br>
+			
+			If you have already completed this process, please let me know so I can reach out to the onboarding team for an update on the delay.</br></br>
+			
+			Cheers,</br>
+			Payton</br></p>
+		  `;
+		}		
 		if (emailType === "i9Reminder") {
 		  template = `
 			<p>Howdy ${firstName}!</br></br>
@@ -2301,6 +2316,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </body>
 
 </html>
+
 
 
 
