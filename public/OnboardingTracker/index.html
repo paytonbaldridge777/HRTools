@@ -968,19 +968,27 @@ function updateCurrentStepSummary() {
     if (bi === -1) return -1;
     return ai - bi;
   });
-  const maxCount = sorted[0][1];
+  const totalSteps = hrTasks.length; // 12
 
   el.innerHTML = sorted.map(([step, count]) => {
-    const pct = Math.round((count / maxCount) * 100);
+    const stepIndex = hrTasks.indexOf(step);
+    // Progress = position in the pipeline (0-based index + 1 completed steps before this one)
+    // "At this step" means steps 0..stepIndex-1 are done, stepIndex is current
+    const stepsCompleted = stepIndex === -1 ? totalSteps : stepIndex;
+    const pct = Math.round((stepsCompleted / totalSteps) * 100);
+    const progressLabel = stepIndex === -1
+      ? `${totalSteps}/${totalSteps}`
+      : `${stepsCompleted}/${totalSteps}`;
     return `
       <div class="mb-2">
         <div class="flex justify-between items-center mb-0.5">
           <span class="text-gray-700 truncate max-w-[75%]" title="${step}">${step}</span>
           <span class="font-semibold text-gray-600 ml-1">${count}</span>
         </div>
-        <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+        <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden" title="${progressLabel} steps complete">
           <div class="h-full bg-red-900 rounded-full transition-all duration-700" style="width:${pct}%"></div>
         </div>
+        <div class="text-right text-gray-400 mt-0.5" style="font-size:10px;">${progressLabel} steps</div>
       </div>`;
   }).join('');
 }
