@@ -959,8 +959,15 @@ function updateCurrentStepSummary() {
     counts[step] = (counts[step] || 0) + 1;
   });
 
-  // Sort by count desc
-  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  // Sort by task order in hrTasks, with 'Completed' at the end
+  const sorted = Object.entries(counts).sort((a, b) => {
+    const ai = hrTasks.indexOf(a[0]);
+    const bi = hrTasks.indexOf(b[0]);
+    if (ai === -1 && bi === -1) return 0;
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
   const maxCount = sorted[0][1];
 
   el.innerHTML = sorted.map(([step, count]) => {
