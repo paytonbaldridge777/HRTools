@@ -149,11 +149,11 @@
 	@keyframes popPie { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 	.pie-slice { animation: popPie 0.8s ease-out forwards; }	
 
-	#chart-category-pie { max-width: 140px; max-height: 140px; margin: auto; overflow: visible; }
+	#chart-category-pie { max-width: 180px; max-height: 180px; margin: auto; overflow: visible; }
 
 	#chart-type-pie {
-	  max-width: 140px;
-	  max-height: 140px;
+	  max-width: 180px;
+	  max-height: 180px;
 	  margin: auto;
 	  overflow: visible;
 	}
@@ -456,7 +456,7 @@
 		</div>
 
 		<!-- Additional Insights -->
-		<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+		<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
 
 		  <!-- HIRE TYPES -->
 		  <div class="bg-white p-4 rounded-lg shadow border border-gray-200 flex flex-col">
@@ -466,7 +466,7 @@
 			<!-- Pie: Hire Type Counts -->
 			<div class="flex flex-col items-center mb-2">
 			  <p class="text-xs text-gray-700 font-medium mb-1">Total Hire Type Distribution</p>
-			  <svg id="chart-type-pie" style="width:140px; height:140px; display:block;"></svg>
+			  <svg id="chart-type-pie" style="width:180px; height:180px; display:block;"></svg>
 			  <p id="type-summary-legend" class="text-xs text-gray-500 italic text-center mt-1"></p>
 			</div>
 
@@ -485,7 +485,7 @@
 			<!-- Pie: Hire Category Counts -->
 			<div class="flex flex-col items-center mb-2">
 			  <p class="text-xs text-gray-700 font-medium mb-1">Total Hire Category Distribution</p>
-			  <svg id="chart-category-pie" style="width:140px; height:140px; display:block;"></svg>
+			  <svg id="chart-category-pie" style="width:180px; height:180px; display:block;"></svg>
 			  <p id="category-summary-legend" class="text-xs text-gray-500 italic text-center mt-1"></p>
 			</div>
 
@@ -493,6 +493,15 @@
 			<div>
 			  <p class="text-xs text-gray-700 font-medium mb-1 text-center">Average Completion Days (by Category)</p>
 			  <div id="chart-category-bar" class="mt-2"></div>
+			</div>
+		  </div>
+
+		  <!-- CURRENT STEPS -->
+		  <div class="bg-white p-4 rounded-lg shadow border border-gray-200 flex flex-col">
+			<h3 class="text-sm font-semibold mb-1 text-tamu-maroon">Current Steps</h3>
+			<p class="text-xs text-gray-500 mb-3">Where active employees are right now</p>
+			<div id="current-step-summary" class="flex-1 space-y-1 text-xs text-gray-700">
+			  <p class="text-gray-400 italic">No active employees</p>
 			</div>
 		  </div>
 		</div>
@@ -914,6 +923,61 @@ function calculateDueDate(task, startDate, requestReceived) {
   }
 }
 
+function normalizeTaskName(str) {
+  return (str || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[\u2010-\u2015\u2212\u2014\u2013]/g, '-')
+    .replace(/\s+/g, ' ');
+}
+
+function getCompletedTaskSet(o) {
+  const raw = Object.keys(o.taskCompletionDates || {});
+  return new Set(raw.map(normalizeTaskName));
+}
+
+function getCurrentStep(o) {
+  const tasks = getFilteredTasks(o.hireCategory, o.internationalHire);
+  const completedSet = getCompletedTaskSet(o);
+  const first = tasks.find(t => !completedSet.has(normalizeTaskName(t)));
+  return first || 'Completed';
+}
+
+function updateCurrentStepSummary() {
+  const el = document.getElementById('current-step-summary');
+  if (!el) return;
+
+  const active = onboardings.filter(o => o.status !== 'completed');
+  if (active.length === 0) {
+    el.innerHTML = '<p class="text-gray-400 italic">No active employees</p>';
+    return;
+  }
+
+  const counts = {};
+  active.forEach(o => {
+    const step = getCurrentStep(o);
+    counts[step] = (counts[step] || 0) + 1;
+  });
+
+  // Sort by count desc
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const maxCount = sorted[0][1];
+
+  el.innerHTML = sorted.map(([step, count]) => {
+    const pct = Math.round((count / maxCount) * 100);
+    return `
+      <div class="mb-2">
+        <div class="flex justify-between items-center mb-0.5">
+          <span class="text-gray-700 truncate max-w-[75%]" title="${step}">${step}</span>
+          <span class="font-semibold text-gray-600 ml-1">${count}</span>
+        </div>
+        <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div class="h-full bg-red-900 rounded-full transition-all duration-700" style="width:${pct}%"></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
 function getFilteredTasks(hireCategory, internationalHire) {
   const category = hireCategory || 'Newhire';
   let tasks = hrTasks;
@@ -952,6 +1016,7 @@ function updateStats() {
 
   updateAverageCompletionTime(completedList);
   updateInsightCharts(); // use the new compact right-side charts
+  updateCurrentStepSummary();
 }
 
 function updateStatDropdown(dropdownId, employees) {
@@ -1014,8 +1079,8 @@ function renderPieChart(containerId, dataMap, order, colors) {
   if (!svg) return;
   svg.innerHTML = '';
   
-  const size = 140;
-  const radius = 60;
+  const size = 180;
+  const radius = 76;
   const center = size / 2;
   svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
   
@@ -1252,9 +1317,15 @@ function renderOnboardingCards() {
   container.innerHTML = '';
   filteredOnboardings.forEach(o => {
     const tasks = getFilteredTasks(o.hireCategory, o.internationalHire);
-    const done = Object.keys(o.taskCompletionDates || {}).filter(t => tasks.includes(t)).length;
+    const completedSet = getCompletedTaskSet(o);
+    const done = tasks.filter(t => completedSet.has(normalizeTaskName(t))).length;
+    const currentStep = getCurrentStep(o);
+    const isFullyDone = currentStep === 'Completed';
     const commentText = o.comment ? o.comment : '';
     const pinText = o.pin ? o.pin : 'N/A';
+    const stepBadgeClass = isFullyDone
+      ? 'text-green-700 bg-green-50 border border-green-200'
+      : 'text-amber-700 bg-amber-50 border border-amber-200';
     const card = document.createElement('div');
     card.className = 'bg-white rounded-lg shadow border border-gray-200 hover:shadow-md transition-shadow flex flex-col h-full';
     card.innerHTML = `
@@ -1267,6 +1338,12 @@ function renderOnboardingCards() {
             <p class="text-xs text-gray-400">UIN: ${o.uin || 'N/A'} | LF: ${o.lf || 'N/A'} | PIN: ${pinText}</p>
             <p class="text-xs text-gray-400">Request: ${o.requestReceived || 'N/A'}</p>
             <p class="text-xs text-gray-400">Start: ${o.startDate || 'N/A'} ${o.internationalHire ? ' • International' : ''}</p>
+            <div class="mt-2 flex items-center gap-2 flex-wrap">
+              <span class="px-2 py-0.5 rounded-full text-xs font-medium ${stepBadgeClass}">
+                Current: ${currentStep}
+              </span>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">Current Step: <span class="font-medium">${currentStep}</span></p>
             ${commentText ? `<p class="mt-2 text-sm text-gray-700 italic">"${commentText}"</p>` : ''}
           </div>
           <div class="flex items-center gap-2">
