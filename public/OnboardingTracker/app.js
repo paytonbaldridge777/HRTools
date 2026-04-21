@@ -37,7 +37,7 @@ document.getElementById('login-form').addEventListener('submit', (e) => {
 
 // GITHUB CONFIGURATION
 const GITHUB_CONFIG = {
-  token: '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',
+  token: '',
   owner: 'paytonbaldridge777',
   repo: 'HRDashboard',
   branch: 'main',
@@ -59,9 +59,10 @@ const hrTasks = [
   "PHF Form",
   "Process in WD",
   "I-9 in Guardian",
+  "Onboarding Email Sent",
+  "Disclosure of Student Status Form Sent",
   "I-9 Section 1 Complete",
   "I-9 Section 2 Complete",  
-  "Onboarding Email Sent",
   "WorkDay at Onboarding Step",
   "Workday Onboarding Started",
   "Workday Onboarding Completed",
@@ -142,13 +143,22 @@ function calculateDueDate(task, startDate, requestReceived) {
   }
 }
 
-function getFilteredTasks(hireCategory, internationalHire) {
+function getFilteredTasks(hireCategory, internationalHire, hireType) {
   const category = hireCategory || 'Newhire';
   let tasks = hrTasks;
+  const isStudentHireType = (hireType || '').trim().toLowerCase().includes('student');
   
   // Filter out tasks not needed for Addjob or Transfer
   if (category === 'Addjob' || category === 'Transfer') {
-    tasks = tasks.filter(t => t !== "I-9 in Guardian" && t !== "Onboarding Email Sent");
+    tasks = tasks.filter(t =>
+      t !== "I-9 in Guardian" &&
+      t !== "Onboarding Email Sent" &&
+      t !== "Disclosure of Student Status Form Sent"
+    );
+  }
+
+  if (!isStudentHireType) {
+    tasks = tasks.filter(t => t !== "Disclosure of Student Status Form Sent");
   }
   
   // Filter out international hire task if not international
@@ -467,7 +477,7 @@ function renderOnboardingCards() {
   const container = document.getElementById('onboarding-cards');
   container.innerHTML = '';
   filteredOnboardings.forEach(o => {
-    const tasks = getFilteredTasks(o.hireCategory, o.internationalHire);
+    const tasks = getFilteredTasks(o.hireCategory, o.internationalHire, o.hireType);
     const done = Object.keys(o.taskCompletionDates || {}).filter(t => tasks.includes(t)).length;
     const commentText = o.comment ? o.comment : '';
     const pinText = o.pin ? o.pin : 'N/A';
@@ -606,7 +616,7 @@ function applyFilters() {
 }
 
 function renderTaskList(o) {
-  const filteredTasks = getFilteredTasks(o.hireCategory, o.internationalHire);
+  const filteredTasks = getFilteredTasks(o.hireCategory, o.internationalHire, o.hireType);
   const completed = Object.keys(o.taskCompletionDates || {}).filter(t => filteredTasks.includes(t));
   const total = filteredTasks.length;
   document.getElementById('task-progress').textContent = `${completed.length} of ${total} completed`;
@@ -615,7 +625,7 @@ function renderTaskList(o) {
 
   const noticeEl = document.getElementById('category-notice');
   if (o.hireCategory === 'Addjob' || o.hireCategory === 'Transfer') {
-    noticeEl.textContent = `ℹ️ I-9 in Guardian and Onboarding Email Sent tasks are not required for ${o.hireCategory} category`;
+    noticeEl.textContent = `ℹ️ I-9 in Guardian, Onboarding Email Sent, and Disclosure of Student Status Form Sent tasks are not required for ${o.hireCategory} category`;
     noticeEl.classList.remove('hidden');
   } else {
     noticeEl.classList.add('hidden');
@@ -718,7 +728,7 @@ function handleTaskToggle(taskName, isChecked) {
     delete updated[taskName];
   }
   o.taskCompletionDates = updated;
-  const tasks = getFilteredTasks(o.hireCategory, o.internationalHire);
+  const tasks = getFilteredTasks(o.hireCategory, o.internationalHire, o.hireType);
   const doneCount = Object.keys(updated).filter(t => tasks.includes(t)).length;
   o.progress = tasks.length ? Math.round(doneCount / tasks.length * 100) : 0;
   if (doneCount === tasks.length) o.status = 'completed';
@@ -738,7 +748,7 @@ function handleCompletionDateChange(taskName, newDate) {
     delete updated[taskName];
   }
   o.taskCompletionDates = updated;
-  const tasks = getFilteredTasks(o.hireCategory, o.internationalHire);
+  const tasks = getFilteredTasks(o.hireCategory, o.internationalHire, o.hireType);
   const doneCount = Object.keys(updated).filter(t => tasks.includes(t)).length;
   o.progress = tasks.length ? Math.round(doneCount / tasks.length * 100) : 0;
   if (doneCount === tasks.length) o.status = 'completed';
@@ -855,7 +865,7 @@ document.getElementById('generate-email').addEventListener('click', () => {
 function updateOverdueCounts() {
   const today = new Date().toISOString().split('T')[0];
   onboardings.forEach(o => {
-    const tasks = getFilteredTasks(o.hireCategory, o.internationalHire);
+    const tasks = getFilteredTasks(o.hireCategory, o.internationalHire, o.hireType);
     let overdue = 0;
 
     tasks.forEach(task => {
@@ -1245,7 +1255,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showConfirmDialog('Please fill required fields.', () => {});
       return;
     }
-    const tasks = getFilteredTasks(formData.hireCategory, formData.internationalHire);
+    const tasks = getFilteredTasks(formData.hireCategory, formData.internationalHire, formData.hireType);
     if (editingOnboarding !== null) {
       const o = onboardings.find(x => x.id === editingOnboarding);
       if (o) Object.assign(o, formData);
