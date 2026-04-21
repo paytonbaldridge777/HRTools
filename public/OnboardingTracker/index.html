@@ -673,6 +673,7 @@
 			  <option value="SupervisorWDTaskReminder">Supervisor WD Hire Task Reminder</option>				
               <option value="i9verification">I-9 Verification</option>			  
 			  <option value="i9Reminder">I-9 Section 1 Reminder</option>
+			  <option value="ConsentForm">Consent for Disclosure of Student Status</option>
 			  <option value="WDOnboardingNotice">WD Onboarding Process Notification</option>
 			  <option value="WDOnboardingReminder">WD Onboarding Reminder</option>
 			 <option value="SSNReminder">SSN Reminder</option>
@@ -1822,6 +1823,25 @@ function updateEmailEmployeeList() {
 			If you haven’t seen the email, try searching all folders, including spam and trash, for "Perfect Compliance" to make sure it didn’t get filtered.</br></br>
 			
 			Let me know if you have any trouble locating the message or if you have any questions about the process, I’m happy to help.</br></br>
+			
+			Cheers,</br>
+			Payton</br></p>
+		  `;
+		}		
+		if (emailType === "ConsentForm") {
+		  template = `
+			<p>Howdy ${firstName}!</br></br>
+			
+			<p>Attached to this email is a Consent for Disclosure of Student Status Related to Employment form, which is required for your employment records. This form is governed by 
+			FERPA (Family Educational Rights and Privacy Act) and gives you the opportunity to indicate what, if any, information from your education records may be disclosed publicly in 
+			connection with your role here at the Law School.</br></br>
+			
+			Please review the form carefully and complete the section labeled "To be completed by the Student," which includes:</br></br>
+			
+			  • Checking the boxes for any information you authorize us to disclose (name, email, phone number, employment title, photograph, and/or honors and awards)</br>
+  			  • Signing and dating the form</br></br>
+
+			Note: Choosing to authorize or decline disclosure has no impact on your employment status — this is entirely your decision.</br></br>
 			
 			Cheers,</br>
 			Payton</br></p>
