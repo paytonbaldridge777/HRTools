@@ -283,7 +283,7 @@ document.getElementById('login-form').addEventListener('submit', (e) => {
 
 // GITHUB CONFIGURATION
 const GITHUB_CONFIG = {
-  token: '',
+  token: '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',
   owner: 'paytonbaldridge777',
   repo: 'HRDashboard',
   branch: 'main',
