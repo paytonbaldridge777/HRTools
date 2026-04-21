@@ -670,6 +670,7 @@
 			  <option value="prospectiveWelcome">Prospective Employee Welcome</option>
 			  <option value="PHFReminder">Prospective Hire Form Reminder</option>
 			  <option value="BCReminder">Background Check Reminder</option>	
+			  <option value="SupervisorWDTaskReminder">Supervisor WD Hire Task Reminder</option>				
               <option value="i9verification">I-9 Verification</option>			  
 			  <option value="i9Reminder">I-9 Section 1 Reminder</option>
 			  <option value="WDOnboardingNotice">WD Onboarding Process Notification</option>
@@ -1779,6 +1780,20 @@ function updateEmailEmployeeList() {
 			Please complete and submit the PHF as soon as possible to avoid any delays. If you have any questions or need help accessing the form, feel free to reach out.</br></br>
 			
 			Thanks in advance for your attention to this!</br></br>
+			
+			Cheers,</br>
+			Payton</br></p>
+		  `;
+		}		
+		if (emailType === "SupervisorWDTaskReminder") {
+		  template = `
+			<p>Howdy ${supervisor}!</br></br>
+			
+			<p>I'm reaching out regarding the hire of ${firstName} ${lastName} with a start date of ${hireDate}. As we move forward with her onboarding, we are awaiting your approval in Workday before we can proceed with the next steps in the hiring process. </br></br>
+			
+			When you have a moment, please log in to Workday and complete the approval step at your earliest convenience. Timely completion will help ensure there are no delays to her anticipated start date.</br></br>
+			
+			Please don't hesitate to reach out if you have any questions. </br></br>
 			
 			Cheers,</br>
 			Payton</br></p>
