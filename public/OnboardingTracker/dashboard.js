@@ -307,6 +307,7 @@ const hrTasks = [
   "I-9 in Guardian",
   "Onboarding Email Sent",
   "Disclosure of Student Status Form Sent",
+  "Disclosure of Student Status Form Received",
   "I-9 Section 1 Complete",
   "I-9 Section 2 Complete",  
   "WorkDay at Onboarding Step",
@@ -390,11 +391,15 @@ function getFilteredTasks(hireCategory, hireType) {
     return hrTasks.filter(t =>
       t !== "I-9 in Guardian" &&
       t !== "Onboarding Email Sent" &&
-      t !== "Disclosure of Student Status Form Sent"
+      t !== "Disclosure of Student Status Form Sent" &&
+      t !== "Disclosure of Student Status Form Received"
     );
   }
   if (!isStudentHireType) {
-    return hrTasks.filter(t => t !== "Disclosure of Student Status Form Sent");
+    return hrTasks.filter(t =>
+      t !== "Disclosure of Student Status Form Sent" &&
+      t !== "Disclosure of Student Status Form Received"
+    );
   }
   return hrTasks;
 }
@@ -790,7 +795,7 @@ function renderTaskList(o) {
 
   const noticeEl = document.getElementById('category-notice');
   if (o.hireCategory === 'Addjob' || o.hireCategory === 'Transfer') {
-    noticeEl.textContent = `ℹ️ I-9 in Guardian, Onboarding Email Sent, and Disclosure of Student Status Form Sent tasks are not required for ${o.hireCategory} category`;
+    noticeEl.textContent = `ℹ️ I-9 in Guardian, Onboarding Email Sent, Disclosure of Student Status Form Sent, and Disclosure of Student Status Form Received tasks are not required for ${o.hireCategory} category`;
     noticeEl.classList.remove('hidden');
   } else {
     noticeEl.classList.add('hidden');
