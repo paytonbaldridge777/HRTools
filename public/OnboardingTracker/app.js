@@ -37,7 +37,7 @@ document.getElementById('login-form').addEventListener('submit', (e) => {
 
 // GITHUB CONFIGURATION
 const GITHUB_CONFIG = {
-  token: '',
+  token: localStorage.getItem('githubToken') || 'YOUR_GITHUB_TOKEN_HERE',
   owner: 'paytonbaldridge777',
   repo: 'HRDashboard',
   branch: 'main',
