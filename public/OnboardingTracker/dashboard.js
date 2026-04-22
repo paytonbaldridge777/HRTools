@@ -283,7 +283,7 @@ document.getElementById('login-form').addEventListener('submit', (e) => {
 
 // GITHUB CONFIGURATION
 const GITHUB_CONFIG = {
-  token: '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',
+  token: localStorage.getItem('githubToken') || 'YOUR_GITHUB_TOKEN_HERE',
   owner: 'paytonbaldridge777',
   repo: 'HRDashboard',
   branch: 'main',
@@ -308,6 +308,7 @@ const hrTasks = [
   "Onboarding Email Sent",
   "Disclosure of Student Status Form Sent",
   "Disclosure of Student Status Form Received",
+  "Disclosure of Student Status Form Uploaded",
   "I-9 Section 1 Complete",
   "I-9 Section 2 Complete",  
   "WorkDay at Onboarding Step",
@@ -392,13 +393,15 @@ function getFilteredTasks(hireCategory, hireType) {
       t !== "I-9 in Guardian" &&
       t !== "Onboarding Email Sent" &&
       t !== "Disclosure of Student Status Form Sent" &&
-      t !== "Disclosure of Student Status Form Received"
+      t !== "Disclosure of Student Status Form Received" &&
+      t !== "Disclosure of Student Status Form Uploaded"
     );
   }
   if (!isStudentHireType) {
     return hrTasks.filter(t =>
       t !== "Disclosure of Student Status Form Sent" &&
-      t !== "Disclosure of Student Status Form Received"
+      t !== "Disclosure of Student Status Form Received" &&
+      t !== "Disclosure of Student Status Form Uploaded"
     );
   }
   return hrTasks;
@@ -795,7 +798,7 @@ function renderTaskList(o) {
 
   const noticeEl = document.getElementById('category-notice');
   if (o.hireCategory === 'Addjob' || o.hireCategory === 'Transfer') {
-    noticeEl.textContent = `ℹ️ I-9 in Guardian, Onboarding Email Sent, Disclosure of Student Status Form Sent, and Disclosure of Student Status Form Received tasks are not required for ${o.hireCategory} category`;
+    noticeEl.textContent = `ℹ️ I-9 in Guardian, Onboarding Email Sent, Disclosure of Student Status Form Sent, Disclosure of Student Status Form Received, and Disclosure of Student Status Form Uploaded tasks are not required for ${o.hireCategory} category`;
     noticeEl.classList.remove('hidden');
   } else {
     noticeEl.classList.add('hidden');
