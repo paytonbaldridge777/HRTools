@@ -313,7 +313,8 @@
 	/* Navigation buttons text color in dark mode */
 	[data-theme="dark"] #nav-dashboard,
 	[data-theme="dark"] #nav-new,
-	[data-theme="dark"] #nav-email {
+	[data-theme="dark"] #nav-email,
+	[data-theme="dark"] #nav-report {
 	  color: var(--text-primary) !important;
 	}
 	
@@ -418,6 +419,7 @@
 			<button id="nav-dashboard" class="px-4 py-2 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 focus:outline-none">Dashboard</button>
 			<button id="nav-new" class="px-4 py-2 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 focus:outline-none">+ New Onboarding</button>
 			<button id="nav-email" class="px-4 py-2 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 focus:outline-none">Email Generator</button>
+			<button id="nav-report" class="px-4 py-2 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 focus:outline-none">📊 Reports</button>
 		  </div>
 		</nav>	
       <!-- Dashboard View -->
@@ -456,7 +458,7 @@
 		</div>
 
 		<!-- Additional Insights -->
-		<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
 
 		  <!-- HIRE TYPES -->
 		  <div class="bg-white p-4 rounded-lg shadow border border-gray-200 flex flex-col">
@@ -499,7 +501,7 @@
 		  <!-- CURRENT STEPS -->
 		  <div class="bg-white p-4 rounded-lg shadow border border-gray-200 flex flex-col">
 			<h3 class="text-sm font-semibold mb-1 text-tamu-maroon">Current Steps</h3>
-			<p class="text-xs text-gray-500 mb-3">Where active employees are right now</p>
+			<p class="text-xs text-gray-500 mb-3">Where active employees are right now &mdash; <span class="italic">click a step to filter</span></p>
 			<div id="current-step-summary" class="flex-1 space-y-1 text-xs text-gray-700">
 			  <p class="text-gray-400 italic">No active employees</p>
 			</div>
@@ -735,6 +737,91 @@
           </div>
         </div>
       </section>
+      <!-- Report View -->
+      <section id="report-view" class="hidden">
+        <div class="max-w-5xl mx-auto">
+          <div class="bg-white rounded-lg shadow border border-gray-200 p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">Generate Report</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Start Date (Request Received)</label>
+                <input type="date" id="report-date-from" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-500">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">End Date (Request Received)</label>
+                <input type="date" id="report-date-to" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-500">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Hire Type</label>
+                <select id="report-hire-type" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-500">
+                  <option value="">All Hire Types</option>
+                  <option value="Student">Student</option>
+                  <option value="Staff">Staff</option>
+                  <option value="Faculty">Faculty</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Hire Category</label>
+                <select id="report-hire-category" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-500">
+                  <option value="">All Categories</option>
+                  <option value="Newhire">Newhire</option>
+                  <option value="Rehire">Rehire</option>
+                  <option value="Transfer">Transfer</option>
+                  <option value="Addjob">Addjob</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Status</label>
+                <select id="report-status" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-500">
+                  <option value="">All Statuses</option>
+                  <option value="active">Active</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">International Hire</label>
+                <select id="report-international" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-500">
+                  <option value="">All</option>
+                  <option value="yes">International Only</option>
+                  <option value="no">Domestic Only</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex gap-3">
+              <button id="run-report" class="px-5 py-2 bg-red-900 text-white rounded-lg hover:bg-red-800 focus:outline-none text-sm font-medium">Run Report</button>
+              <button id="clear-report" class="px-5 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:outline-none text-sm">Clear</button>
+              <button id="export-report-csv" class="px-5 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 focus:outline-none text-sm hidden">Export CSV</button>
+            </div>
+          </div>
+
+          <!-- Report Results -->
+          <div id="report-results" class="hidden">
+            <div class="bg-white rounded-lg shadow border border-gray-200 p-4 mb-4">
+              <div id="report-summary" class="flex flex-wrap gap-4 text-sm text-gray-700"></div>
+            </div>
+            <div class="bg-white rounded-lg shadow border border-gray-200 overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="bg-gray-50 border-b border-gray-200">
+                    <th class="text-left p-3 text-xs font-semibold text-gray-600">Name</th>
+                    <th class="text-left p-3 text-xs font-semibold text-gray-600">Hire Type</th>
+                    <th class="text-left p-3 text-xs font-semibold text-gray-600">Category</th>
+                    <th class="text-left p-3 text-xs font-semibold text-gray-600">Status</th>
+                    <th class="text-left p-3 text-xs font-semibold text-gray-600">Request Received</th>
+                    <th class="text-left p-3 text-xs font-semibold text-gray-600">Start Date</th>
+                    <th class="text-left p-3 text-xs font-semibold text-gray-600">Title</th>
+                    <th class="text-left p-3 text-xs font-semibold text-gray-600">Manager</th>
+                    <th class="text-left p-3 text-xs font-semibold text-gray-600">Intl</th>
+                    <th class="text-left p-3 text-xs font-semibold text-gray-600">Progress</th>
+                  </tr>
+                </thead>
+                <tbody id="report-table-body"></tbody>
+              </table>
+              <div id="report-empty" class="hidden text-center py-10 text-gray-400 italic text-sm">No records match the selected filters.</div>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -866,7 +953,7 @@ function showToast(msg, duration = 3000) {
 }
 
 function showView(viewName) {
-  ['dashboard', 'new', 'email', 'task-detail'].forEach(v => {
+  ['dashboard', 'new', 'email', 'task-detail', 'report'].forEach(v => {
     const el = document.getElementById(v + '-view');
     if (el) el.classList.add('hidden');
     const btn = document.getElementById('nav-' + v);
@@ -973,21 +1060,20 @@ function updateCurrentStepSummary() {
     if (bi === -1) return -1;
     return ai - bi;
   });
-  const totalSteps = hrTasks.length; // 12
+  const totalSteps = hrTasks.length;
 
   el.innerHTML = sorted.map(([step, count]) => {
     const stepIndex = hrTasks.indexOf(step);
-    // Progress = position in the pipeline (0-based index + 1 completed steps before this one)
-    // "At this step" means steps 0..stepIndex-1 are done, stepIndex is current
     const stepsCompleted = stepIndex === -1 ? totalSteps : stepIndex;
     const pct = Math.round((stepsCompleted / totalSteps) * 100);
     const progressLabel = stepIndex === -1
       ? `${totalSteps}/${totalSteps}`
       : `${stepsCompleted}/${totalSteps}`;
+    const safeStep = step.replace(/"/g, '&quot;');
     return `
-      <div class="mb-2">
+      <div class="mb-2 cursor-pointer rounded px-1 py-0.5 hover:bg-gray-100 transition-colors" title="Click to filter by this step" data-step="${safeStep}" onclick="applyStepFilter('${safeStep}')">
         <div class="flex justify-between items-center mb-0.5">
-          <span class="text-gray-700 truncate max-w-[75%]" title="${step}">${step}</span>
+          <span class="text-gray-700 truncate max-w-[75%]" title="${safeStep}">${step}</span>
           <span class="font-semibold text-gray-600 ml-1">${count}</span>
         </div>
         <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden" title="${progressLabel} steps complete">
@@ -997,7 +1083,6 @@ function updateCurrentStepSummary() {
       </div>`;
   }).join('');
 }
-
 function getFilteredTasks(hireCategory, internationalHire, hireType) {
   const category = hireCategory || 'Newhire';
   let tasks = hrTasks;
@@ -1345,6 +1430,26 @@ function applyQuickFilter(type) {
   renderOnboardingCards();
   updateStats();
 }
+
+function applyStepFilter(step) {
+  // Filter dashboard cards to employees whose current step matches
+  const hireFilter = document.getElementById('filter-hire-type');
+  const statusFilter = document.getElementById('filter-status');
+  if (hireFilter) hireFilter.value = '';
+  if (statusFilter) statusFilter.value = '';
+
+  filteredOnboardings = onboardings.filter(o => getCurrentStep(o) === step);
+
+  // Show a toast so users know the filter is active
+  showToast(`Showing: ${filteredOnboardings.length} at "${step}"`, 3000);
+
+  // Scroll down to the cards
+  const cardsEl = document.getElementById('onboarding-cards');
+  if (cardsEl) cardsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  renderOnboardingCards();
+}
+
 
 
 function renderOnboardingCards() {
@@ -2258,6 +2363,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showView('new');
   });
   document.getElementById('nav-email').addEventListener('click', () => showView('email'));
+  document.getElementById('nav-report').addEventListener('click', () => showView('report'));
   document.getElementById('search-input').addEventListener('input', applyFilters);
   document.getElementById('filter-hire-type').addEventListener('change', applyFilters);
   document.getElementById('filter-status').addEventListener('change', applyFilters);
@@ -2448,6 +2554,136 @@ document.addEventListener('DOMContentLoaded', () => {
 	}
 
 
+  // ===== REPORT LOGIC =====
+  document.getElementById('run-report').addEventListener('click', () => {
+    const dateFrom  = document.getElementById('report-date-from').value;
+    const dateTo    = document.getElementById('report-date-to').value;
+    const hireType  = document.getElementById('report-hire-type').value;
+    const hireCat   = document.getElementById('report-hire-category').value;
+    const status    = document.getElementById('report-status').value;
+    const intlVal   = document.getElementById('report-international').value;
+
+    const results = onboardings.filter(o => {
+      const req = o.requestReceived || '';
+      if (dateFrom && req < dateFrom) return false;
+      if (dateTo   && req > dateTo)   return false;
+      if (hireType && o.hireType !== hireType) return false;
+      if (hireCat  && o.hireCategory !== hireCat) return false;
+      if (status   && o.status !== status) return false;
+      if (intlVal === 'yes' && !o.internationalHire) return false;
+      if (intlVal === 'no'  &&  o.internationalHire) return false;
+      return true;
+    });
+
+    // Sort by requestReceived ascending
+    results.sort((a, b) => (a.requestReceived || '').localeCompare(b.requestReceived || ''));
+
+    // Summary bar
+    const byType = {};
+    const byCat  = {};
+    let completedCount = 0;
+    results.forEach(o => {
+      const t = o.hireType || 'Unknown';
+      const c = o.hireCategory || 'Unknown';
+      byType[t] = (byType[t] || 0) + 1;
+      byCat[c]  = (byCat[c]  || 0) + 1;
+      if (o.status === 'completed') completedCount++;
+    });
+
+    const typeStr = Object.entries(byType).map(([k,v]) => `${k}: ${v}`).join(' | ');
+    const catStr  = Object.entries(byCat).map(([k,v])  => `${k}: ${v}`).join(' | ');
+
+    document.getElementById('report-summary').innerHTML = `
+      <div class="flex flex-wrap gap-6 text-sm">
+        <div><span class="font-semibold text-gray-800">Total Records:</span> <span class="text-tamu-maroon font-bold text-lg ml-1">${results.length}</span></div>
+        <div><span class="font-semibold text-gray-700">Completed:</span> <span class="ml-1">${completedCount}</span></div>
+        <div><span class="font-semibold text-gray-700">Active:</span> <span class="ml-1">${results.length - completedCount}</span></div>
+        ${typeStr ? `<div class="w-full text-xs text-gray-500"><span class="font-semibold">By Type:</span> ${typeStr}</div>` : ''}
+        ${catStr  ? `<div class="w-full text-xs text-gray-500"><span class="font-semibold">By Category:</span> ${catStr}</div>`  : ''}
+      </div>
+    `;
+
+    // Table rows
+    const tbody = document.getElementById('report-table-body');
+    tbody.innerHTML = '';
+    if (results.length === 0) {
+      document.getElementById('report-empty').classList.remove('hidden');
+    } else {
+      document.getElementById('report-empty').classList.add('hidden');
+      results.forEach((o, i) => {
+        const tasks   = getFilteredTasks(o.hireCategory, o.internationalHire, o.hireType);
+        const done    = Object.keys(o.taskCompletionDates || {}).filter(t => tasks.includes(t)).length;
+        const pct     = tasks.length ? Math.round(done / tasks.length * 100) : 0;
+        const rowBg   = i % 2 === 0 ? '' : 'bg-gray-50';
+        const statusCls = o.status === 'completed'
+          ? 'text-green-700 bg-green-50 border border-green-200'
+          : (o.overdueTasks > 0 ? 'text-red-700 bg-red-50 border border-red-200' : 'text-blue-700 bg-blue-50 border border-blue-200');
+        const tr = document.createElement('tr');
+        tr.className = `${rowBg} border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors`;
+        tr.innerHTML = `
+          <td class="p-3 font-medium text-gray-800">${o.name || ''}</td>
+          <td class="p-3 text-gray-600">${o.hireType || ''}</td>
+          <td class="p-3 text-gray-600">${o.hireCategory || ''}</td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${statusCls}">${o.status}</span></td>
+          <td class="p-3 text-gray-600">${o.requestReceived || ''}</td>
+          <td class="p-3 text-gray-600">${o.startDate || ''}</td>
+          <td class="p-3 text-gray-500 text-xs">${o.title || ''}</td>
+          <td class="p-3 text-gray-500 text-xs">${o.manager || ''}</td>
+          <td class="p-3 text-center">${o.internationalHire ? '<span title="International" class="text-blue-600">🌐</span>' : ''}</td>
+          <td class="p-3">
+            <div class="flex items-center gap-2">
+              <div class="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden" style="min-width:48px">
+                <div class="h-full bg-red-900 rounded-full" style="width:${pct}%"></div>
+              </div>
+              <span class="text-xs text-gray-500">${pct}%</span>
+            </div>
+          </td>
+        `;
+        tr.addEventListener('click', () => showTaskDetailView(o.id));
+        tbody.appendChild(tr);
+      });
+    }
+
+    document.getElementById('report-results').classList.remove('hidden');
+    document.getElementById('export-report-csv').classList.remove('hidden');
+
+    // Store results for CSV export
+    document.getElementById('export-report-csv')._reportData = results;
+  });
+
+  document.getElementById('clear-report').addEventListener('click', () => {
+    ['report-date-from','report-date-to','report-hire-type','report-hire-category','report-status','report-international']
+      .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    document.getElementById('report-results').classList.add('hidden');
+    document.getElementById('export-report-csv').classList.add('hidden');
+  });
+
+  document.getElementById('export-report-csv').addEventListener('click', function() {
+    const results = this._reportData || [];
+    const headers = ['Name','Hire Type','Category','Status','Request Received','Start Date','Title','Manager','International','Progress %'];
+    const rows = results.map(o => {
+      const tasks = getFilteredTasks(o.hireCategory, o.internationalHire, o.hireType);
+      const done  = Object.keys(o.taskCompletionDates || {}).filter(t => tasks.includes(t)).length;
+      const pct   = tasks.length ? Math.round(done / tasks.length * 100) : 0;
+      return [
+        o.name || '', o.hireType || '', o.hireCategory || '', o.status || '',
+        o.requestReceived || '', o.startDate || '', o.title || '', o.manager || '',
+        o.internationalHire ? 'Yes' : 'No', pct
+      ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
+    });
+    const csv  = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `onboarding-report-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+  // ===== END REPORT LOGIC =====
+
   // Auto-load from GitHub & initialize view as in your original
   loadDataFromServer();
   showView('dashboard');
@@ -2460,30 +2696,3 @@ document.addEventListener('DOMContentLoaded', () => {
 </body>
 
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
