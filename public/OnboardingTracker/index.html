@@ -1489,6 +1489,7 @@ function renderOnboardingCards() {
             <span class="px-2 py-1 rounded-full text-xs ${o.overdueTasks > 0 ? 'text-red-600 bg-red-50' : (o.status === 'completed' ? 'text-green-600 bg-green-50' : 'text-stone-5000 bg-red-900-50')}">
               ${o.status}
             </span>
+            <button class="duplicate-btn text-blue-500 hover:text-blue-700 p-1 rounded hover:bg-blue-50" data-id="${o.id}" title="Duplicate record">📋</button>
             <button class="delete-btn text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50" data-id="${o.id}">🗑️</button>
           </div>
         </div>

@@ -691,6 +691,7 @@ function renderOnboardingCards() {
             <span class="px-2 py-1 rounded-full text-xs ${o.overdueTasks > 0 ? 'text-red-600 bg-red-50' : (o.status === 'completed' ? 'text-green-600 bg-green-50' : 'text-stone-5000 bg-rose-800-50')}">
               ${o.status}
             </span>
+            <button class="duplicate-btn text-blue-500 hover:text-blue-700 p-1 rounded hover:bg-blue-50" data-id="${o.id}" title="Duplicate record">📋</button>
             <button class="delete-btn text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50" data-id="${o.id}">🗑️</button>
           </div>
         </div>
@@ -718,6 +719,34 @@ function renderOnboardingCards() {
         applyFilters();
         updateStats();
         autoSave();
+      });
+    });
+  });
+
+  document.querySelectorAll('.duplicate-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = parseInt(btn.dataset.id);
+      const o = onboardings.find(x => x.id === id);
+      if (!o) return;
+      showConfirmDialog(`Duplicate the onboarding record for "${o.name}"? It will open as a new unsaved record with employee-specific fields cleared.`, () => {
+        document.getElementById('form-name').value = '';
+        document.getElementById('form-hire-type').value = o.hireType || '';
+        document.getElementById('form-start-date').value = o.startDate || '';
+        document.getElementById('form-request-received').value = o.requestReceived || '';
+        document.getElementById('form-title').value = o.title || '';
+        document.getElementById('form-pay-rate').value = o.payRate || '';
+        document.getElementById('form-supervisors-email').value = o.supervisorsEmail || '';
+        document.getElementById('form-uin').value = '';
+        document.getElementById('form-lf').value = '';
+        document.getElementById('form-manager').value = o.manager || '';
+        document.getElementById('form-email').value = '';
+        document.getElementById('form-hire-category').value = o.hireCategory || 'Newhire';
+        document.getElementById('form-international-hire').checked = !!o.internationalHire;
+        document.getElementById('form-comment').value = o.comment || '';
+        document.getElementById('form-pin').value = '';
+        editingOnboarding = null;
+        showView('new');
       });
     });
   });
