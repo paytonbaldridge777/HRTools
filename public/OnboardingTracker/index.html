@@ -1520,10 +1520,17 @@ function renderOnboardingCards() {
       e.stopPropagation();
       const id = parseInt(btn.dataset.id);
       showConfirmDialog('Are you sure you want to delete this onboarding?', () => {
-        onboardings = onboardings.filter(x => x.id !== id);
-        applyFilters();
-        updateStats();
-        autoSave();
+        supabase('DELETE', `onboardings?id=eq.${id}`)
+          .then(res => {
+            if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
+            onboardings = onboardings.filter(x => x.id !== id);
+            applyFilters();
+            updateStats();
+            showToast('✓ Record deleted');
+          })
+          .catch(err => {
+            showToast(`❌ Could not delete: ${err.message}`);
+          });
       });
     });
   });
@@ -2393,21 +2400,35 @@ document.addEventListener('DOMContentLoaded', () => {
       showConfirmDialog('No completed onboardings.', () => {});
     } else {
       showConfirmDialog(`Delete ${c} completed?`, () => {
-        onboardings = onboardings.filter(o => o.status !== 'completed');
-        applyFilters();
-        updateStats();
-		updateInsightCharts();
-        autoSave();
+        supabase('DELETE', `onboardings?status=eq.completed`)
+          .then(res => {
+            if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
+            onboardings = onboardings.filter(o => o.status !== 'completed');
+            applyFilters();
+            updateStats();
+            updateInsightCharts();
+            showToast(`✓ Deleted ${c} completed record${c !== 1 ? 's' : ''}`);
+          })
+          .catch(err => {
+            showToast(`❌ Could not delete: ${err.message}`);
+          });
       });
     }
   });
 
   document.getElementById('clear-all-data').addEventListener('click', () => {
     showConfirmDialog('Delete ALL data?', () => {
-      onboardings = [];
-      applyFilters();
-      updateStats();
-      autoSave();
+      supabase('DELETE', `onboardings?id=gt.0`)
+        .then(res => {
+          if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
+          onboardings = [];
+          applyFilters();
+          updateStats();
+          showToast('✓ All records deleted');
+        })
+        .catch(err => {
+          showToast(`❌ Could not delete: ${err.message}`);
+        });
     });
   });
 
