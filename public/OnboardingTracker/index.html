@@ -2113,8 +2113,10 @@ function recordToRow(o) {
     title: o.title || null,
     uin: o.uin || null,
     lf: o.lf || null,
+    pin: o.pin || null,
     manager: o.manager || null,
     email: o.email || null,
+    supervisors_email: o.supervisorsEmail || null,
     status: o.status || 'active',
     progress: o.progress || 0,
     days_remaining: o.daysRemaining || 0,
@@ -2123,6 +2125,7 @@ function recordToRow(o) {
     total_tasks: o.totalTasks || 0,
     task_completion_dates: o.taskCompletionDates || {},
     international_hire: o.internationalHire || false,
+    request_received: o.requestReceived || null,
     comment: o.comment || ''
   };
 }
@@ -2137,8 +2140,10 @@ function rowToRecord(r) {
     title: r.title,
     uin: r.uin,
     lf: r.lf,
+    pin: r.pin,
     manager: r.manager,
     email: r.email,
+    supervisorsEmail: r.supervisors_email,
     status: r.status,
     progress: r.progress,
     daysRemaining: r.days_remaining,
@@ -2147,6 +2152,7 @@ function rowToRecord(r) {
     totalTasks: r.total_tasks,
     taskCompletionDates: r.task_completion_dates || {},
     internationalHire: r.international_hire,
+    requestReceived: r.request_received,
     comment: r.comment
   };
 }
