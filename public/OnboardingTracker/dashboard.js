@@ -306,15 +306,15 @@ const hrTasks = [
   "Process in WD",
   "I-9 in Guardian",
   "Onboarding Email Sent",
-  "Disclosure of Student Status Form Sent",
-  "Disclosure of Student Status Form Received",
-  "Disclosure of Student Status Form Uploaded",
+  "Disclosure of Student Status Form Sent",  
   "I-9 Section 1 Complete",
   "I-9 Section 2 Complete",  
   "WorkDay at Onboarding Step",
   "Workday Onboarding Started",
   "Workday Onboarding Completed",
-  "LF Hold till BP/Start Date Done"
+  "LF Hold till BP/Start Date Done",
+  "Disclosure of Student Status Form Received",
+  "Disclosure of Student Status Form Uploaded"
 ];
 
 
