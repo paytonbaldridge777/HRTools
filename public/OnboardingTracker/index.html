@@ -832,8 +832,8 @@
       <button id="admin-close" class="text-gray-500 hover:text-gray-700 text-lg">✖</button>
     </div>
     <div class="space-y-2">
-      <button id="load-from-github" class="w-full px-4 py-2 rounded bg-blue-600 text-white">📥 Load from GitHub</button>
-      <button id="save-data" class="w-full px-4 py-2 rounded bg-green-600 text-white">💾 Save to GitHub</button>
+      <button id="load-from-github" class="w-full px-4 py-2 rounded bg-blue-600 text-white">📥 Refresh Data</button>
+      <button id="save-data" class="w-full px-4 py-2 rounded bg-green-600 text-white">💾 Save Now</button>
       <label for="import-data" class="block w-full px-4 py-2 rounded bg-red-900 text-white text-center cursor-pointer">
         📤 Import Data
         <input type="file" id="import-data" accept=".json" class="hidden">
@@ -903,21 +903,28 @@
 })();
 
 
-// GITHUB CONFIGURATION
-const GITHUB_CONFIG = {
-  token: localStorage.getItem('githubToken') || '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',
-  owner: 'paytonbaldridge777',
-  repo: 'HRDashboard',
-  branch: 'main',
-  filePath: 'data.json'
-};
+// SUPABASE CONFIGURATION
+const SUPABASE_URL = 'https://cnxdlahqonlewgbcjyla.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNueGRsYWhxb25sZXdnYmNqeWxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNDkwODcsImV4cCI6MjA5MzgyNTA4N30.hWfowD_2bIg5xoCWWRYuVU6svsFaM08ddc8JSZX8KnE';
+
+function supabase(method, path, body) {
+  return fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method,
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': method === 'POST' ? 'resolution=merge-duplicates' : ''
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+}
 
 let onboardings = [];
 let filteredOnboardings = [];
 let currentView = 'dashboard';
 let selectedOnboardingId = null;
 let editingOnboarding = null;
-let githubFileSha = null;
 let saveTimeout = null;
 let isSaving = false;
 let chartsAnimated = false;
@@ -2096,82 +2103,73 @@ function exportData() {
   URL.revokeObjectURL(url);
 }
 
-function validateGithubConfig() {
-  return GITHUB_CONFIG.token &&
-         GITHUB_CONFIG.token !== 'YOUR_GITHUB_TOKEN_HERE' &&
-         GITHUB_CONFIG.owner &&
-         GITHUB_CONFIG.owner !== 'YOUR_GITHUB_USERNAME' &&
-         GITHUB_CONFIG.repo &&
-         GITHUB_CONFIG.repo !== 'YOUR_REPO_NAME';
+function recordToRow(o) {
+  return {
+    id: o.id,
+    name: o.name,
+    hire_type: o.hireType,
+    hire_category: o.hireCategory || null,
+    start_date: o.startDate || null,
+    title: o.title || null,
+    uin: o.uin || null,
+    lf: o.lf || null,
+    manager: o.manager || null,
+    email: o.email || null,
+    status: o.status || 'active',
+    progress: o.progress || 0,
+    days_remaining: o.daysRemaining || 0,
+    overdue_tasks: o.overdueTasks || 0,
+    completed_tasks: o.completedTasks || 0,
+    total_tasks: o.totalTasks || 0,
+    task_completion_dates: o.taskCompletionDates || {},
+    international_hire: o.internationalHire || false,
+    comment: o.comment || ''
+  };
 }
 
-function saveData(retryCount = 0) {
-  if (!validateGithubConfig()) {
-    showConfirmDialog('GitHub configuration is incomplete.', () => {});
-    return;
-  }
+function rowToRecord(r) {
+  return {
+    id: r.id,
+    name: r.name,
+    hireType: r.hire_type,
+    hireCategory: r.hire_category,
+    startDate: r.start_date,
+    title: r.title,
+    uin: r.uin,
+    lf: r.lf,
+    manager: r.manager,
+    email: r.email,
+    status: r.status,
+    progress: r.progress,
+    daysRemaining: r.days_remaining,
+    overdueTasks: r.overdue_tasks,
+    completedTasks: r.completed_tasks,
+    totalTasks: r.total_tasks,
+    taskCompletionDates: r.task_completion_dates || {},
+    internationalHire: r.international_hire,
+    comment: r.comment
+  };
+}
+
+function saveData() {
   if (isSaving) return;
   isSaving = true;
+  showToast('Saving...', 5000);
 
-  const data = { onboardings, exportDate: new Date().toISOString(), version: "1.0" };
-  const content = JSON.stringify(data, null, 2);
-  const encodedContent = btoa(unescape(encodeURIComponent(content)));
-  const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.filePath}`;
-  const payload = {
-    message: `Update onboarding data - ${new Date().toISOString()}`,
-    content: encodedContent,
-    branch: GITHUB_CONFIG.branch
-  };
-  if (githubFileSha) payload.sha = githubFileSha;
+  const rows = onboardings.map(recordToRow);
 
-  showToast('Saving to GitHub...', 5000);
-
-  fetch(url, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
-      'Accept': 'application/vnd.github.v3+json',
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(payload)
-  })
-  .then(response => {
-    if (!response.ok) {
-      return response.json().then(err => {
-        throw { status: response.status, message: err.message || 'Failed to save' };
-      });
-    }
-    return response.json();
-  })
-  .then(result => {
-    githubFileSha = result.content.sha;
-    isSaving = false;
-    showToast('✓ Data saved to GitHub');
-  })
-  .catch(err => {
-    isSaving = false;
-    if (err.message && err.message.includes('does not match') && retryCount === 0) {
-      showToast('Syncing...', 3000);
-      fetch(url + `?ref=${GITHUB_CONFIG.branch}`, {
-        headers: {
-          'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
-          'Accept': 'application/vnd.github.v3+json'
-        }
-      })
-      .then(response => response.json())
-      .then(fileData => {
-        if (fileData && fileData.sha) {
-          githubFileSha = fileData.sha;
-          saveData(1);
-        }
-      })
-      .catch(() => {
-        showConfirmDialog(`Failed to save. Click "Load from GitHub" first.`, () => {});
-      });
-    } else {
+  supabase('POST', 'onboardings', rows)
+    .then(res => {
+      isSaving = false;
+      if (!res.ok) {
+        return res.json().then(err => { throw new Error(err.message || 'Save failed'); });
+      }
+      showToast('✓ Saved');
+    })
+    .catch(err => {
+      isSaving = false;
       showConfirmDialog(`Failed to save: ${err.message}`, () => {});
-    }
-  });
+    });
 }
 
 function autoSave() {
@@ -2180,47 +2178,26 @@ function autoSave() {
 }
 
 function loadDataFromServer() {
-  if (!validateGithubConfig()) {
-    showToast('⚠️ GitHub not configured');
-    return;
-  }
-  const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.filePath}?ref=${GITHUB_CONFIG.branch}`;
-  showToast('Loading from GitHub...', 3000);
+  showToast('Loading...', 3000);
 
-  fetch(url, {
-    headers: {
-      'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
-      'Accept': 'application/vnd.github.v3+json'
-    }
-  })
-  .then(response => {
-    if (!response.ok) {
-      if (response.status === 404) {
-        showToast('⚠️ No data file found');
-        return null;
-      }
-      throw new Error(`API error: ${response.status}`);
-    }
-    return response.json();
-  })
-  .then(fileData => {
-    if (fileData && fileData.content) {
-      githubFileSha = fileData.sha;
-      const content = decodeURIComponent(escape(atob(fileData.content)));
-      const data = JSON.parse(content);
-      if (data && data.onboardings && Array.isArray(data.onboardings)) {
-        onboardings = data.onboardings;
-		updateOverdueCounts();
+  supabase('GET', 'onboardings?select=*&order=id.asc')
+    .then(res => {
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      return res.json();
+    })
+    .then(rows => {
+      if (Array.isArray(rows)) {
+        onboardings = rows.map(rowToRecord);
+        updateOverdueCounts();
         applyFilters();
         updateStats();
-		updateEmailEmployeeList();
+        updateEmailEmployeeList();
         showToast(`✓ Loaded ${onboardings.length} record${onboardings.length !== 1 ? 's' : ''}`);
       }
-    }
-  })
-  .catch(err => {
-    showToast(`❌ Could not load: ${err.message}`);
-  });
+    })
+    .catch(err => {
+      showToast(`❌ Could not load: ${err.message}`);
+    });
 }
 
 function importData(event) {
@@ -2713,7 +2690,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   // ===== END REPORT LOGIC =====
 
-  // Auto-load from GitHub & initialize view as in your original
+  // Auto-load from Supabase & initialize view
   loadDataFromServer();
   showView('dashboard');
   document.getElementById('filter-status').value = 'active';
