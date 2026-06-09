@@ -1791,6 +1791,7 @@ function handleTaskToggle(taskName, isChecked) {
   const doneCount = Object.keys(updated).filter(t => tasks.includes(t)).length;
   o.progress = tasks.length ? Math.round(doneCount / tasks.length * 100) : 0;
   if (doneCount === tasks.length) o.status = 'completed';
+  else if (o.status === 'completed') o.status = 'active';
   renderTaskList(o);
   applyFilters();
   updateStats();
@@ -1811,6 +1812,7 @@ function handleCompletionDateChange(taskName, newDate) {
   const doneCount = Object.keys(updated).filter(t => tasks.includes(t)).length;
   o.progress = tasks.length ? Math.round(doneCount / tasks.length * 100) : 0;
   if (doneCount === tasks.length) o.status = 'completed';
+  else if (o.status === 'completed') o.status = 'active';
   renderTaskList(o);
   applyFilters();
   updateStats();
