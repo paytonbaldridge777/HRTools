@@ -917,7 +917,36 @@ function supabase(method, path, body) {
       'Prefer': method === 'POST' ? 'resolution=merge-duplicates' : ''
     },
     body: body ? JSON.stringify(body) : undefined
+  }).then(res => {
+    // If Cloudflare Access session has expired it intercepts the request and
+    // returns an HTML login page (Content-Type: text/html) instead of JSON.
+    // Detect this and surface a clear session-expired error immediately.
+    const ct = res.headers.get('Content-Type') || '';
+    if (ct.includes('text/html')) {
+      showSessionExpiredBanner();
+      throw new Error('SESSION_EXPIRED');
+    }
+    return res;
   });
+}
+
+function showSessionExpiredBanner() {
+  if (document.getElementById('session-expired-banner')) return; // already showing
+  const banner = document.createElement('div');
+  banner.id = 'session-expired-banner';
+  banner.style.cssText = [
+    'position:fixed', 'top:0', 'left:0', 'right:0', 'z-index:9999',
+    'background:#7f1d1d', 'color:#fff', 'padding:14px 20px',
+    'display:flex', 'align-items:center', 'justify-content:space-between',
+    'font-size:15px', 'font-weight:600', 'box-shadow:0 2px 8px rgba(0,0,0,0.4)'
+  ].join(';');
+  banner.innerHTML = `
+    <span>⚠️ Your session has expired. Any unsaved changes will be lost if you continue working. Please refresh to re-authenticate before saving.</span>
+    <button onclick="location.reload()" style="margin-left:20px;padding:6px 16px;background:#fff;color:#7f1d1d;border:none;border-radius:4px;cursor:pointer;font-weight:700;white-space:nowrap;">
+      Refresh &amp; Re-login
+    </button>
+  `;
+  document.body.prepend(banner);
 }
 
 let onboardings = [];
@@ -2183,6 +2212,8 @@ function saveData() {
     })
     .catch(err => {
       isSaving = false;
+      // SESSION_EXPIRED is already surfaced by the persistent banner -- skip the modal.
+      if (err.message === 'SESSION_EXPIRED') return;
       showConfirmDialog(`Failed to save: ${err.message}`, () => {});
     });
 }
@@ -2718,6 +2749,29 @@ document.addEventListener('DOMContentLoaded', () => {
     URL.revokeObjectURL(url);
   });
   // ===== END REPORT LOGIC =====
+
+  // ── Session validity probe ──────────────────────────────────────────────
+  // Cloudflare Access cookies expire overnight. When they do, Supabase REST
+  // calls appear to succeed (reads come from cache / the anon key still works)
+  // but writes are silently intercepted and lost. We probe with a no-op HEAD
+  // request on app load so we can warn the user before any work is done.
+  (function checkSession() {
+    fetch(`${SUPABASE_URL}/rest/v1/onboardings?limit=1`, {
+      method: 'HEAD',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+      }
+    }).then(res => {
+      const ct = res.headers.get('Content-Type') || '';
+      if (ct.includes('text/html')) {
+        showSessionExpiredBanner();
+      }
+    }).catch(() => {
+      // Network error -- don't block, user will see errors when they try to save.
+    });
+  })();
+  // ────────────────────────────────────────────────────────────────────────
 
   // Auto-load from Supabase & initialize view
   loadDataFromServer();
