@@ -263,6 +263,14 @@
           </select>
           <span class="text-xs" style="color:var(--text-tertiary)">Required by 29 CFR 825.300(d)(3)</span>
         </label>
+        <label class="text-sm">Status
+          <select id="f-status" class="w-full mt-1 px-3 py-2 rounded text-sm">
+            <option value="">Follow the workflow</option>
+            <option value="denied">Denied</option>
+            <option value="closed">Closed</option>
+          </select>
+          <span class="text-xs" style="color:var(--text-tertiary)">Set only to end a case early</span>
+        </label>
         <label class="text-sm">Accommodation review needed
           <select id="f-accom" class="w-full mt-1 px-3 py-2 rounded text-sm">
             <option value="false">No</option>
@@ -584,6 +592,39 @@ function balance(c) {
   return { ent, used, left: Math.max(0, ent - used), pct: Math.min(100, (used/ent)*100) };
 }
 
+/* ---------- Persisting a single workflow field ---------- */
+
+// Status follows the workflow rather than being typed in. Denied and closed
+// are terminal and set by hand, so they are never overwritten here.
+function derivedStatus(c) {
+  if (c.status === 'denied' || c.status === 'closed') return c.status;
+  if (balance(c).left <= 0)  return 'exhausted';
+  if (c.designationSent)     return 'approved';
+  if (c.certReceived)        return 'cert_review';
+  if (c.certRequested)       return 'awaiting_cert';
+  return 'intake';
+}
+
+async function patchCase(id, fields) {
+  const c = cases.find(x => x.id === id);
+  Object.assign(c, fields);
+  c.status = derivedStatus(c);
+
+  if (DEMO_MODE) {
+    showToast('Recorded locally only. Not connected to the database.');
+    openCase(id); renderAll();
+    return;
+  }
+  try {
+    await api('POST', 'cases', toDb({ id, ...fields, status: c.status }));
+    await loadCases();
+    openCase(id); renderAll();
+  } catch (e) {
+    showToast(e.message, 6000);
+    await loadCases(); openCase(id); renderAll();
+  }
+}
+
 /* ---------- Status ---------- */
 
 const STATUS_LABEL = {
@@ -833,6 +874,15 @@ function openCase(id) {
   const elig = isEligible(c);
   const hire = d(c.hireDate);
 
+  // Which case field each step writes, and what the button says.
+  const ACTIONS = {
+    eligibility:   { field: 'eligibilityNoticeSent', verb: 'Mark notice sent' },
+    certification: { field: 'certReceived',          verb: 'Record certification' },
+    cure:          { field: 'certCured',             verb: 'Mark cured' },
+    designation:   { field: 'designationSent',       verb: 'Mark notice sent' },
+    recert:        { field: 'recertReceived',        verb: 'Mark received' }
+  };
+
   const steps = Object.values(dls).map(dl => {
     const s = segState(dl);
     const left = dl.due ? daysBetween(today(), dl.due) : null;
@@ -841,12 +891,40 @@ function openCase(id) {
       : left < 0 ? `Past due by ${Math.abs(left)} days`
       : `Due ${fmt(dl.due)}, ${left} days out`;
     const dot = dl.done ? '#15803d' : dl.blocked ? '#9ca3af' : left < 0 ? '#b91c1c' : left <= 2 ? '#d97706' : '#3b82f6';
-    return `<div class="flex items-start gap-3 py-2.5 border-b" style="border-color:var(--border-color)">
+
+    const act = ACTIONS[dl.key];
+    let control = '';
+
+    if (dl.done && act) {
+      control = `<button class="step-undo text-xs px-2 py-1 rounded card"
+                   data-field="${act.field}">Undo</button>`;
+    } else if (dl.key === 'certification' && dl.blocked) {
+      // The 15-day clock cannot start until the certification is requested.
+      control = `<button class="step-req text-xs px-2 py-1 rounded bg-tamu-maroon text-white">
+                   Request certification</button>`;
+    } else if (act && !dl.done) {
+      const suff = dl.key === 'certification'
+        ? `<select class="step-suff text-xs px-1 py-1 rounded">
+             <option value="sufficient">Sufficient</option>
+             <option value="incomplete">Incomplete</option>
+             <option value="insufficient">Insufficient</option>
+           </select>` : '';
+      control = `<div class="flex flex-wrap gap-1 items-center justify-end">
+          ${suff}
+          <input type="date" class="step-date text-xs px-1 py-1 rounded" value="${iso(today())}" />
+          <button class="step-do text-xs px-2 py-1 rounded bg-tamu-maroon text-white"
+                  data-field="${act.field}">${act.verb}</button>
+        </div>`;
+    }
+
+    return `<div class="flex items-start gap-3 py-2.5 border-b" style="border-color:var(--border-color)"
+                 data-step="${dl.key}">
       <span style="width:10px;height:10px;border-radius:999px;background:${dot};margin-top:5px;flex:none"></span>
       <div class="flex-1 min-w-0">
         <div class="text-sm font-medium">${dl.label}</div>
         <div class="text-xs" style="color:var(--text-tertiary)">${stateText} &middot; ${dl.total} ${dl.unit}</div>
       </div>
+      <div class="flex-none">${control}</div>
     </div>`;
   }).join('');
 
@@ -971,6 +1049,30 @@ function openCase(id) {
   });
   document.getElementById('edit-case').addEventListener('click', () => editCase(c.id));
 
+  const row = el => el.closest('[data-step]');
+
+  document.querySelectorAll('.step-do').forEach(b => b.addEventListener('click', () => {
+    const r = row(b);
+    const date = r.querySelector('.step-date').value;
+    if (!date) { showToast('Pick a date first.'); return; }
+    const fields = { [b.dataset.field]: date };
+    const suff = r.querySelector('.step-suff');
+    if (suff) fields.certSufficient = suff.value;
+    patchCase(c.id, fields);
+  }));
+
+  document.querySelectorAll('.step-req').forEach(b => b.addEventListener('click', () =>
+    patchCase(c.id, { certRequested: iso(today()) })));
+
+  document.querySelectorAll('.step-undo').forEach(b => b.addEventListener('click', () => {
+    const fields = { [b.dataset.field]: '' };
+    // Undoing the certification also clears the sufficiency finding and the
+    // cure date, otherwise the case keeps a verdict on a document it no
+    // longer has.
+    if (b.dataset.field === 'certReceived') { fields.certSufficient = ''; fields.certCured = ''; }
+    patchCase(c.id, fields);
+  }));
+
   showView('detail');
 }
 
@@ -1024,6 +1126,7 @@ function editCase(id) {
   set('f-ffd', String(c.ffdRequired)); set('f-notes', c.notes);
   set('f-birth', c.birthDate); set('f-ffdnotice', String(c.ffdNoticed));
   set('f-accom', String(c.accommodationReview));
+  set('f-status', ['denied','closed'].includes(c.status) ? c.status : '');
   syncReasonFields();
   showView('new');
 }
@@ -1041,6 +1144,7 @@ function newCase() {
   document.getElementById('f-birth').value = '';
   document.getElementById('f-ffdnotice').value = 'false';
   document.getElementById('f-accom').value = 'false';
+  document.getElementById('f-status').value = '';
   document.getElementById('notes-warning').classList.add('hidden');
   syncReasonFields();
   showView('new');
@@ -1059,12 +1163,13 @@ function saveCase() {
     ffdNoticed: g('f-ffdnotice') === 'true',
     accommodationReview: g('f-accom') === 'true'
   };
+  if (g('f-status')) rec.status = g('f-status');
   // The database enforces these too. Belt and suspenders, and it keeps a
   // stale disabled control from writing something the constraint rejects.
   if (rec.reason !== 'own') { rec.ffdRequired = false; rec.ffdNoticed = false; }
   if (!['bonding_birth','bonding_placement'].includes(rec.reason)) rec.birthDate = '';
   if (editingId) rec.id = editingId;
-  if (!editingId) rec.status = 'intake';
+  if (!editingId && !rec.status) rec.status = 'intake';
 
   if (DEMO_MODE) {
     if (editingId) Object.assign(cases.find(c => c.id === editingId), rec);
