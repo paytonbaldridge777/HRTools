@@ -313,7 +313,9 @@ async function api(method, path, body) {
     throw new Error('Your session expired. Reload the page to sign in again.');
   }
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  if (!res.ok) {
+    throw new Error(data.detail || data.error || `Request failed (${res.status})`);
+  }
   return data;
 }
 
@@ -339,8 +341,13 @@ const FIELD_MAP = {
 function toDb(c) {
   const out = {};
   for (const [js, db] of Object.entries(FIELD_MAP)) {
-    if (c[js] !== undefined && c[js] !== '') out[db] = c[js];
+    if (c[js] === undefined) continue;
+    // Send null rather than omitting, so clearing a field in the form
+    // actually clears it in the database. Empty string is not a valid
+    // date, so it has to become null on the way out.
+    out[db] = (c[js] === '' ? null : c[js]);
   }
+  if (!out.id) delete out.id;
   return out;
 }
 

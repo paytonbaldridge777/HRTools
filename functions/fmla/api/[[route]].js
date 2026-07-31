@@ -164,9 +164,19 @@ export async function onRequest(context) {
 
     if (route === 'cases' && request.method === 'POST') {
       const body = await request.json();
-      const saved = await sb(env, 'POST', 'cases', [body],
-        { Prefer: 'resolution=merge-duplicates,return=representation' });
-      await audit(env, actor, body.id ? 'update_case' : 'create_case', saved?.[0]?.id ?? null);
+      const id = body.id;
+      delete body.id;   // `id` is GENERATED ALWAYS. Postgres rejects any
+                        // explicit value for it, including on upsert.
+      let saved;
+      if (id) {
+        body.updated_at = new Date().toISOString();
+        saved = await sb(env, 'PATCH', `cases?id=eq.${encodeURIComponent(id)}`, body,
+          { Prefer: 'return=representation' });
+      } else {
+        saved = await sb(env, 'POST', 'cases', [body],
+          { Prefer: 'return=representation' });
+      }
+      await audit(env, actor, id ? 'update_case' : 'create_case', saved?.[0]?.id ?? null);
       return json(saved?.[0] ?? null);
     }
 
@@ -188,8 +198,9 @@ export async function onRequest(context) {
     return json({ error: `No route for ${request.method} /${route}` }, 404);
 
   } catch (e) {
-    // Supabase errors can echo query fragments. Log server side, stay vague client side.
+    // The caller is already a verified HR staff member, so the detail is not
+    // leaking to a stranger, and a vague message makes this impossible to debug.
     console.error('fmla api', route, e.message);
-    return json({ error: 'The request could not be completed' }, 500);
+    return json({ error: 'The request could not be completed', detail: e.message }, 500);
   }
 }
