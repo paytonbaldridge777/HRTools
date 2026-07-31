@@ -206,6 +206,19 @@
         <label class="text-sm">Scheduled hours per week
           <input id="f-hrsweek" type="number" step="0.5" value="40" class="w-full mt-1 px-3 py-2 rounded text-sm" />
         </label>
+        <label class="text-sm">Employee type
+          <select id="f-emptype" class="w-full mt-1 px-3 py-2 rounded text-sm">
+            <option value="staff">Staff</option>
+            <option value="faculty">Faculty</option>
+          </select>
+        </label>
+        <label class="text-sm">12 months of State of Texas service
+          <select id="f-stateservice" class="w-full mt-1 px-3 py-2 rounded text-sm">
+            <option value="false">Not confirmed</option>
+            <option value="true">Confirmed</option>
+          </select>
+          <span class="text-xs" style="color:var(--text-tertiary)">Need not be consecutive, and counts other state agencies</span>
+        </label>
         <label class="text-sm">Hours worked in prior 12 months
           <input id="f-hrs12" type="number" class="w-full mt-1 px-3 py-2 rounded text-sm" />
           <span class="text-xs" style="color:var(--text-tertiary)">Eligibility threshold is 1,250</span>
@@ -364,6 +377,11 @@ const FIELD_MAP = {
   ffdReceived: 'ffd_received', paidLeave: 'paid_leave_substitution',
   birthDate: 'birth_or_placement_date', ffdNoticed: 'ffd_noticed_in_designation',
   accommodationReview: 'accommodation_review',
+  employeeType: 'employee_type', erReviewSent: 'er_review_sent',
+  erReviewCleared: 'er_review_cleared', certMethod: 'cert_received_method',
+  supervisorNotified: 'supervisor_notified', returnCheckin: 'return_checkin_done',
+  stateService: 'twelve_months_state_service',
+  insuranceEnrollmentNoted: 'insurance_enrollment_noted',
   status: 'status', notes: 'notes'
 };
 
@@ -386,6 +404,7 @@ function fromDb(row, usageRows) {
   out.ffdRequired = row.ffd_required === true;
   out.ffdNoticed = row.ffd_noticed_in_designation === true;
   out.accommodationReview = row.accommodation_review === true;
+  out.stateService = row.twelve_months_state_service === true;
   out.hoursWeek = Number(row.scheduled_hours_week) || 40;
   out.hoursPrior12 = Number(row.hours_prior_12mo) || 0;
   out.usage = (usageRows || [])
@@ -489,8 +508,11 @@ function deadlines(c) {
 
   out.eligibility = {
     key: 'eligibility',
-    label: 'Eligibility notice (WH-381)',
-    short: 'ELIG',
+    // The checklist issues Form 573a, the medical certification form, and the
+    // position description together as one packet within 5 days, so this one
+    // action starts the certification clock too.
+    label: 'FMLA packet issued (Form 573a)',
+    short: 'PACKET',
     due: recv ? addBusinessDays(recv, 5) : null,
     done: !!c.eligibilityNoticeSent,
     doneDate: d(c.eligibilityNoticeSent),
@@ -521,6 +543,39 @@ function deadlines(c) {
     };
   }
 
+  // Faculty requesting intermittent leave route to the Director of Employee
+  // Relations before the designation notice may issue. Hard stop between
+  // checklist steps 4 and 5.
+  const needsER = c.employeeType === 'faculty'
+    && (c.type === 'intermittent' || c.type === 'reduced')
+    && c.certSufficient === 'sufficient';
+  if (needsER) {
+    out.erReview = {
+      key: 'erReview', label: 'Employee Relations review (faculty, intermittent)',
+      short: 'ER', due: c.certReceived ? addBusinessDays(d(c.certReceived), 3) : null,
+      done: !!c.erReviewCleared, doneDate: d(c.erReviewCleared),
+      total: 3, unit: 'business days', blocked: !c.certReceived
+    };
+  }
+
+  if (c.certReceived) {
+    out.supervisor = {
+      key: 'supervisor', label: 'Notify supervisor of return date and limits',
+      short: 'SUPV', due: addBusinessDays(d(c.certReceived), 5),
+      done: !!c.supervisorNotified, doneDate: d(c.supervisorNotified),
+      total: 5, unit: 'business days', rail: false
+    };
+  }
+
+  if (c.expectedEnd) {
+    out.checkin = {
+      key: 'checkin', label: 'Pre-return check-in with employee',
+      short: 'RTW', due: addCalendarDays(d(c.expectedEnd), -14),
+      done: !!c.returnCheckin, doneDate: d(c.returnCheckin),
+      total: 14, unit: 'calendar days', rail: false
+    };
+  }
+
   const trigger = c.certSufficient === 'sufficient' ? d(c.certReceived)
                 : (c.certCured ? d(c.certCured) : null);
   out.designation = {
@@ -543,6 +598,17 @@ function deadlines(c) {
       key: 'bonding', label: 'Bonding entitlement expires', short: 'BOND',
       due: expiry, done: c.status === 'closed', doneDate: null,
       total: 365, unit: 'calendar days', informational: true
+    };
+  }
+
+  if (c.reason === 'bonding_birth' && c.birthDate) {
+    // Not an FMLA deadline. It is on the checklist, it is time-critical,
+    // and missing it costs the employee real money.
+    out.insurance = {
+      key: 'insurance', label: 'Remind employee: 31 days to add baby to insurance',
+      short: 'INS', due: addCalendarDays(d(c.birthDate), 31),
+      done: !!c.insuranceEnrollmentNoted, doneDate: d(c.insuranceEnrollmentNoted),
+      total: 31, unit: 'calendar days', rail: false
     };
   }
 
@@ -643,9 +709,10 @@ const REASON_LABEL = {
 const TYPE_LABEL = { continuous: 'Continuous', intermittent: 'Intermittent', reduced: 'Reduced schedule' };
 
 function isEligible(c) {
-  const hire = d(c.hireDate);
-  const twelveMonths = hire && daysBetween(hire, today()) >= 365;
-  return twelveMonths && Number(c.hoursPrior12) >= 1250;
+  // 12 months of service to the STATE OF TEXAS, need not be consecutive.
+  // Deriving this from the Law School hire date denied anyone who
+  // transferred in from another state agency, so HR confirms it directly.
+  return c.stateService === true && Number(c.hoursPrior12) >= 1250;
 }
 
 /* ---------- Demo data ---------- */
@@ -808,7 +875,7 @@ function visibleCases() {
 
 function railHTML(c) {
   const dls = deadlines(c);
-  return `<div class="clock-rail">` + Object.values(dls).map(dl => {
+  return `<div class="clock-rail">` + Object.values(dls).filter(dl => dl.rail !== false).map(dl => {
     const s = segState(dl);
     return `<div class="clock-seg ${s.cls}" title="${dl.label}">
       <div class="fill" style="width:${s.pct}%"></div>
@@ -880,7 +947,11 @@ function openCase(id) {
     certification: { field: 'certReceived',          verb: 'Record certification' },
     cure:          { field: 'certCured',             verb: 'Mark cured' },
     designation:   { field: 'designationSent',       verb: 'Mark notice sent' },
-    recert:        { field: 'recertReceived',        verb: 'Mark received' }
+    recert:        { field: 'recertReceived',        verb: 'Mark received' },
+    erReview:      { field: 'erReviewCleared',       verb: 'Mark cleared' },
+    supervisor:    { field: 'supervisorNotified',    verb: 'Mark notified' },
+    checkin:       { field: 'returnCheckin',         verb: 'Mark done' },
+    insurance:     { field: 'insuranceEnrollmentNoted', verb: 'Mark reminded' }
   };
 
   const steps = Object.values(dls).map(dl => {
@@ -904,7 +975,12 @@ function openCase(id) {
                    Request certification</button>`;
     } else if (act && !dl.done) {
       const suff = dl.key === 'certification'
-        ? `<select class="step-suff text-xs px-1 py-1 rounded">
+        ? `<select class="step-method text-xs px-1 py-1 rounded">
+             <option value="email">Email</option>
+             <option value="fax">Fax</option>
+             <option value="in_person">In person</option>
+           </select>
+           <select class="step-suff text-xs px-1 py-1 rounded">
              <option value="sufficient">Sufficient</option>
              <option value="incomplete">Incomplete</option>
              <option value="insufficient">Insufficient</option>
@@ -962,8 +1038,8 @@ function openCase(id) {
         <h3 class="font-semibold text-tamu-maroon mb-1">Eligibility</h3>
         <p class="text-xs mb-3" style="color:var(--text-tertiary)">29 CFR 825.110</p>
         <div class="flex justify-between text-sm py-1.5 border-b" style="border-color:var(--border-color)">
-          <span>12 months of service</span>
-          <span class="font-medium">${hire && daysBetween(hire, today()) >= 365 ? 'Met' : 'Not met'}</span>
+          <span>12 months of State of Texas service</span>
+          <span class="font-medium">${c.stateService ? 'Confirmed' : 'Not confirmed'}</span>
         </div>
         <div class="flex justify-between text-sm py-1.5 border-b" style="border-color:var(--border-color)">
           <span>1,250 hours in prior 12 months</span>
@@ -999,7 +1075,7 @@ function openCase(id) {
         ${c.ffdRequired && !c.ffdNoticed ? `<div class="mt-3 text-xs px-3 py-2 rounded bg-red-100 text-red-900">
           <strong>Fitness for duty is not enforceable on this case.</strong>
           29 CFR 825.300(d)(3) requires the requirement be stated in the designation
-          notice. It was not. You cannot condition her return on it now.</div>` : ''}
+          notice (Form 573b). It was not. You cannot condition her return on it now.</div>` : ''}
         ${c.accommodationReview ? `<div class="mt-3 text-xs px-3 py-2 rounded bg-indigo-100 text-indigo-900">
           Accommodation review flagged. PWFA and ADA obligations can apply independently
           of FMLA, including after a clean fitness-for-duty certification, and can attach
@@ -1056,8 +1132,13 @@ function openCase(id) {
     const date = r.querySelector('.step-date').value;
     if (!date) { showToast('Pick a date first.'); return; }
     const fields = { [b.dataset.field]: date };
+    // The packet carries Form 573a, the certification form, and the position
+    // description together, so issuing it also starts the 15-day clock.
+    if (b.dataset.field === 'eligibilityNoticeSent') fields.certRequested = date;
     const suff = r.querySelector('.step-suff');
     if (suff) fields.certSufficient = suff.value;
+    const meth = r.querySelector('.step-method');
+    if (meth) fields.certMethod = meth.value;
     patchCase(c.id, fields);
   }));
 
@@ -1084,7 +1165,7 @@ const CLINICAL_TERMS = ['diagnos','cancer','surgery','depress','anxiet','pregnan
 const FFD_NOTE_BLOCKED =
   'Not available. Fitness for duty applies only to the employee\'s own serious health condition.';
 const FFD_NOTE_OK =
-  'Only enforceable if you state it in the designation notice (WH-382).';
+  'Only enforceable if you state it in the designation notice (Form 573b).';
 
 function syncReasonFields() {
   const reason = document.getElementById('f-reason').value;
@@ -1127,6 +1208,7 @@ function editCase(id) {
   set('f-birth', c.birthDate); set('f-ffdnotice', String(c.ffdNoticed));
   set('f-accom', String(c.accommodationReview));
   set('f-status', ['denied','closed'].includes(c.status) ? c.status : '');
+  set('f-emptype', c.employeeType || 'staff'); set('f-stateservice', String(c.stateService));
   syncReasonFields();
   showView('new');
 }
@@ -1145,6 +1227,8 @@ function newCase() {
   document.getElementById('f-ffdnotice').value = 'false';
   document.getElementById('f-accom').value = 'false';
   document.getElementById('f-status').value = '';
+  document.getElementById('f-emptype').value = 'staff';
+  document.getElementById('f-stateservice').value = 'false';
   document.getElementById('notes-warning').classList.add('hidden');
   syncReasonFields();
   showView('new');
@@ -1164,6 +1248,8 @@ function saveCase() {
     accommodationReview: g('f-accom') === 'true'
   };
   if (g('f-status')) rec.status = g('f-status');
+  rec.employeeType = g('f-emptype');
+  rec.stateService = g('f-stateservice') === 'true';
   // The database enforces these too. Belt and suspenders, and it keeps a
   // stale disabled control from writing something the constraint rejects.
   if (rec.reason !== 'own') { rec.ffdRequired = false; rec.ffdNoticed = false; }
