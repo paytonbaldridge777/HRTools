@@ -264,7 +264,18 @@
               <option value="week">Week</option>
             </select>
           </div>
-          <span class="text-xs" style="color:var(--text-tertiary)">What the provider authorized, used to flag overuse</span>
+          <span class="text-xs" style="color:var(--text-tertiary)">Episodic flare-ups, as certified</span>
+        </label>
+        <label class="text-sm" id="wrap-care">Care or time off needed
+          <div class="flex gap-1 mt-1 items-center">
+            <input id="f-carehours" type="number" step="0.25" min="0" max="24" placeholder="Hours"
+                   class="px-2 py-2 rounded text-sm w-20" />
+            <span class="text-xs" style="color:var(--text-tertiary)">hours per day,</span>
+            <input id="f-caredays" type="number" step="0.5" min="0" max="7" placeholder="Days"
+                   class="px-2 py-2 rounded text-sm w-20" />
+            <span class="text-xs" style="color:var(--text-tertiary)">days per week</span>
+          </div>
+          <span class="text-xs" style="color:var(--text-tertiary)">Reduced schedule, as certified. Takes precedence over episodes when both are set.</span>
         </label>
         <label class="text-sm">Request received
           <input id="f-received" type="date" class="w-full mt-1 px-3 py-2 rounded text-sm" />
@@ -417,6 +428,7 @@ const FIELD_MAP = {
   intermittentEpisodes: 'intermittent_episodes',
   intermittentHoursEach: 'intermittent_hours_each',
   intermittentPeriod: 'intermittent_period',
+  careHoursPerDay: 'care_hours_per_day', careDaysPerWeek: 'care_days_per_week',
   status: 'status', notes: 'notes'
 };
 
@@ -765,17 +777,30 @@ async function patchCase(id, fields) {
    to be told when an employee uses more leave than the doctor allowed. */
 
 function frequencyCheck(c) {
+  const hpd = Number(c.careHoursPerDay), dpw = Number(c.careDaysPerWeek);
   const eps = Number(c.intermittentEpisodes), hrs = Number(c.intermittentHoursEach);
-  if (!eps || !hrs || !c.intermittentPeriod) return null;
-  const days = c.intermittentPeriod === 'week' ? 7 : 30;
-  const authorized = eps * hrs;
+
+  let authorized, days, basis;
+  if (hpd && dpw) {
+    // Reduced schedule shape. Takes precedence when present: it is the more
+    // specific of the two, and a weekly window reacts faster than a monthly one.
+    authorized = hpd * dpw; days = 7;
+    basis = `${hpd} hrs/day x ${dpw} days/week`;
+  } else if (eps && hrs && c.intermittentPeriod) {
+    // Episodic flare-up shape.
+    days = c.intermittentPeriod === 'week' ? 7 : 30;
+    authorized = eps * hrs;
+    basis = `${eps} episodes x ${hrs} hrs per ${c.intermittentPeriod}`;
+  } else {
+    return null;
+  }
+
   const since = addCalendarDays(today(), -days);
   const used = (c.usage || []).reduce((sum, u) => {
     const ud = d(u.date);
     return (ud > since && ud <= today()) ? sum + Number(u.hours) : sum;
   }, 0);
-  return { authorized, used, days, over: used > authorized,
-           period: c.intermittentPeriod };
+  return { authorized, used, days, basis, over: used > authorized };
 }
 
 /* ---------- Which phase of a birth leave are we in? ----------
@@ -1234,6 +1259,7 @@ function openCase(id) {
             <div class="text-xs font-medium">
               ${f.used} of ${f.authorized} authorized hours in the last ${f.days} days
             </div>
+            <div class="text-xs" style="opacity:.75">Certified as ${f.basis}</div>
             <div class="gauge mt-1" style="background:rgba(0,0,0,.1)">
               <div style="width:${pct}%; background:${f.over ? '#b91c1c' : '#500000'}"></div>
             </div>
@@ -1337,6 +1363,7 @@ function syncReasonFields() {
   // Bonding start only applies to the combined single-case shape.
   const episodic = document.getElementById('f-type').value !== 'continuous';
   document.getElementById('wrap-freq').style.display = episodic ? '' : 'none';
+  document.getElementById('wrap-care').style.display = episodic ? '' : 'none';
 
   const showBondingStart = isOwn && !!document.getElementById('f-birth').value;
   document.getElementById('wrap-bondingstart').style.display = showBondingStart ? '' : 'none';
@@ -1380,6 +1407,7 @@ function editCase(id) {
   set('f-indefinite', String(c.conditionIndefinite)); set('f-certvalid', c.certValidThrough);
   set('f-episodes', c.intermittentEpisodes); set('f-hourseach', c.intermittentHoursEach);
   set('f-freqperiod', c.intermittentPeriod || 'month');
+  set('f-carehours', c.careHoursPerDay); set('f-caredays', c.careDaysPerWeek);
   syncReasonFields();
   showView('new');
 }
@@ -1404,6 +1432,7 @@ function newCase() {
   document.getElementById('f-indefinite').value = 'false';
   ['f-certvalid','f-episodes','f-hourseach'].forEach(k => document.getElementById(k).value = '');
   document.getElementById('f-freqperiod').value = 'month';
+  ['f-carehours','f-caredays'].forEach(k => document.getElementById(k).value = '');
   document.getElementById('notes-warning').classList.add('hidden');
   syncReasonFields();
   showView('new');
@@ -1433,8 +1462,11 @@ function saveCase() {
   rec.intermittentHoursEach = g('f-hourseach') ? Number(g('f-hourseach')) : '';
   // Certified frequency is meaningless on a continuous leave, and the
   // database constraint rejects it.
+  rec.careHoursPerDay = g('f-carehours') ? Number(g('f-carehours')) : '';
+  rec.careDaysPerWeek = g('f-caredays') ? Number(g('f-caredays')) : '';
   if (rec.type === 'continuous') {
     rec.intermittentEpisodes = ''; rec.intermittentHoursEach = ''; rec.intermittentPeriod = '';
+    rec.careHoursPerDay = ''; rec.careDaysPerWeek = '';
   }
   // The database enforces these too. Belt and suspenders, and it keeps a
   // stale disabled control from writing something the constraint rejects.
