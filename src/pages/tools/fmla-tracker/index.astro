@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="FMLA Case Tracker - HR Tools">
+  <div class="container max-w-[1800px] mx-auto px-4 py-12">
+    <div id="fmla-tracker-root" class="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg shadow-sm overflow-hidden">
+      <iframe
+        src="/FMLATracker/index.html"
+        class="w-full border-0"
+        style="min-height: 900px;"
+        title="FMLA Case Tracker Tool"
+      ></iframe>
+    </div>
+
+    <div class="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+      <h2 class="text-xl font-bold text-blue-900 dark:text-blue-100 mb-3">How to Use</h2>
+      <ul class="list-disc list-inside space-y-2 text-blue-800 dark:text-blue-200">
+        <li>Work the compliance queue first: it lists every open statutory deadline, soonest first</li>
+        <li>The colored rail on each case tracks the eligibility notice, certification, cure, and designation clocks</li>
+        <li>Entitlement uses a rolling 12-month lookback, summed across all cases for the same UIN</li>
+        <li>Enter hours from the FMLA Calculator into the case hours ledger</li>
+      </ul>
+    </div>
+
+    <div class="mt-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-6">
+      <h2 class="text-xl font-bold text-amber-900 dark:text-amber-100 mb-3">Confidentiality</h2>
+      <p class="text-amber-800 dark:text-amber-200">
+        FMLA records are confidential medical records under 29 CFR 825.500(g) and must be
+        kept separate from personnel files. Record dates, hours, and status only. Do not
+        enter diagnoses, symptoms, or treatment details. Store certification forms in the
+        sanctioned document system and reference them by ID.
+      </p>
+    </div>
+  </div>
+</BaseLayout>

@@ -3,7 +3,10 @@
     "slug": "fmla-calculator",
     "name": "FMLA Calculator",
     "shortDescription": "Calculate FMLA eligibility and leave details for TAMU employees.",
-    "tags": ["Leave", "Compliance"],
+    "tags": [
+      "Leave",
+      "Compliance"
+    ],
     "status": "stable",
     "icon": "/icons/fmla.svg"
   },
@@ -11,7 +14,9 @@
     "slug": "traintraq-reminders",
     "name": "TrainTraq Reminders",
     "shortDescription": "Manage and track training reminder schedules.",
-    "tags": ["Training"],
+    "tags": [
+      "Training"
+    ],
     "status": "stable",
     "icon": "/icons/training.svg"
   },
@@ -19,7 +24,9 @@
     "slug": "onboarding-tracker",
     "name": "Onboarding Tracker",
     "shortDescription": "Track onboarding tasks and progress for new hires.",
-    "tags": ["Onboarding"],
+    "tags": [
+      "Onboarding"
+    ],
     "status": "stable",
     "icon": "/icons/onboarding.svg"
   },
@@ -27,7 +34,9 @@
     "slug": "accessibility-checker",
     "name": "Accessibility Checker",
     "shortDescription": "Analyze documents and websites for WCAG 2.1 Level AA compliance.",
-    "tags": ["Compliance"],
+    "tags": [
+      "Compliance"
+    ],
     "status": "stable",
     "icon": "/icons/accessibility.svg"
   },
@@ -35,8 +44,22 @@
     "slug": "payroll-reminders",
     "name": "Payroll Reminders",
     "shortDescription": "Generate manager reminder emails for unsubmitted and unapproved timesheet hours.",
-    "tags": ["Payroll", "Compliance"],
+    "tags": [
+      "Payroll",
+      "Compliance"
+    ],
     "status": "stable",
     "icon": "/icons/payroll.svg"
+  },
+  {
+    "slug": "fmla-tracker",
+    "name": "FMLA Case Tracker",
+    "shortDescription": "Track FMLA cases, statutory notice deadlines, and rolling 12-month entitlement.",
+    "tags": [
+      "Leave",
+      "Compliance"
+    ],
+    "status": "beta",
+    "icon": "/icons/fmla.svg"
   }
 ]
