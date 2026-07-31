@@ -245,11 +245,30 @@
             <option value="pool">Sick leave pool</option>
           </select>
         </label>
+        <label class="text-sm" id="wrap-birth">Birth or placement date
+          <input id="f-birth" type="date" class="w-full mt-1 px-3 py-2 rounded text-sm" />
+          <span class="text-xs" style="color:var(--text-tertiary)">Bonding leave must conclude within 12 months</span>
+        </label>
         <label class="text-sm">Fitness for duty required on return
           <select id="f-ffd" class="w-full mt-1 px-3 py-2 rounded text-sm">
             <option value="false">No</option>
             <option value="true">Yes</option>
           </select>
+          <span id="ffd-note" class="text-xs block mt-1" style="color:var(--text-tertiary)"></span>
+        </label>
+        <label class="text-sm" id="wrap-ffdnotice">Stated in the designation notice
+          <select id="f-ffdnotice" class="w-full mt-1 px-3 py-2 rounded text-sm">
+            <option value="false">No</option>
+            <option value="true">Yes</option>
+          </select>
+          <span class="text-xs" style="color:var(--text-tertiary)">Required by 29 CFR 825.300(d)(3)</span>
+        </label>
+        <label class="text-sm">Accommodation review needed
+          <select id="f-accom" class="w-full mt-1 px-3 py-2 rounded text-sm">
+            <option value="false">No</option>
+            <option value="true">Yes</option>
+          </select>
+          <span class="text-xs" style="color:var(--text-tertiary)">PWFA or ADA may apply independently of FMLA</span>
         </label>
       </div>
 
@@ -335,6 +354,8 @@ const FIELD_MAP = {
   designationSent: 'designation_sent', recertDue: 'recert_due',
   recertReceived: 'recert_received', ffdRequired: 'ffd_required',
   ffdReceived: 'ffd_received', paidLeave: 'paid_leave_substitution',
+  birthDate: 'birth_or_placement_date', ffdNoticed: 'ffd_noticed_in_designation',
+  accommodationReview: 'accommodation_review',
   status: 'status', notes: 'notes'
 };
 
@@ -355,6 +376,8 @@ function fromDb(row, usageRows) {
   const out = {};
   for (const [js, db] of Object.entries(FIELD_MAP)) out[js] = row[db] ?? '';
   out.ffdRequired = row.ffd_required === true;
+  out.ffdNoticed = row.ffd_noticed_in_designation === true;
+  out.accommodationReview = row.accommodation_review === true;
   out.hoursWeek = Number(row.scheduled_hours_week) || 40;
   out.hoursPrior12 = Number(row.hours_prior_12mo) || 0;
   out.usage = (usageRows || [])
@@ -502,6 +525,18 @@ function deadlines(c) {
     total: 5, unit: 'business days',
     blocked: !trigger
   };
+
+  if ((c.reason === 'bonding_birth' || c.reason === 'bonding_placement') && c.birthDate) {
+    // 29 CFR 825.120(a)(2): bonding leave must conclude within 12 months
+    // of birth or placement. Unused entitlement is simply lost.
+    const b = d(c.birthDate);
+    const expiry = new Date(b.getFullYear() + 1, b.getMonth(), b.getDate());
+    out.bonding = {
+      key: 'bonding', label: 'Bonding entitlement expires', short: 'BOND',
+      due: expiry, done: c.status === 'closed', doneDate: null,
+      total: 365, unit: 'calendar days', informational: true
+    };
+  }
 
   if (c.recertDue) {
     out.recert = {
@@ -662,7 +697,9 @@ function openDeadlines() {
     const dls = deadlines(c);
     Object.values(dls).forEach(dl => {
       if (dl.done || dl.blocked || !dl.due) return;
-      rows.push({ c, dl, left: daysBetween(today(), dl.due) });
+      const left = daysBetween(today(), dl.due);
+      if (dl.informational && left > 60) return;  // not actionable yet
+      rows.push({ c, dl, left });
     });
     if (!c.certRequested && c.eligibilityNoticeSent && c.reason !== 'exigency') {
       rows.push({ c, dl: { label: 'Request medical certification', short:'REQ' }, left: 0, adhoc: true });
@@ -879,8 +916,16 @@ function openCase(id) {
       <div class="card rounded-lg shadow-sm p-5">
         <h3 class="font-semibold text-tamu-maroon mb-3">Notice and certification steps</h3>
         ${steps}
-        ${c.ffdRequired ? `<div class="mt-3 text-xs px-3 py-2 rounded bg-amber-100 text-amber-900">
+        ${c.ffdRequired && c.ffdNoticed ? `<div class="mt-3 text-xs px-3 py-2 rounded bg-amber-100 text-amber-900">
           Fitness-for-duty certification required before return to work.</div>` : ''}
+        ${c.ffdRequired && !c.ffdNoticed ? `<div class="mt-3 text-xs px-3 py-2 rounded bg-red-100 text-red-900">
+          <strong>Fitness for duty is not enforceable on this case.</strong>
+          29 CFR 825.300(d)(3) requires the requirement be stated in the designation
+          notice. It was not. You cannot condition her return on it now.</div>` : ''}
+        ${c.accommodationReview ? `<div class="mt-3 text-xs px-3 py-2 rounded bg-indigo-100 text-indigo-900">
+          Accommodation review flagged. PWFA and ADA obligations can apply independently
+          of FMLA, including after a clean fitness-for-duty certification, and can attach
+          even when the employee is not FMLA eligible.</div>` : ''}
       </div>
 
       <div class="card rounded-lg shadow-sm p-5">
@@ -934,6 +979,29 @@ function openCase(id) {
 const CLINICAL_TERMS = ['diagnos','cancer','surgery','depress','anxiet','pregnan','psychiatric',
   'chemo','therapy','medication','disorder','symptom','treatment'];
 
+const FFD_NOTE_BLOCKED =
+  'Not available. Fitness for duty applies only to the employee\'s own serious health condition.';
+const FFD_NOTE_OK =
+  'Only enforceable if you state it in the designation notice (WH-382).';
+
+function syncReasonFields() {
+  const reason = document.getElementById('f-reason').value;
+  const isBonding = reason === 'bonding_birth' || reason === 'bonding_placement';
+  const isOwn = reason === 'own';
+
+  document.getElementById('wrap-birth').style.display = isBonding ? '' : 'none';
+  if (!isBonding) document.getElementById('f-birth').value = '';
+
+  const ffd = document.getElementById('f-ffd');
+  ffd.disabled = !isOwn;
+  if (!isOwn) ffd.value = 'false';
+  document.getElementById('ffd-note').textContent = isOwn ? FFD_NOTE_OK : FFD_NOTE_BLOCKED;
+
+  const showNotice = isOwn && ffd.value === 'true';
+  document.getElementById('wrap-ffdnotice').style.display = showNotice ? '' : 'none';
+  if (!showNotice) document.getElementById('f-ffdnotice').value = 'false';
+}
+
 function checkNotes() {
   const v = document.getElementById('f-notes').value.toLowerCase();
   const hit = CLINICAL_TERMS.find(t => v.includes(t));
@@ -954,6 +1022,9 @@ function editCase(id) {
   set('f-reason', c.reason); set('f-type', c.type); set('f-received', c.requestReceived);
   set('f-start', c.leaveStart); set('f-end', c.expectedEnd); set('f-paid', c.paidLeave);
   set('f-ffd', String(c.ffdRequired)); set('f-notes', c.notes);
+  set('f-birth', c.birthDate); set('f-ffdnotice', String(c.ffdNoticed));
+  set('f-accom', String(c.accommodationReview));
+  syncReasonFields();
   showView('new');
 }
 
@@ -967,7 +1038,11 @@ function newCase() {
   document.getElementById('f-type').value = 'continuous';
   document.getElementById('f-paid').value = 'none';
   document.getElementById('f-ffd').value = 'false';
+  document.getElementById('f-birth').value = '';
+  document.getElementById('f-ffdnotice').value = 'false';
+  document.getElementById('f-accom').value = 'false';
   document.getElementById('notes-warning').classList.add('hidden');
+  syncReasonFields();
   showView('new');
 }
 
@@ -979,8 +1054,15 @@ function saveCase() {
     hireDate: g('f-hire'), hoursWeek: Number(g('f-hrsweek')), hoursPrior12: Number(g('f-hrs12')),
     reason: g('f-reason'), type: g('f-type'), requestReceived: g('f-received'),
     leaveStart: g('f-start'), expectedEnd: g('f-end'), paidLeave: g('f-paid'),
-    ffdRequired: g('f-ffd') === 'true', notes: g('f-notes')
+    ffdRequired: g('f-ffd') === 'true', notes: g('f-notes'),
+    birthDate: g('f-birth'),
+    ffdNoticed: g('f-ffdnotice') === 'true',
+    accommodationReview: g('f-accom') === 'true'
   };
+  // The database enforces these too. Belt and suspenders, and it keeps a
+  // stale disabled control from writing something the constraint rejects.
+  if (rec.reason !== 'own') { rec.ffdRequired = false; rec.ffdNoticed = false; }
+  if (!['bonding_birth','bonding_placement'].includes(rec.reason)) rec.birthDate = '';
   if (editingId) rec.id = editingId;
   if (!editingId) rec.status = 'intake';
 
@@ -1077,6 +1159,8 @@ document.getElementById('save-case').addEventListener('click', saveCase);
 document.getElementById('cancel-case').addEventListener('click', () => showView('dashboard'));
 document.getElementById('export-csv').addEventListener('click', exportCSV);
 document.getElementById('f-notes').addEventListener('input', checkNotes);
+document.getElementById('f-reason').addEventListener('change', syncReasonFields);
+document.getElementById('f-ffd').addEventListener('change', syncReasonFields);
 ['search','filter-status','filter-type'].forEach(id =>
   document.getElementById(id).addEventListener('input', renderCases));
 
