@@ -19,5 +19,13 @@
     "IndependenceDay": "2025/07/04",
     "Thanksgiving": ["2024/11/28-2024/11/29"],
     "WinterBreak": ["2024/12/24-2025/01/01"]
+  },
+  "FY2027": {
+    "LaborDay": "2026/09/07",
+    "Thanksgiving": ["2026/11/26-2026/11/27"],
+    "WinterBreak": ["2026/12/23-2027/01/01"],
+    "MartinLutherKingJrDay": "2027/01/18",
+    "MemorialDay": "2027/05/31",
+    "IndependenceDay": "2027/07/02"
   }
 }

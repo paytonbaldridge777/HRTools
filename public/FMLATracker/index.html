@@ -380,17 +380,35 @@ function banner(msg) {
 
 /* ---------- Date helpers ---------- */
 
-/* Holidays are kept local rather than read from
-   FMLACalculator/src/static/holidays.json, because that file is bundled by
-   Vite (not served), uses a mixed string/range format, and currently stops at
-   FY2025. Stale holiday data silently corrupts every business-day deadline on
-   this page, so the coverage boundary below is checked at load and surfaced.
-   Update both the array and HOLIDAYS_THROUGH each fiscal year. */
-const HOLIDAYS_THROUGH = '2026-12-31';
+/* Texas A&M University School of Law, FY2027 holiday schedule.
+   Source: https://www.tamus.edu/hr/holiday/  (anchor #law2)
+
+   The Law School schedule is NOT the main campus schedule. Under the
+   footnote to that table, the Law School reallocated its two spring break
+   holidays to winter break and Independence Day, because the distance
+   education graduate program runs during main campus spring break. So:
+     - NO spring break holidays. Staff work the full week of March 15, 2027.
+     - Winter break starts Dec 23, a day earlier than main campus.
+     - Independence Day observed July 2, which main campus does not take.
+   Copying the main campus dates here would silently miscount deadlines.
+
+   Fourteen dates below, matching the count required by Chapter 662 of the
+   Texas Government Code. If a future year's list is not 14 weekdays, it was
+   transcribed wrong.
+
+   Coverage is bounded and checked at load. Update all three constants each
+   fiscal year from the link above. */
+const HOLIDAYS_FROM    = '2026-09-01';
+const HOLIDAYS_THROUGH = '2027-08-31';
 const HOLIDAYS = [
-  '2026-01-01','2026-01-19','2026-03-16','2026-03-17','2026-03-18','2026-03-19','2026-03-20',
-  '2026-05-25','2026-06-19','2026-07-03','2026-09-07','2026-11-26','2026-11-27',
-  '2026-12-24','2026-12-25','2026-12-28','2026-12-29','2026-12-30','2026-12-31'
+  '2026-09-07',                                 // Labor Day
+  '2026-11-26', '2026-11-27',                   // Thanksgiving
+  '2026-12-23', '2026-12-24', '2026-12-25',     // Winter break
+  '2026-12-28', '2026-12-29', '2026-12-30',
+  '2026-12-31', '2027-01-01',
+  '2027-01-18',                                 // Martin Luther King, Jr. Day
+  '2027-05-31',                                 // Memorial Day
+  '2027-07-02'                                  // Independence Day (observed)
 ];
 
 function d(str) { if (!str) return null; const [y,m,dd] = str.split('-').map(Number); return new Date(y, m-1, dd); }
@@ -1025,15 +1043,20 @@ function exportCSV() {
 /* ---------- Wiring ---------- */
 
 function checkHolidayCoverage() {
-  const through = d(HOLIDAYS_THROUGH);
-  if (today() <= through) return;
+  const from = d(HOLIDAYS_FROM), through = d(HOLIDAYS_THROUGH);
+  const t = today();
+  if (t >= from && t <= through) return;
+  const before = t < from;
   const el = document.createElement('div');
   el.className = 'card rounded-lg p-3 mb-4 text-sm';
   el.style.cssText = 'border-left:4px solid #b91c1c';
-  el.innerHTML = `<strong class="text-red-700">Holiday table is out of date.</strong>
-    It covers through ${fmt(through)}. Business-day deadlines calculated past that
-    date will treat TAMU holidays as workdays and will run short. Update HOLIDAYS
-    and HOLIDAYS_THROUGH before relying on the eligibility and designation clocks.`;
+  el.innerHTML = `<strong class="text-red-700">Holiday table does not cover today.</strong>
+    It runs ${fmt(from)} to ${fmt(through)}.
+    ${before
+      ? 'Dates before that window assume no holidays, so business-day deadlines may run long.'
+      : 'Business-day deadlines past that window will treat Law School holidays as workdays and will run short.'}
+    Update HOLIDAYS, HOLIDAYS_FROM, and HOLIDAYS_THROUGH from
+    tamus.edu/hr/holiday (anchor #law2, School of Law).`;
   document.getElementById('dashboard-view').prepend(el);
 }
 
