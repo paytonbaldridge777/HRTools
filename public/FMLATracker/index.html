@@ -260,7 +260,11 @@
         </label>
         <label class="text-sm" id="wrap-birth">Birth or placement date
           <input id="f-birth" type="date" class="w-full mt-1 px-3 py-2 rounded text-sm" />
-          <span class="text-xs" style="color:var(--text-tertiary)">Bonding leave must conclude within 12 months</span>
+          <span class="text-xs" style="color:var(--text-tertiary)">Bonding must conclude within 12 months. Leave blank if not a birth or placement.</span>
+        </label>
+        <label class="text-sm" id="wrap-bondingstart">Bonding begins
+          <input id="f-bondingstart" type="date" class="w-full mt-1 px-3 py-2 rounded text-sm" />
+          <span class="text-xs" style="color:var(--text-tertiary)">When recovery ends and bonding starts, for one continuous leave</span>
         </label>
         <label class="text-sm">Fitness for duty required on return
           <select id="f-ffd" class="w-full mt-1 px-3 py-2 rounded text-sm">
@@ -382,6 +386,7 @@ const FIELD_MAP = {
   supervisorNotified: 'supervisor_notified', returnCheckin: 'return_checkin_done',
   stateService: 'twelve_months_state_service',
   insuranceEnrollmentNoted: 'insurance_enrollment_noted',
+  bondingStart: 'bonding_start_date',
   status: 'status', notes: 'notes'
 };
 
@@ -589,7 +594,7 @@ function deadlines(c) {
     blocked: !trigger
   };
 
-  if ((c.reason === 'bonding_birth' || c.reason === 'bonding_placement') && c.birthDate) {
+  if (c.birthDate) {
     // 29 CFR 825.120(a)(2): bonding leave must conclude within 12 months
     // of birth or placement. Unused entitlement is simply lost.
     const b = d(c.birthDate);
@@ -601,7 +606,7 @@ function deadlines(c) {
     };
   }
 
-  if (c.reason === 'bonding_birth' && c.birthDate) {
+  if (c.birthDate && c.reason !== 'bonding_placement') {
     // Not an FMLA deadline. It is on the checklist, it is time-critical,
     // and missing it costs the employee real money.
     out.insurance = {
@@ -689,6 +694,19 @@ async function patchCase(id, fields) {
     showToast(e.message, 6000);
     await loadCases(); openCase(id); renderAll();
   }
+}
+
+/* ---------- Which phase of a birth leave are we in? ----------
+   Recovery is her own serious health condition. Bonding is 825.120.
+   The boundary matters because intermittent leave is hers by right
+   during recovery and needs employer agreement during bonding. */
+
+function leavePhase(c) {
+  if (!c.birthDate) return null;
+  if (c.reason === 'bonding_birth' || c.reason === 'bonding_placement') return 'bonding';
+  if (c.reason !== 'own') return null;
+  if (!c.bondingStart) return 'recovery';
+  return today() >= d(c.bondingStart) ? 'bonding' : 'recovery';
 }
 
 /* ---------- Status ---------- */
@@ -1067,6 +1085,38 @@ function openCase(id) {
         </div>
       </div>
 
+      ${(() => {
+        const phase = leavePhase(c);
+        if (!phase) return '';
+        const bs = c.bondingStart ? d(c.bondingStart) : null;
+        const recovery = phase === 'recovery';
+        return `<div class="card rounded-lg shadow-sm p-5">
+          <h3 class="font-semibold text-tamu-maroon mb-1">Leave phase</h3>
+          <p class="text-xs mb-3" style="color:var(--text-tertiary)">
+            One continuous leave, two qualifying reasons
+          </p>
+          <div class="text-lg font-bold mb-1">
+            ${recovery ? 'Recovery' : 'Bonding'}
+          </div>
+          <div class="text-xs mb-3" style="color:var(--text-tertiary)">
+            ${recovery
+              ? (bs ? `Her own serious health condition through ${fmt(bs)}`
+                    : 'Her own serious health condition. Set a bonding start date once she is medically cleared.')
+              : (bs ? `Bonding since ${fmt(bs)}` : 'Bonding')}
+          </div>
+          <div class="text-xs px-3 py-2 rounded ${recovery ? 'bg-green-100 text-green-900' : 'bg-amber-100 text-amber-900'}">
+            <strong>Intermittent or reduced schedule:</strong>
+            ${recovery
+              ? 'available as medically necessary. You may not refuse it (29 CFR 825.202).'
+              : 'requires your agreement. You may decline it (29 CFR 825.120(b)).'}
+          </div>
+          ${recovery && !bs ? `<div class="text-xs mt-2 px-3 py-2 rounded bg-slate-100 text-slate-800">
+            Until a bonding start date is set, this case is treated as recovery
+            throughout, which is the conservative reading for intermittent requests.
+          </div>` : ''}
+        </div>`;
+      })()}
+
       <div class="card rounded-lg shadow-sm p-5">
         <h3 class="font-semibold text-tamu-maroon mb-3">Notice and certification steps</h3>
         ${steps}
@@ -1172,8 +1222,16 @@ function syncReasonFields() {
   const isBonding = reason === 'bonding_birth' || reason === 'bonding_placement';
   const isOwn = reason === 'own';
 
-  document.getElementById('wrap-birth').style.display = isBonding ? '' : 'none';
-  if (!isBonding) document.getElementById('f-birth').value = '';
+  // A continuous birth leave is recorded as 'own', since that is what starts
+  // it, so the birth date has to be reachable there too.
+  const canHaveBirth = isBonding || isOwn;
+  document.getElementById('wrap-birth').style.display = canHaveBirth ? '' : 'none';
+  if (!canHaveBirth) document.getElementById('f-birth').value = '';
+
+  // Bonding start only applies to the combined single-case shape.
+  const showBondingStart = isOwn && !!document.getElementById('f-birth').value;
+  document.getElementById('wrap-bondingstart').style.display = showBondingStart ? '' : 'none';
+  if (!showBondingStart) document.getElementById('f-bondingstart').value = '';
 
   const ffd = document.getElementById('f-ffd');
   ffd.disabled = !isOwn;
@@ -1209,6 +1267,7 @@ function editCase(id) {
   set('f-accom', String(c.accommodationReview));
   set('f-status', ['denied','closed'].includes(c.status) ? c.status : '');
   set('f-emptype', c.employeeType || 'staff'); set('f-stateservice', String(c.stateService));
+  set('f-bondingstart', c.bondingStart);
   syncReasonFields();
   showView('new');
 }
@@ -1229,6 +1288,7 @@ function newCase() {
   document.getElementById('f-status').value = '';
   document.getElementById('f-emptype').value = 'staff';
   document.getElementById('f-stateservice').value = 'false';
+  document.getElementById('f-bondingstart').value = '';
   document.getElementById('notes-warning').classList.add('hidden');
   syncReasonFields();
   showView('new');
@@ -1250,10 +1310,12 @@ function saveCase() {
   if (g('f-status')) rec.status = g('f-status');
   rec.employeeType = g('f-emptype');
   rec.stateService = g('f-stateservice') === 'true';
+  rec.bondingStart = g('f-bondingstart');
   // The database enforces these too. Belt and suspenders, and it keeps a
   // stale disabled control from writing something the constraint rejects.
   if (rec.reason !== 'own') { rec.ffdRequired = false; rec.ffdNoticed = false; }
-  if (!['bonding_birth','bonding_placement'].includes(rec.reason)) rec.birthDate = '';
+  if (!['own','bonding_birth','bonding_placement'].includes(rec.reason)) rec.birthDate = '';
+  if (rec.reason !== 'own' || !rec.birthDate) rec.bondingStart = '';
   if (editingId) rec.id = editingId;
   if (!editingId && !rec.status) rec.status = 'intake';
 
@@ -1352,6 +1414,7 @@ document.getElementById('export-csv').addEventListener('click', exportCSV);
 document.getElementById('f-notes').addEventListener('input', checkNotes);
 document.getElementById('f-reason').addEventListener('change', syncReasonFields);
 document.getElementById('f-ffd').addEventListener('change', syncReasonFields);
+document.getElementById('f-birth').addEventListener('change', syncReasonFields);
 ['search','filter-status','filter-type'].forEach(id =>
   document.getElementById(id).addEventListener('input', renderCases));
 
