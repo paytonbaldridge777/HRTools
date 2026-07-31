@@ -240,6 +240,32 @@
             <option value="reduced">Reduced schedule</option>
           </select>
         </label>
+        <label class="text-sm" id="wrap-indefinite">Condition duration
+          <select id="f-indefinite" class="w-full mt-1 px-3 py-2 rounded text-sm">
+            <option value="false">Defined period</option>
+            <option value="true">Indefinite or chronic</option>
+          </select>
+          <span class="text-xs" style="color:var(--text-tertiary)">Indefinite allows recertification every 6 months (825.308(b))</span>
+        </label>
+        <label class="text-sm">Certification valid through
+          <input id="f-certvalid" type="date" class="w-full mt-1 px-3 py-2 rounded text-sm" />
+          <span class="text-xs" style="color:var(--text-tertiary)">When the current certification expires, not when leave ends</span>
+        </label>
+        <label class="text-sm" id="wrap-freq">Certified frequency
+          <div class="flex gap-1 mt-1 items-center">
+            <input id="f-episodes" type="number" step="0.5" placeholder="Episodes"
+                   class="px-2 py-2 rounded text-sm w-20" />
+            <span class="text-xs" style="color:var(--text-tertiary)">x</span>
+            <input id="f-hourseach" type="number" step="0.5" placeholder="Hours"
+                   class="px-2 py-2 rounded text-sm w-20" />
+            <span class="text-xs" style="color:var(--text-tertiary)">per</span>
+            <select id="f-freqperiod" class="px-2 py-2 rounded text-sm flex-1">
+              <option value="month">Month</option>
+              <option value="week">Week</option>
+            </select>
+          </div>
+          <span class="text-xs" style="color:var(--text-tertiary)">What the provider authorized, used to flag overuse</span>
+        </label>
         <label class="text-sm">Request received
           <input id="f-received" type="date" class="w-full mt-1 px-3 py-2 rounded text-sm" />
         </label>
@@ -387,6 +413,10 @@ const FIELD_MAP = {
   stateService: 'twelve_months_state_service',
   insuranceEnrollmentNoted: 'insurance_enrollment_noted',
   bondingStart: 'bonding_start_date',
+  conditionIndefinite: 'condition_indefinite', certValidThrough: 'cert_valid_through',
+  intermittentEpisodes: 'intermittent_episodes',
+  intermittentHoursEach: 'intermittent_hours_each',
+  intermittentPeriod: 'intermittent_period',
   status: 'status', notes: 'notes'
 };
 
@@ -410,6 +440,7 @@ function fromDb(row, usageRows) {
   out.ffdNoticed = row.ffd_noticed_in_designation === true;
   out.accommodationReview = row.accommodation_review === true;
   out.stateService = row.twelve_months_state_service === true;
+  out.conditionIndefinite = row.condition_indefinite === true;
   out.hoursWeek = Number(row.scheduled_hours_week) || 40;
   out.hoursPrior12 = Number(row.hours_prior_12mo) || 0;
   out.usage = (usageRows || [])
@@ -572,7 +603,9 @@ function deadlines(c) {
     };
   }
 
-  if (c.expectedEnd) {
+  // No expected end means no return to work to prepare for. A chronic
+  // intermittent case would otherwise carry a phantom check-in deadline.
+  if (c.expectedEnd && c.type === 'continuous') {
     out.checkin = {
       key: 'checkin', label: 'Pre-return check-in with employee',
       short: 'RTW', due: addCalendarDays(d(c.expectedEnd), -14),
@@ -620,6 +653,29 @@ function deadlines(c) {
       short: 'INS', due: addCalendarDays(d(c.birthDate), 31),
       done: !!c.insuranceEnrollmentNoted, doneDate: d(c.insuranceEnrollmentNoted),
       total: 31, unit: 'calendar days', rail: false
+    };
+  }
+
+  if (c.certValidThrough) {
+    out.certExpiry = {
+      key: 'certExpiry', label: 'Current certification expires',
+      short: 'CERTX', due: d(c.certValidThrough),
+      done: false, doneDate: null, total: 60, unit: 'calendar days',
+      rail: false, informational: true
+    };
+  }
+
+  // 825.308(b): where the condition is indefinite or lasts beyond 30 days,
+  // recertification may be required every six months in connection with an
+  // absence. That is the rhythm for chronic cases, not the 30-day floor.
+  if (c.conditionIndefinite && c.certReceived && !c.recertDue) {
+    const cr = d(c.certReceived);
+    out.recertSix = {
+      key: 'recertSix', label: 'Recertification available (6-month rule)',
+      short: 'RECERT6',
+      due: new Date(cr.getFullYear(), cr.getMonth() + 6, cr.getDate()),
+      done: !!c.recertReceived, doneDate: d(c.recertReceived),
+      total: 180, unit: 'calendar days', rail: false, informational: true
     };
   }
 
@@ -700,6 +756,26 @@ async function patchCase(id, fields) {
     showToast(e.message, 6000);
     await loadCases(); openCase(id); renderAll();
   }
+}
+
+/* ---------- Usage against the certified frequency ----------
+   825.308(c)(2) permits recertification when information casts doubt on
+   the continuing validity of the certification. Exceeding what the
+   provider authorized is exactly that. The TAMU checklist also asks HR
+   to be told when an employee uses more leave than the doctor allowed. */
+
+function frequencyCheck(c) {
+  const eps = Number(c.intermittentEpisodes), hrs = Number(c.intermittentHoursEach);
+  if (!eps || !hrs || !c.intermittentPeriod) return null;
+  const days = c.intermittentPeriod === 'week' ? 7 : 30;
+  const authorized = eps * hrs;
+  const since = addCalendarDays(today(), -days);
+  const used = (c.usage || []).reduce((sum, u) => {
+    const ud = d(u.date);
+    return (ud > since && ud <= today()) ? sum + Number(u.hours) : sum;
+  }, 0);
+  return { authorized, used, days, over: used > authorized,
+           period: c.intermittentPeriod };
 }
 
 /* ---------- Which phase of a birth leave are we in? ----------
@@ -1089,6 +1165,13 @@ function openCase(id) {
         <div class="mt-3 text-xs" style="color:var(--text-tertiary)">
           Paid leave running concurrently: ${c.paidLeave.replace('_',' then ')}
         </div>
+        ${c.conditionIndefinite ? `<div class="mt-2 text-xs" style="color:var(--text-tertiary)">
+          Condition certified as indefinite. Entitlement still resets on the
+          rolling 12-month lookback; the condition lasting does not extend it.
+        </div>` : ''}
+        ${c.certValidThrough ? `<div class="mt-2 text-xs" style="color:var(--text-tertiary)">
+          Certification valid through ${fmt(d(c.certValidThrough))}
+        </div>` : ''}
       </div>
 
       ${(() => {
@@ -1143,6 +1226,23 @@ function openCase(id) {
         <p class="text-xs mb-3" style="color:var(--text-tertiary)">
           Dated entries, which is what makes the rolling balance possible
         </p>
+        ${(() => {
+          const f = frequencyCheck(c);
+          if (!f) return '';
+          const pct = Math.min(100, (f.used / f.authorized) * 100);
+          return `<div class="mb-3 px-3 py-2 rounded ${f.over ? 'bg-red-100 text-red-900' : 'bg-slate-100 text-slate-800'}">
+            <div class="text-xs font-medium">
+              ${f.used} of ${f.authorized} authorized hours in the last ${f.days} days
+            </div>
+            <div class="gauge mt-1" style="background:rgba(0,0,0,.1)">
+              <div style="width:${pct}%; background:${f.over ? '#b91c1c' : '#500000'}"></div>
+            </div>
+            ${f.over ? `<div class="text-xs mt-1">
+              <strong>Exceeds the certified frequency.</strong> This is grounds for
+              recertification under 825.308(c)(2), and the checklist asks that the
+              HR Professional assigned to the HUB be notified.</div>` : ''}
+          </div>`;
+        })()}
         <div class="max-h-48 overflow-y-auto">${usageRows}</div>
         <div class="flex gap-2 mt-3">
           <input id="u-date" type="date" class="px-2 py-1.5 rounded text-sm flex-1" value="${iso(today())}" />
@@ -1235,6 +1335,9 @@ function syncReasonFields() {
   if (!canHaveBirth) document.getElementById('f-birth').value = '';
 
   // Bonding start only applies to the combined single-case shape.
+  const episodic = document.getElementById('f-type').value !== 'continuous';
+  document.getElementById('wrap-freq').style.display = episodic ? '' : 'none';
+
   const showBondingStart = isOwn && !!document.getElementById('f-birth').value;
   document.getElementById('wrap-bondingstart').style.display = showBondingStart ? '' : 'none';
   if (!showBondingStart) document.getElementById('f-bondingstart').value = '';
@@ -1274,6 +1377,9 @@ function editCase(id) {
   set('f-status', ['denied','closed'].includes(c.status) ? c.status : '');
   set('f-emptype', c.employeeType || 'staff'); set('f-stateservice', String(c.stateService));
   set('f-bondingstart', c.bondingStart);
+  set('f-indefinite', String(c.conditionIndefinite)); set('f-certvalid', c.certValidThrough);
+  set('f-episodes', c.intermittentEpisodes); set('f-hourseach', c.intermittentHoursEach);
+  set('f-freqperiod', c.intermittentPeriod || 'month');
   syncReasonFields();
   showView('new');
 }
@@ -1295,6 +1401,9 @@ function newCase() {
   document.getElementById('f-emptype').value = 'staff';
   document.getElementById('f-stateservice').value = 'false';
   document.getElementById('f-bondingstart').value = '';
+  document.getElementById('f-indefinite').value = 'false';
+  ['f-certvalid','f-episodes','f-hourseach'].forEach(k => document.getElementById(k).value = '');
+  document.getElementById('f-freqperiod').value = 'month';
   document.getElementById('notes-warning').classList.add('hidden');
   syncReasonFields();
   showView('new');
@@ -1317,6 +1426,16 @@ function saveCase() {
   rec.employeeType = g('f-emptype');
   rec.stateService = g('f-stateservice') === 'true';
   rec.bondingStart = g('f-bondingstart');
+  rec.conditionIndefinite = g('f-indefinite') === 'true';
+  rec.certValidThrough = g('f-certvalid');
+  rec.intermittentPeriod = g('f-freqperiod');
+  rec.intermittentEpisodes = g('f-episodes') ? Number(g('f-episodes')) : '';
+  rec.intermittentHoursEach = g('f-hourseach') ? Number(g('f-hourseach')) : '';
+  // Certified frequency is meaningless on a continuous leave, and the
+  // database constraint rejects it.
+  if (rec.type === 'continuous') {
+    rec.intermittentEpisodes = ''; rec.intermittentHoursEach = ''; rec.intermittentPeriod = '';
+  }
   // The database enforces these too. Belt and suspenders, and it keeps a
   // stale disabled control from writing something the constraint rejects.
   if (rec.reason !== 'own') { rec.ffdRequired = false; rec.ffdNoticed = false; }
@@ -1421,6 +1540,7 @@ document.getElementById('f-notes').addEventListener('input', checkNotes);
 document.getElementById('f-reason').addEventListener('change', syncReasonFields);
 document.getElementById('f-ffd').addEventListener('change', syncReasonFields);
 document.getElementById('f-birth').addEventListener('change', syncReasonFields);
+document.getElementById('f-type').addEventListener('change', syncReasonFields);
 ['search','filter-status','filter-type'].forEach(id =>
   document.getElementById(id).addEventListener('input', renderCases));
 
