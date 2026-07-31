@@ -249,7 +249,7 @@
         </label>
         <label class="text-sm">Certification valid through
           <input id="f-certvalid" type="date" class="w-full mt-1 px-3 py-2 rounded text-sm" />
-          <span class="text-xs" style="color:var(--text-tertiary)">When the current certification expires, not when leave ends</span>
+          <span class="text-xs" style="color:var(--text-tertiary)">Use the end date the provider gave. Leave blank if the condition is indefinite, since nothing expires.</span>
         </label>
         <label class="text-sm" id="wrap-freq">Certified frequency
           <div class="flex gap-1 mt-1 items-center">
@@ -688,6 +688,17 @@ function deadlines(c) {
       due: new Date(cr.getFullYear(), cr.getMonth() + 6, cr.getDate()),
       done: !!c.recertReceived, doneDate: d(c.recertReceived),
       total: 180, unit: 'calendar days', rail: false, informational: true
+    };
+  }
+
+  if (c.conditionIndefinite && c.leaveStart) {
+    const ls = d(c.leaveStart);
+    out.newCert = {
+      key: 'newCert', label: 'New certification may be required (new leave year)',
+      short: 'NEWCERT',
+      due: new Date(ls.getFullYear() + 1, ls.getMonth(), ls.getDate()),
+      done: false, doneDate: null, total: 365, unit: 'calendar days',
+      rail: false, informational: true
     };
   }
 
