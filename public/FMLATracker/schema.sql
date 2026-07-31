@@ -95,7 +95,8 @@ create table if not exists fmla.cases (
                              'denied','exhausted','closed')),
   notes                   text,
 
-  -- Pointer to the WH-380 in the sanctioned document system.
+  -- Pointer to the medical certification form in the sanctioned document
+  -- system.
   -- The form itself is deliberately not stored here.
   cert_document_ref       text,
 

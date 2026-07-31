@@ -583,15 +583,21 @@ function deadlines(c) {
 
   const trigger = c.certSufficient === 'sufficient' ? d(c.certReceived)
                 : (c.certCured ? d(c.certCured) : null);
+
+  // Faculty intermittent leave cannot be designated until Employee Relations
+  // clears it, so the designation clock starts from the clearance, not the
+  // certification.
+  const desigTrigger = needsER ? (c.erReviewCleared ? d(c.erReviewCleared) : null) : trigger;
+
   out.designation = {
     key: 'designation',
-    label: 'Designation notice (WH-382)',
+    label: 'Designation notice (Form 573b)',
     short: 'DESIG',
-    due: trigger ? addBusinessDays(trigger, 5) : null,
+    due: desigTrigger ? addBusinessDays(desigTrigger, 5) : null,
     done: !!c.designationSent,
     doneDate: d(c.designationSent),
     total: 5, unit: 'business days',
-    blocked: !trigger
+    blocked: !desigTrigger
   };
 
   if (c.birthDate) {
