@@ -309,15 +309,25 @@
         }
 
         // Pay Schedule Auto-Population Functions
+        // Add new fiscal-year JSON files here as they're created each year
+        const PAY_SCHEDULE_FILES = ['Pay_Schedule_FY2026.json', 'Pay_Schedule_FY2027.json'];
         let payScheduleCache = null;
 
         async function loadPayScheduleJSON() {
             if (payScheduleCache) return payScheduleCache;
-            
+
             try {
-                const response = await fetch('./Pay_Schedule_FY2026.json');
-                if (!response.ok) throw new Error('Failed to load schedule');
-                payScheduleCache = await response.json();
+                const responses = await Promise.all(
+                    PAY_SCHEDULE_FILES.map(filename => fetch(`./${filename}`))
+                );
+                const failed = responses.find(r => !r.ok);
+                if (failed) throw new Error('Failed to load schedule');
+
+                const schedules = await Promise.all(responses.map(r => r.json()));
+                const merged = schedules.flatMap(s => s.payPeriods);
+                merged.sort((a, b) => a.payDate.localeCompare(b.payDate));
+
+                payScheduleCache = { payPeriods: merged };
                 return payScheduleCache;
             } catch (error) {
                 console.error('Error loading schedule:', error);
@@ -392,7 +402,7 @@
             document.getElementById('currentDueManagerDateTime').value = makeDateTimeLocal(mgrCurDate, mgrCurTime);
             
             // Retro Period (6 periods back)
-            const currentIdx = schedule.payPeriods.findIndex(p => p.payPeriod === period.payPeriod);
+            const currentIdx = schedule.payPeriods.findIndex(p => p.payDate === period.payDate);
             if (currentIdx >= 6) {
                 const retroStart = schedule.payPeriods[currentIdx - 6];
                 const retroEnd = schedule.payPeriods[currentIdx - 1];

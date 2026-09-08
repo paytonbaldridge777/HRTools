@@ -1,0 +1,438 @@
+{
+  "fiscalYear": 2027,
+  "payPeriods": [
+    {
+      "payPeriod": 1,
+      "estimated": false,
+      "payDate": "2026-09-04",
+      "periodFrom": "2026-08-16",
+      "periodThru": "2026-08-29",
+      "currentDue": {
+        "employee": "2026-08-29T17:00:00",
+        "supervisor": "2026-08-31T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2026-08-26T17:00:00",
+        "supervisor": "2026-08-27T11:00:00"
+      },
+      "finalRefresh": "2026-09-01T00:00:00"
+    },
+    {
+      "payPeriod": 2,
+      "estimated": false,
+      "payDate": "2026-09-18",
+      "periodFrom": "2026-08-30",
+      "periodThru": "2026-09-12",
+      "currentDue": {
+        "employee": "2026-09-12T17:00:00",
+        "supervisor": "2026-09-14T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2026-09-09T17:00:00",
+        "supervisor": "2026-09-10T11:00:00"
+      },
+      "finalRefresh": "2026-09-15T00:00:00"
+    },
+    {
+      "payPeriod": 3,
+      "estimated": false,
+      "payDate": "2026-10-02",
+      "periodFrom": "2026-09-13",
+      "periodThru": "2026-09-26",
+      "currentDue": {
+        "employee": "2026-09-26T17:00:00",
+        "supervisor": "2026-09-28T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2026-09-23T17:00:00",
+        "supervisor": "2026-09-24T11:00:00"
+      },
+      "finalRefresh": "2026-09-29T00:00:00"
+    },
+    {
+      "payPeriod": 4,
+      "estimated": false,
+      "payDate": "2026-10-16",
+      "periodFrom": "2026-09-27",
+      "periodThru": "2026-10-10",
+      "currentDue": {
+        "employee": "2026-10-10T17:00:00",
+        "supervisor": "2026-10-12T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2026-10-07T17:00:00",
+        "supervisor": "2026-10-08T11:00:00"
+      },
+      "finalRefresh": "2026-10-13T00:00:00"
+    },
+    {
+      "payPeriod": 5,
+      "estimated": false,
+      "payDate": "2026-10-30",
+      "periodFrom": "2026-10-11",
+      "periodThru": "2026-10-24",
+      "currentDue": {
+        "employee": "2026-10-24T17:00:00",
+        "supervisor": "2026-10-26T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2026-10-21T17:00:00",
+        "supervisor": "2026-10-22T11:00:00"
+      },
+      "finalRefresh": "2026-10-27T00:00:00"
+    },
+    {
+      "payPeriod": 6,
+      "estimated": true,
+      "payDate": "2026-11-13",
+      "periodFrom": "2026-10-25",
+      "periodThru": "2026-11-07",
+      "currentDue": {
+        "employee": "2026-11-07T17:00:00",
+        "supervisor": "2026-11-06T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2026-11-03T17:00:00",
+        "supervisor": "2026-11-04T11:00:00"
+      },
+      "finalRefresh": "2026-11-09T00:00:00"
+    },
+    {
+      "payPeriod": 7,
+      "estimated": true,
+      "payDate": "2026-11-27",
+      "periodFrom": "2026-11-08",
+      "periodThru": "2026-11-21",
+      "currentDue": {
+        "employee": "2026-11-21T17:00:00",
+        "supervisor": "2026-11-20T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2026-11-17T17:00:00",
+        "supervisor": "2026-11-18T11:00:00"
+      },
+      "finalRefresh": "2026-11-23T00:00:00"
+    },
+    {
+      "payPeriod": 8,
+      "estimated": false,
+      "payDate": "2026-12-11",
+      "periodFrom": "2026-11-22",
+      "periodThru": "2026-12-05",
+      "currentDue": {
+        "employee": "2026-12-05T17:00:00",
+        "supervisor": "2026-12-07T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2026-12-02T17:00:00",
+        "supervisor": "2026-12-03T11:00:00"
+      },
+      "finalRefresh": "2026-12-08T00:00:00"
+    },
+    {
+      "payPeriod": 9,
+      "estimated": true,
+      "payDate": "2026-12-28",
+      "periodFrom": "2026-12-06",
+      "periodThru": "2026-12-19",
+      "currentDue": {
+        "employee": "2026-12-19T17:00:00",
+        "supervisor": "2026-12-14T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2026-12-09T17:00:00",
+        "supervisor": "2026-12-10T11:00:00"
+      },
+      "finalRefresh": "2026-12-15T00:00:00"
+    },
+    {
+      "payPeriod": 10,
+      "estimated": false,
+      "payDate": "2027-01-08",
+      "periodFrom": "2026-12-20",
+      "periodThru": "2027-01-02",
+      "currentDue": {
+        "employee": "2027-01-02T17:00:00",
+        "supervisor": "2027-01-04T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2026-12-20T17:00:00",
+        "supervisor": "2026-12-21T11:00:00"
+      },
+      "finalRefresh": "2027-01-05T00:00:00"
+    },
+    {
+      "payPeriod": 11,
+      "estimated": true,
+      "payDate": "2027-01-22",
+      "periodFrom": "2027-01-03",
+      "periodThru": "2027-01-16",
+      "currentDue": {
+        "employee": "2027-01-16T17:00:00",
+        "supervisor": "2027-01-15T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2027-01-12T17:00:00",
+        "supervisor": "2027-01-13T11:00:00"
+      },
+      "finalRefresh": "2027-01-19T00:00:00"
+    },
+    {
+      "payPeriod": 12,
+      "estimated": false,
+      "payDate": "2027-02-05",
+      "periodFrom": "2027-01-17",
+      "periodThru": "2027-01-30",
+      "currentDue": {
+        "employee": "2027-01-30T17:00:00",
+        "supervisor": "2027-02-01T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2027-01-27T17:00:00",
+        "supervisor": "2027-01-28T11:00:00"
+      },
+      "finalRefresh": "2027-02-02T00:00:00"
+    },
+    {
+      "payPeriod": 13,
+      "estimated": false,
+      "payDate": "2027-02-19",
+      "periodFrom": "2027-01-31",
+      "periodThru": "2027-02-13",
+      "currentDue": {
+        "employee": "2027-02-13T17:00:00",
+        "supervisor": "2027-02-15T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2027-02-09T17:00:00",
+        "supervisor": "2027-02-10T11:00:00"
+      },
+      "finalRefresh": "2027-02-16T00:00:00"
+    },
+    {
+      "payPeriod": 14,
+      "estimated": false,
+      "payDate": "2027-03-05",
+      "periodFrom": "2027-02-14",
+      "periodThru": "2027-02-27",
+      "currentDue": {
+        "employee": "2027-02-27T17:00:00",
+        "supervisor": "2027-03-01T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2027-02-24T17:00:00",
+        "supervisor": "2027-02-25T11:00:00"
+      },
+      "finalRefresh": "2027-03-02T00:00:00"
+    },
+    {
+      "payPeriod": 15,
+      "estimated": false,
+      "payDate": "2027-03-19",
+      "periodFrom": "2027-02-28",
+      "periodThru": "2027-03-13",
+      "currentDue": {
+        "employee": "2027-03-13T17:00:00",
+        "supervisor": "2027-03-15T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2027-03-08T17:00:00",
+        "supervisor": "2027-03-09T11:00:00"
+      },
+      "finalRefresh": "2027-03-16T00:00:00"
+    },
+    {
+      "payPeriod": 16,
+      "estimated": false,
+      "payDate": "2027-04-02",
+      "periodFrom": "2027-03-14",
+      "periodThru": "2027-03-27",
+      "currentDue": {
+        "employee": "2027-03-27T17:00:00",
+        "supervisor": "2027-03-29T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2027-03-24T17:00:00",
+        "supervisor": "2027-03-25T11:00:00"
+      },
+      "finalRefresh": "2027-03-30T00:00:00"
+    },
+    {
+      "payPeriod": 17,
+      "estimated": false,
+      "payDate": "2027-04-16",
+      "periodFrom": "2027-03-28",
+      "periodThru": "2027-04-10",
+      "currentDue": {
+        "employee": "2027-04-10T17:00:00",
+        "supervisor": "2027-04-12T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2027-04-07T17:00:00",
+        "supervisor": "2027-04-08T11:00:00"
+      },
+      "finalRefresh": "2027-04-13T00:00:00"
+    },
+    {
+      "payPeriod": 18,
+      "estimated": false,
+      "payDate": "2027-04-30",
+      "periodFrom": "2027-04-11",
+      "periodThru": "2027-04-24",
+      "currentDue": {
+        "employee": "2027-04-24T17:00:00",
+        "supervisor": "2027-04-26T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2027-04-21T17:00:00",
+        "supervisor": "2027-04-22T11:00:00"
+      },
+      "finalRefresh": "2027-04-27T00:00:00"
+    },
+    {
+      "payPeriod": 19,
+      "estimated": false,
+      "payDate": "2027-05-14",
+      "periodFrom": "2027-04-25",
+      "periodThru": "2027-05-08",
+      "currentDue": {
+        "employee": "2027-05-08T17:00:00",
+        "supervisor": "2027-05-10T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2027-05-05T17:00:00",
+        "supervisor": "2027-05-06T11:00:00"
+      },
+      "finalRefresh": "2027-05-11T00:00:00"
+    },
+    {
+      "payPeriod": 20,
+      "estimated": false,
+      "payDate": "2027-05-28",
+      "periodFrom": "2027-05-09",
+      "periodThru": "2027-05-22",
+      "currentDue": {
+        "employee": "2027-05-22T17:00:00",
+        "supervisor": "2027-05-24T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2027-05-19T17:00:00",
+        "supervisor": "2027-05-20T11:00:00"
+      },
+      "finalRefresh": "2027-05-25T00:00:00"
+    },
+    {
+      "payPeriod": 21,
+      "estimated": false,
+      "payDate": "2027-06-11",
+      "periodFrom": "2027-05-23",
+      "periodThru": "2027-06-05",
+      "currentDue": {
+        "employee": "2027-06-05T17:00:00",
+        "supervisor": "2027-06-07T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2027-06-02T17:00:00",
+        "supervisor": "2027-06-03T11:00:00"
+      },
+      "finalRefresh": "2027-06-08T00:00:00"
+    },
+    {
+      "payPeriod": 22,
+      "estimated": false,
+      "payDate": "2027-06-25",
+      "periodFrom": "2027-06-06",
+      "periodThru": "2027-06-19",
+      "currentDue": {
+        "employee": "2027-06-19T17:00:00",
+        "supervisor": "2027-06-21T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2027-06-15T17:00:00",
+        "supervisor": "2027-06-16T11:00:00"
+      },
+      "finalRefresh": "2027-06-22T00:00:00"
+    },
+    {
+      "payPeriod": 23,
+      "estimated": false,
+      "payDate": "2027-07-09",
+      "periodFrom": "2027-06-20",
+      "periodThru": "2027-07-03",
+      "currentDue": {
+        "employee": "2027-07-03T17:00:00",
+        "supervisor": "2027-07-05T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2027-06-29T17:00:00",
+        "supervisor": "2027-06-30T11:00:00"
+      },
+      "finalRefresh": "2027-07-06T00:00:00"
+    },
+    {
+      "payPeriod": 24,
+      "estimated": false,
+      "payDate": "2027-07-23",
+      "periodFrom": "2027-07-04",
+      "periodThru": "2027-07-17",
+      "currentDue": {
+        "employee": "2027-07-17T17:00:00",
+        "supervisor": "2027-07-19T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2027-07-14T17:00:00",
+        "supervisor": "2027-07-15T11:00:00"
+      },
+      "finalRefresh": "2027-07-20T00:00:00"
+    },
+    {
+      "payPeriod": 25,
+      "estimated": false,
+      "payDate": "2027-08-06",
+      "periodFrom": "2027-07-18",
+      "periodThru": "2027-07-31",
+      "currentDue": {
+        "employee": "2027-07-31T17:00:00",
+        "supervisor": "2027-08-02T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2027-07-28T17:00:00",
+        "supervisor": "2027-07-29T11:00:00"
+      },
+      "finalRefresh": "2027-08-03T00:00:00"
+    },
+    {
+      "payPeriod": 26,
+      "estimated": false,
+      "payDate": "2027-08-20",
+      "periodFrom": "2027-08-01",
+      "periodThru": "2027-08-14",
+      "currentDue": {
+        "employee": "2027-08-14T17:00:00",
+        "supervisor": "2027-08-16T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2027-08-11T17:00:00",
+        "supervisor": "2027-08-12T11:00:00"
+      },
+      "finalRefresh": "2027-08-17T00:00:00"
+    },
+    {
+      "payPeriod": 1,
+      "fiscalYearLabel": "FY28-1",
+      "estimated": false,
+      "payDate": "2027-09-03",
+      "periodFrom": "2027-08-15",
+      "periodThru": "2027-08-28",
+      "currentDue": {
+        "employee": "2027-08-28T17:00:00",
+        "supervisor": "2027-08-30T11:00:00"
+      },
+      "retroDue": {
+        "employee": "2027-08-25T17:00:00",
+        "supervisor": "2027-08-26T11:00:00"
+      },
+      "finalRefresh": "2027-08-31T00:00:00"
+    }
+  ]
+}
