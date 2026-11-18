@@ -269,18 +269,18 @@
         // The page can't download a PDF from employees.tamu.edu directly, so it goes through
         // the site's /pay-schedule-pdf function. A direct download is tried as a fallback.
         async function fetchPdfBytes(link) {
-            const attempts = [`/pay-schedule-pdf?url=${encodeURIComponent(link)}`, link];
-            let lastError = '';
-            for (const url of attempts) {
+            const attempts = [['site download', `/pay-schedule-pdf?url=${encodeURIComponent(link)}`], ['direct download', link]];
+            const errors = [];
+            for (const [name, url] of attempts) {
                 try {
                     const res = await fetch(url);
                     if (res.ok && (res.headers.get('content-type') || '').includes('pdf')) return await res.arrayBuffer();
-                    lastError = res.ok ? 'response was not a PDF' : await res.text();
+                    errors.push(`${name}: ${res.ok ? 'response was not a PDF' : (await res.text()).slice(0, 200)}`);
                 } catch (err) {
-                    lastError = err.message;
+                    errors.push(`${name}: ${err.message}`);
                 }
             }
-            throw new Error(lastError || 'could not download');
+            throw new Error(errors.join('; '));
         }
 
         async function loadSchedulesFromLinks() {
@@ -995,16 +995,13 @@
             return new Date(iso + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
         }
 
-        // Shared "pay cycle at a glance" block. The row for the email being read is highlighted.
-        function buildCycleTimeline(p, activeRow) {
-            const row = (key, label, employeeDue, supervisorDue, early) => {
-                const active = key === activeRow;
-                const bg = active ? '#fff6d6' : '#ffffff';
-                const tag = active ? '<br><span style="font-size: 11px; font-weight: bold; color: #500000;">&#9654; THIS EMAIL</span>' : '';
+        // Shared "pay cycle at a glance" block: both deadline pairs, early ones marked.
+        function buildCycleTimeline(p) {
+            const row = (label, employeeDue, supervisorDue, early) => {
                 const earlyTag = early ? ' <span style="font-size: 11px; font-weight: bold; color: #a00000;">(EARLY)</span>' : '';
                 const cell = 'padding: 8px; border-top: 1px solid #c8c8c8; vertical-align: top;';
-                return `<tr style="background: ${bg};">
-                    <td style="${cell} font-weight: bold;">${label}${tag}</td>
+                return `<tr>
+                    <td style="${cell} font-weight: bold;">${label}</td>
                     <td style="${cell}">${employeeDue}${earlyTag}</td>
                     <td style="${cell}">${supervisorDue}${earlyTag}</td></tr>`;
             };
@@ -1013,8 +1010,8 @@
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border: 1px solid #c8c8c8; font-size: 14px;">
                     <tr><td colspan="3" style="background: #f3f0e6; padding: 8px; font-weight: bold;">This pay cycle at a glance: Pay Period ${p.payPeriodNumber} | Payday ${p.payDateLong}</td></tr>
                     <tr><th style="${head}">Which hours</th><th style="${head}">Employees submit by</th><th style="${head}">Supervisors approve by</th></tr>
-                    ${row('retro', `Corrections: time from before ${p.periodStartShort}`, p.retroEmployeeDue, p.retroSupervisorDue, p.retroEarly)}
-                    ${row('current', `Current period: ${p.periodRange}`, p.currentEmployeeDue, p.currentSupervisorDue, p.currentEarly)}
+                    ${row(`Corrections: time from before ${p.periodStartShort}`, p.retroEmployeeDue, p.retroSupervisorDue, p.retroEarly)}
+                    ${row(`Current period: ${p.periodRange}`, p.currentEmployeeDue, p.currentSupervisorDue, p.currentEarly)}
                 </table>
             </td></tr>`;
         }
@@ -1102,11 +1099,11 @@
             const early = mode === 'retro' ? params.retroEarly : params.currentEarly;
             const earlyPrefix = early ? 'EARLY DEADLINE: ' : '';
 
-            const build = (template, row) => {
+            const build = (template) => {
                 const html = fillTemplate(template, {
                     ...params,
                     earlyBanner: early ? buildEarlyBanner(params, mode === 'current') : '',
-                    cycleTimeline: buildCycleTimeline(params, row)
+                    cycleTimeline: buildCycleTimeline(params)
                 });
                 return { htmlBody: html, textBody: stripHtml(html) };
             };
@@ -1120,12 +1117,12 @@
                     {
                         label: 'Worker Current Reminder', to: '', bcc: workerEmails.join('; '), cc: hrManager,
                         subject: `${earlyPrefix}Submit your hours for ${shortRange} by ${formatDeadlineShort(due.currentEmployee)}`,
-                        ...build(employeeTemplate, 'current')
+                        ...build(employeeTemplate)
                     },
                     {
                         label: 'Manager Current Reminder', to: '', bcc: managerEmails.join('; '), cc: hrManager,
                         subject: `SUPERVISORS: ${earlyPrefix}Approve hours for ${shortRange} by ${formatDeadlineShort(due.currentSupervisor)}`,
-                        ...build(supervisorTemplate, 'current')
+                        ...build(supervisorTemplate)
                     }
                 ];
             } else if (mode === 'retro') {
@@ -1137,12 +1134,12 @@
                     {
                         label: 'Worker Retro Reminder', to: '', bcc: workerEmails.join('; '), cc: hrManager,
                         subject: `${earlyPrefix}Fix missed or incorrect time from before ${params.periodStartShort} by ${formatDeadlineShort(due.retroEmployee)}`,
-                        ...build(employeeTemplate, 'retro')
+                        ...build(employeeTemplate)
                     },
                     {
                         label: 'Manager Retro Reminder', to: '', bcc: managerEmails.join('; '), cc: hrManager,
                         subject: `SUPERVISORS: ${earlyPrefix}Approve time corrections from before ${params.periodStartShort} by ${formatDeadlineShort(due.retroSupervisor)}`,
-                        ...build(supervisorTemplate, 'retro')
+                        ...build(supervisorTemplate)
                     }
                 ];
             }

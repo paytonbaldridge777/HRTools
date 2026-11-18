@@ -19,7 +19,15 @@ export async function onRequestGet({ request }) {
     return new Response(`Only https PDF links on ${ALLOWED_HOST} are allowed.`, { status: 400 });
   }
 
-  const upstream = await fetch(target.toString(), { redirect: 'follow' });
+  // employees.tamu.edu answers 404 to requests that don't look like a browser,
+  // so send the same headers a browser would.
+  const upstream = await fetch(target.toString(), {
+    redirect: 'follow',
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36',
+      'Accept': 'application/pdf,*/*'
+    }
+  });
   if (new URL(upstream.url).hostname !== ALLOWED_HOST) {
     return new Response(`That link redirects away from ${ALLOWED_HOST}.`, { status: 502 });
   }
