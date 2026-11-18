@@ -4,6 +4,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payroll Reminders Processor</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+    <script src="./pay-schedule.js"></script>
     <link rel="stylesheet" href="./styles.css?v=20260204" />
 </head>
 <body>
@@ -49,24 +51,66 @@
 
             <!-- Shared Fields -->
             <div id="sharedFields">
+                <h4 style="margin: 0 0 8px 0;">1. Pay schedule</h4>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Current fiscal year Pay Schedule PDF link:</label>
+                    <input type="url" id="payScheduleLink" style="width: 60%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div style="margin-top: 10px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Prior fiscal year Pay Schedule PDF link:</label>
+                    <input type="url" id="priorPayScheduleLink" style="width: 60%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <span style="display: block; font-size: 12px; color: #666; margin-top: 4px;">Update both links each fiscal year (from employees.tamu.edu/payroll). The prior year is needed for corrections that reach back into it. Saved on this device.</span>
+                </div>
+                <div style="margin-top: 10px;">
+                    <button type="button" id="loadScheduleBtn" class="action-btn" onclick="loadSchedulesFromLinks()" style="background: #17a2b8; color: white; padding: 10px 20px;">📅 Load Pay Schedules</button>
+                    <span style="font-size: 12px; color: #666; margin-left: 10px;">or choose the PDF files:</span>
+                    <input type="file" id="schedulePdfInput" accept=".pdf" multiple style="font-size: 12px;">
+                </div>
+                <div id="scheduleStatus" style="margin-top: 8px; font-size: 13px;"></div>
+                <details id="schedulePreview" class="hidden" style="margin-top: 8px; font-size: 13px;">
+                    <summary style="cursor: pointer;">Show the dates read from the PDFs</summary>
+                    <div id="schedulePreviewTable" style="max-height: 300px; overflow-y: auto; margin-top: 6px;"></div>
+                </details>
+
+                <h4 style="margin: 20px 0 8px 0;">2. Pay date and deadlines</h4>
                 <div>
                     <label style="display: block; margin-bottom: 5px; font-weight: 600;">Pay Date:</label>
-                    <input type="date" id="payDateInput" class="date-input" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <input type="date" id="payDateInput" class="date-input" onchange="populateFromPaySchedule()" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <span id="populateStatus" style="margin-left: 10px; font-size: 12px;"></span>
                 </div>
-                <div>
+                <div style="margin-top: 10px;">
                     <label style="display: block; margin-bottom: 5px; font-weight: 600;">HR Manager Email (for CC):</label>
                     <input type="email" id="hrManagerEmail" value="ndharris@law.tamu.edu" placeholder="e.g., ndharris@law.tamu.edu" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>   
-                <div style="margin-top: 10px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Pay Schedule PDF Link:</label>
-                    <input type="url" id="payScheduleLink" placeholder="e.g., https://employees.tamu.edu/payroll/_media/calendars/2026/main-biweekly-pay-schedule-2026.pdf" style="width: 40%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                    <span style="display: block; font-size: 12px; color: #666; margin-top: 4px;">Update this each fiscal year. Saved automatically for future use on this device.</span>
                 </div>
                 <div style="margin-top: 10px;">
-                    <button type="button" id="populateFromScheduleBtn" class="action-btn" onclick="populateFromPaySchedule()" style="background: #17a2b8; color: white; padding: 10px 20px;">
-                        📅 Auto-Populate from Pay Schedule
-                    </button>
-                    <span id="populateStatus" style="margin-left: 10px; font-size: 12px;"></span>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Corrections (prior pay periods) covered:</label>
+                    <input type="text" id="retroPeriod" style="width: 40%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <table style="margin-top: 10px; border-collapse: collapse; font-size: 14px;">
+                    <tr><th></th><th style="text-align: left; padding: 4px 8px;">Employees submit by</th><th style="text-align: left; padding: 4px 8px;">Supervisors approve by</th></tr>
+                    <tr>
+                        <td style="padding: 4px 8px; font-weight: 600;">Corrections (retro)</td>
+                        <td style="padding: 4px 8px;"><input type="datetime-local" id="retroDueWorkerDateTime" style="padding: 6px;"></td>
+                        <td style="padding: 4px 8px;"><input type="datetime-local" id="retroDueManagerDateTime" style="padding: 6px;"></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 8px; font-weight: 600;">Current period</td>
+                        <td style="padding: 4px 8px;"><input type="datetime-local" id="currentDueWorkerDateTime" style="padding: 6px;"></td>
+                        <td style="padding: 4px 8px;"><input type="datetime-local" id="currentDueManagerDateTime" style="padding: 6px;"></td>
+                    </tr>
+                </table>
+                <div style="margin-top: 10px;">
+                    <label style="font-weight: 600;"><input type="checkbox" id="retroEarlyCheck"> Corrections deadlines are early</label>
+                    <label style="font-weight: 600; margin-left: 20px;"><input type="checkbox" id="currentEarlyCheck"> Current period deadlines are early</label>
+                    <span style="display: block; font-size: 12px; color: #666; margin-top: 4px;">Set automatically from the pay schedule. The Early Deadline banner only appears in emails whose deadlines are early.</span>
+                </div>
+                <div style="margin-top: 10px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Early deadline reason (shown in the banner):</label>
+                    <input type="text" id="earlyReason" style="width: 60%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div style="margin-top: 10px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Extra early deadline instructions (optional, shown in the banner of the current period emails):</label>
+                    <textarea id="earlyNote" rows="2" placeholder="e.g., Enter hours for Nov 20 and 21 after you work them; they will be paid on the next payday." style="width: 60%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
                 </div>
             </br>
             </div>
@@ -79,38 +123,14 @@
             </div>
 
             <!-- Broadcast Current Tab -->
-            <div id="broadcastCurrentTabPanel" class="hidden">                
-                <div style="margin-bottom: 10px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Current Period Range:</label>
-                    <input type="text" id="currentPeriod" placeholder="e.g., January 25 - February 7, 2026" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>
-                <div style="margin-bottom: 10px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Worker Submission Deadline:</label>
-                    <input type="datetime-local" id="currentDueWorkerDateTime" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Manager Approval Deadline:</label>
-                    <input type="datetime-local" id="currentDueManagerDateTime" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>
+            <div id="broadcastCurrentTabPanel" class="hidden">
                 <button id="generateBroadcastCurrentBtn" class="process-btn" onclick="generateBroadcastEmails('current')" disabled style="background: #28a745;">
                     📢 Generate Broadcast – Current
                 </button>
             </div>
 
             <!-- Broadcast Retro Tab -->
-            <div id="broadcastRetroTabPanel" class="hidden">               
-                <div style="margin-bottom: 10px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Retro Period Description:</label>
-                    <input type="text" id="retroPeriod" placeholder="e.g., Up to 6 prior pay periods" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>
-                <div style="margin-bottom: 10px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Worker Retro Deadline:</label>
-                    <input type="datetime-local" id="retroDueWorkerDateTime" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Manager Retro Deadline:</label>
-                    <input type="datetime-local" id="retroDueManagerDateTime" style="width: 15%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>
+            <div id="broadcastRetroTabPanel" class="hidden">
                 <button id="generateBroadcastRetroBtn" class="process-btn" onclick="generateBroadcastEmails('retro')" disabled style="background: #28a745;">
                     📢 Generate Broadcast – Retro
                 </button>
@@ -190,98 +210,6 @@
     </div>
 
     <script>
-        // Email Templates - Full HTML documents from template files
-        const WORKER_CURRENT_TEMPLATE = `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-</head>
-<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-    <p style="margin-bottom: 15px;">Howdy,</p>
-    <p style="margin-bottom: 15px;">This is a friendly reminder to submit your timesheet for the current pay period <strong>{currentPeriod}</strong>.</p>
-    <p style="margin-bottom: 15px;">Please ensure your hours are submitted in Workday by <strong>{currentDueWorkerDay}, {currentDueWorker}</strong> for payment on <strong>{payDate}</strong>.</p>
-    <p style="margin-bottom: 15px;"><strong>What you need to do:</strong></p>
-    <ol style="margin-bottom: 20px; padding-left: 25px;">
-        <li style="margin-bottom: 8px;">Log into Workday</li>
-        <li style="margin-bottom: 8px;">Review your time entries for accuracy</li>
-        <li style="margin-bottom: 8px;">Submit your timesheet for approval</li>
-    </ol>
-    <p style="margin-bottom: 15px;">If you have any questions or need assistance with timesheet submission, please reach out to your supervisor or contact HR at <a href="mailto:{HRManager}" style="color: #500000;">{HRManager}</a>.</p>
-    <p style="margin-top: 20px; margin-bottom: 5px;">Thank you for your prompt attention to this matter.</p>
-    <p style="margin-top: 5px; margin-bottom: 15px;">Thanks!<br>TAMU School of Law HR</p>
-</body>
-</html>`;
-
-        const MANAGER_CURRENT_TEMPLATE = `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-</head>
-<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-    <p style="margin-bottom: 15px;">Howdy,</p>
-    <p style="margin-bottom: 15px;">This is a reminder to review and approve timesheets for your direct reports for the current pay period <strong>{currentPeriod}</strong>.</p>
-    <p style="margin-bottom: 15px;">Please ensure all timesheet approvals are completed in Workday by <strong>{currentDueManagerDay}, {currentDueManager} by {currentDueManagerTime}</strong> for payment on <strong>{payDate}</strong>.</p>
-    <p style="margin-bottom: 15px;"><strong>What you need to do:</strong></p>
-    <ol style="margin-bottom: 20px; padding-left: 25px;">
-        <li style="margin-bottom: 8px;">Log into Workday</li>
-        <li style="margin-bottom: 8px;">Navigate to your inbox for pending approvals</li>
-        <li style="margin-bottom: 8px;">Review each timesheet for accuracy</li>
-        <li style="margin-bottom: 8px;">Approve or send back for corrections as needed</li>
-    </ol>
-    <p style="margin-bottom: 15px;">Timely approval ensures your employees are paid correctly and on schedule. If you have employees who have not yet submitted their timesheets, please follow up with them directly.</p>
-    <p style="margin-bottom: 15px;">If you have any questions or need assistance with the approval process, please contact HR at <a href="mailto:{HRManager}" style="color: #500000;">{HRManager}</a>.</p>
-    <p style="margin-top: 20px; margin-bottom: 5px;">Thank you for your prompt attention to this matter.</p>
-    <p style="margin-top: 5px; margin-bottom: 15px;">Thanks!<br>TAMU School of Law HR</p>
-</body>
-</html>`;
-
-        const WORKER_RETRO_TEMPLATE = `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-</head>
-<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-    <p style="margin-bottom: 15px;">Howdy,</p>
-    <p style="margin-bottom: 15px;">This is a reminder to review and submit any corrections to your timesheets for <strong>prior pay periods ({retroPeriod})</strong>.</p>
-    <p style="margin-bottom: 15px;">If you have any time entry corrections or missed hours from previous pay periods, please submit them in Workday by <strong>{retroDueWorkerDay}, {retroDueWorker}</strong> for payment on <strong>{payDate}</strong>.</p>
-    <p style="margin-bottom: 15px;"><strong>What you need to do:</strong></p>
-    <ol style="margin-bottom: 20px; padding-left: 25px;">
-        <li style="margin-bottom: 8px;">Log into Workday</li>
-        <li style="margin-bottom: 8px;">Review your timesheets for the specified retro period</li>
-        <li style="margin-bottom: 8px;">Submit any corrections or missed hours</li>
-        <li style="margin-bottom: 8px;">Ensure all entries are submitted for approval</li>
-    </ol>
-    <p style="margin-bottom: 15px;"><strong>Important:</strong> Retro corrections must be submitted by the deadline to be included in the upcoming payroll cycle. Late submissions will be processed in the following pay period.</p>
-    <p style="margin-bottom: 15px;">If you have any questions or need assistance with timesheet corrections, please reach out to your supervisor or contact HR at <a href="mailto:{HRManager}" style="color: #500000;">{HRManager}</a>.</p>
-    <p style="margin-top: 20px; margin-bottom: 5px;">Thank you for your prompt attention to this matter.</p>
-    <p style="margin-top: 5px; margin-bottom: 15px;">Thanks!<br>TAMU School of Law HR</p>
-</body>
-</html>`;
-
-        const MANAGER_RETRO_TEMPLATE = `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-</head>
-<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-    <p style="margin-bottom: 15px;">Howdy,</p>
-    <p style="margin-bottom: 15px;">This is a reminder to review and approve any timesheet corrections submitted by your direct reports for <strong>prior pay periods ({retroPeriod})</strong>.</p>
-    <p style="margin-bottom: 15px;">Please ensure all retro timesheet approvals are completed in Workday by <strong>{retroDueManagerDay}, {retroDueManager}</strong> for payment on <strong>{payDate}</strong>.</p>
-    <p style="margin-bottom: 15px;"><strong>What you need to do:</strong></p>
-    <ol style="margin-bottom: 20px; padding-left: 25px;">
-        <li style="margin-bottom: 8px;">Log into Workday</li>
-        <li style="margin-bottom: 8px;">Navigate to your inbox for pending retro approvals</li>
-        <li style="margin-bottom: 8px;">Review each timesheet correction for accuracy</li>
-        <li style="margin-bottom: 8px;">Approve or send back for corrections as needed</li>
-    </ol>
-    <p style="margin-bottom: 15px;"><strong>Important:</strong> Retro approvals must be completed by the deadline to ensure corrections are included in the upcoming payroll cycle. Late approvals will be processed in the following pay period.</p>
-    <p style="margin-bottom: 15px;">If you have employees who have submitted corrections that require clarification, please follow up with them directly before the approval deadline.</p>
-    <p style="margin-bottom: 15px;">If you have any questions or need assistance with the approval process, please contact HR at <a href="mailto:{HRManager}" style="color: #500000;">{HRManager}</a>.</p>
-    <p style="margin-top: 20px; margin-bottom: 5px;">Thank you for your prompt attention to this matter.</p>
-    <p style="margin-top: 5px; margin-bottom: 15px;">Thanks!<br>TAMU School of Law HR</p>
-</body>
-</html>`;
-
         let workbookData = null;
         let generatedEmails = [];
         let broadcastEmails = [];
@@ -308,143 +236,161 @@
             }
         }
 
-        // Pay Schedule Auto-Population Functions
-        // Add new fiscal-year JSON files here as they're created each year
-        const PAY_SCHEDULE_FILES = ['Pay_Schedule_FY2026.json', 'Pay_Schedule_FY2027.json'];
-        let payScheduleCache = null;
+        // ---- Pay schedule: read from the TAMU PDF links (no JSON files to maintain) ----
+        const PAY_SCHEDULE_LINK_KEYS = { payScheduleLink: 'payScheduleLink', priorPayScheduleLink: 'priorPayScheduleLink' };
+        const DEFAULT_LINKS = {
+            payScheduleLink: 'https://employees.tamu.edu/payroll/_media/biweekly-pay-schedule-fy27.pdf',
+            priorPayScheduleLink: 'https://employees.tamu.edu/payroll/calendars/fy-2026/main-biweekly-pay-schedule-2026.pdf'
+        };
+        let schedulePeriods = [];   // merged pay periods from every loaded PDF
+        let scheduleFiscalYear = null;
+        let selectedPeriod = null;  // the pay period for the chosen pay date
 
-        async function loadPayScheduleJSON() {
-            if (payScheduleCache) return payScheduleCache;
-
-            try {
-                const responses = await Promise.all(
-                    PAY_SCHEDULE_FILES.map(filename => fetch(`./${filename}`))
-                );
-                const failed = responses.find(r => !r.ok);
-                if (failed) throw new Error('Failed to load schedule');
-
-                const schedules = await Promise.all(responses.map(r => r.json()));
-                const merged = schedules.flatMap(s => s.payPeriods);
-                merged.sort((a, b) => a.payDate.localeCompare(b.payDate));
-
-                payScheduleCache = { payPeriods: merged };
-                return payScheduleCache;
-            } catch (error) {
-                console.error('Error loading schedule:', error);
-                return null;
-            }
+        if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
         }
 
-        function findPayPeriodForDate(schedule, dateString) {
-            const targetDate = new Date(dateString + 'T00:00:00');
-            
-            for (const period of schedule.payPeriods) {
-                const payDate = new Date(period.payDate + 'T00:00:00');
-                if (payDate.getTime() === targetDate.getTime()) {
-                    return period;
-                }
-            }
-            return null;
-        }
-
-        function formatDisplayDate(dateStr) {
-            const d = new Date(dateStr + 'T00:00:00');
-            return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-        }
-
-        function makeDateTimeLocal(dateStr, timeStr) {
-            return `${dateStr}T${timeStr}`;
-        }
-
-        async function populateFromPaySchedule() {
-            const payDate = document.getElementById('payDateInput').value;
-            const statusSpan = document.getElementById('populateStatus');
-            
-            if (!payDate) {
-                showStatus('Please select a Pay Date first!', 'error');
-                statusSpan.textContent = '❌ Select pay date first';
-                statusSpan.style.color = '#dc3545';
-                return;
-            }
-            
-            statusSpan.textContent = '⏳ Loading...';
-            statusSpan.style.color = '#666';
-            
-            const schedule = await loadPayScheduleJSON();
-            if (!schedule) {
-                showStatus('Failed to load pay schedule', 'error');
-                statusSpan.textContent = '❌ Load failed';
-                statusSpan.style.color = '#dc3545';
-                return;
-            }
-            
-            const period = findPayPeriodForDate(schedule, payDate);
-            if (!period) {
-                showStatus('No pay period found for this date', 'error');
-                statusSpan.textContent = '❌ Period not found';
-                statusSpan.style.color = '#dc3545';
-                return;
-            }
-            
-            // Populate Current Period
-            currentPayPeriodEstimated = !!period.estimated;
-            updatePayPeriodIndicator();
-            const year = new Date(period.periodThru + 'T00:00:00').getFullYear();
-            const currentRange = `${formatDisplayDate(period.periodFrom)} - ${formatDisplayDate(period.periodThru)}, ${year}`;
-            document.getElementById('currentPeriod').value = currentRange;
-            
-            // Worker deadline = periodThru at 5pm
-            document.getElementById('currentDueWorkerDateTime').value = makeDateTimeLocal(period.periodThru, '17:00');
-            
-            // Manager current deadline from JSON
-            const mgrCurDate = period.currentDue.supervisor.split('T')[0];
-            const mgrCurTime = period.currentDue.supervisor.split('T')[1].substring(0, 5);
-            document.getElementById('currentDueManagerDateTime').value = makeDateTimeLocal(mgrCurDate, mgrCurTime);
-            
-            // Retro Period (6 periods back)
-            const currentIdx = schedule.payPeriods.findIndex(p => p.payDate === period.payDate);
-            if (currentIdx >= 6) {
-                const retroStart = schedule.payPeriods[currentIdx - 6];
-                const retroEnd = schedule.payPeriods[currentIdx - 1];
-                const retroRange = `${formatDisplayDate(retroStart.periodFrom)} - ${formatDisplayDate(retroEnd.periodThru)} (up to 6 prior pay periods)`;
-                document.getElementById('retroPeriod').value = retroRange;
-                
-                // Worker retro = 1 day before manager retro at 5pm
-                const mgrRetroDate = new Date(period.retroDue.supervisor);
-                const workerRetroDate = new Date(mgrRetroDate);
-                workerRetroDate.setDate(workerRetroDate.getDate() - 1);
-                const workerRetroStr = workerRetroDate.toISOString().split('T')[0];
-                document.getElementById('retroDueWorkerDateTime').value = makeDateTimeLocal(workerRetroStr, '17:00');
-                
-                // Manager retro from JSON
-                const mgrRetroDateStr = period.retroDue.supervisor.split('T')[0];
-                const mgrRetroTimeStr = period.retroDue.supervisor.split('T')[1].substring(0, 5);
-                document.getElementById('retroDueManagerDateTime').value = makeDateTimeLocal(mgrRetroDateStr, mgrRetroTimeStr);
-            }
-            
-            showStatus(`Populated fields for Pay Period ${period.payPeriod}`, 'success');
-            statusSpan.textContent = `✅ PP ${period.payPeriod}`;
-            statusSpan.style.color = '#28a745';
-        }
-
-        const BCC_DISPLAY_LIMIT = 100;
-
-        // Pay Schedule PDF Link (admin-editable, persisted per device)
-        const PAY_SCHEDULE_LINK_STORAGE_KEY = 'payScheduleLink';
-        const DEFAULT_PAY_SCHEDULE_LINK = 'https://employees.tamu.edu/payroll/_media/calendars/2026/main-biweekly-pay-schedule-2026.pdf';
-
-        (function initPayScheduleLink() {
-            const input = document.getElementById('payScheduleLink');
-            const saved = localStorage.getItem(PAY_SCHEDULE_LINK_STORAGE_KEY);
-            input.value = saved || DEFAULT_PAY_SCHEDULE_LINK;
-            input.addEventListener('change', function() {
-                localStorage.setItem(PAY_SCHEDULE_LINK_STORAGE_KEY, input.value.trim());
+        (function initPayScheduleLinks() {
+            Object.keys(PAY_SCHEDULE_LINK_KEYS).forEach(id => {
+                const input = document.getElementById(id);
+                input.value = localStorage.getItem(PAY_SCHEDULE_LINK_KEYS[id]) || DEFAULT_LINKS[id];
+                input.addEventListener('change', () => localStorage.setItem(PAY_SCHEDULE_LINK_KEYS[id], input.value.trim()));
+            });
+            document.getElementById('schedulePdfInput').addEventListener('change', async e => {
+                const files = [...e.target.files];
+                if (files.length) await loadSchedules(files.map(f => ({ name: f.name, getBytes: () => f.arrayBuffer() })));
             });
         })();
 
         function getPayScheduleLink() {
-            return document.getElementById('payScheduleLink').value.trim() || DEFAULT_PAY_SCHEDULE_LINK;
+            return document.getElementById('payScheduleLink').value.trim();
         }
+
+        // The page can't download a PDF from employees.tamu.edu directly, so it goes through
+        // the site's /pay-schedule-pdf function. A direct download is tried as a fallback.
+        async function fetchPdfBytes(link) {
+            const attempts = [`/pay-schedule-pdf?url=${encodeURIComponent(link)}`, link];
+            let lastError = '';
+            for (const url of attempts) {
+                try {
+                    const res = await fetch(url);
+                    if (res.ok && (res.headers.get('content-type') || '').includes('pdf')) return await res.arrayBuffer();
+                    lastError = res.ok ? 'response was not a PDF' : await res.text();
+                } catch (err) {
+                    lastError = err.message;
+                }
+            }
+            throw new Error(lastError || 'could not download');
+        }
+
+        async function loadSchedulesFromLinks() {
+            const links = [getPayScheduleLink(), document.getElementById('priorPayScheduleLink').value.trim()].filter(Boolean);
+            await loadSchedules(links.map(link => ({ name: link, getBytes: () => fetchPdfBytes(link) })));
+        }
+
+        async function loadSchedules(sources) {
+            const statusDiv = document.getElementById('scheduleStatus');
+            statusDiv.style.color = '#666';
+            statusDiv.textContent = '⏳ Reading pay schedule PDFs...';
+
+            const loaded = [];
+            const messages = [];
+            for (const source of sources) {
+                try {
+                    const schedule = await PaySchedule.parsePdf(await source.getBytes(), pdfjsLib);
+                    if (!schedule.periods.length) throw new Error(schedule.problems.join(' ') || 'no pay periods found');
+                    loaded.push(schedule);
+                    messages.push(`✅ FY${schedule.fiscalYear}: ${schedule.periods.length} rows read`);
+                    schedule.problems.forEach(p => messages.push(`⚠️ FY${schedule.fiscalYear}: ${p}`));
+                } catch (err) {
+                    messages.push(`❌ ${source.name}: ${err.message}`);
+                }
+            }
+
+            if (!loaded.length) {
+                statusDiv.style.color = '#dc3545';
+                statusDiv.innerHTML = messages.join('<br>') + '<br>Check the links, or choose the PDF files instead.';
+                return;
+            }
+
+            schedulePeriods = PaySchedule.mergeSchedules(loaded);
+            scheduleFiscalYear = Math.max(...loaded.map(s => s.fiscalYear));
+            statusDiv.style.color = messages.some(m => !m.startsWith('✅')) ? '#b8860b' : '#28a745';
+            statusDiv.innerHTML = messages.join('<br>');
+            renderSchedulePreview();
+
+            // Default to the next payday so the form is ready to go.
+            const today = new Date().toISOString().slice(0, 10);
+            const next = schedulePeriods.find(p => p.payDate >= today);
+            const payDateInput = document.getElementById('payDateInput');
+            if (!payDateInput.value && next) payDateInput.value = next.payDate;
+            if (payDateInput.value) populateFromPaySchedule();
+        }
+
+        function renderSchedulePreview() {
+            const rows = schedulePeriods.map(p => {
+                const d = PaySchedule.deriveDeadlines(p);
+                return `<tr><td>FY${p.fiscalYear}</td><td>${p.payPeriod}</td><td>${p.special}</td><td>${p.periodFrom} to ${p.periodThru}</td><td>${p.retroDue}${d.retroEarly ? ' (early)' : ''}</td><td>${p.currentDue}${d.currentEarly ? ' (early)' : ''}</td><td>${p.payDate}</td></tr>`;
+            }).join('');
+            document.getElementById('schedulePreviewTable').innerHTML =
+                `<table border="1" cellpadding="4" style="border-collapse: collapse;"><tr><th>FY</th><th>PP</th><th>Special</th><th>Period</th><th>Retro due</th><th>Current due</th><th>Pay date</th></tr>${rows}</table>`;
+            document.getElementById('schedulePreview').classList.remove('hidden');
+        }
+
+        function formatLongDate(iso, withYear = true) {
+            const opts = { month: 'long', day: 'numeric', timeZone: 'UTC' };
+            if (withYear) opts.year = 'numeric';
+            return new Date(iso + 'T00:00:00Z').toLocaleDateString('en-US', opts);
+        }
+
+        function formatDateRange(fromIso, thruIso) {
+            const sameYear = fromIso.slice(0, 4) === thruIso.slice(0, 4);
+            return `${formatLongDate(fromIso, !sameYear)} - ${formatLongDate(thruIso)}`;
+        }
+
+        function populateFromPaySchedule() {
+            const payDate = document.getElementById('payDateInput').value;
+            const statusSpan = document.getElementById('populateStatus');
+            selectedPeriod = null;
+
+            if (!schedulePeriods.length) {
+                statusSpan.textContent = 'Load the pay schedules first.';
+                statusSpan.style.color = '#dc3545';
+                return;
+            }
+            const index = schedulePeriods.findIndex(p => p.payDate === payDate);
+            if (index === -1) {
+                statusSpan.textContent = '❌ That date is not a payday on the loaded schedules.';
+                statusSpan.style.color = '#dc3545';
+                return;
+            }
+
+            const period = schedulePeriods[index];
+            const d = PaySchedule.deriveDeadlines(period);
+            selectedPeriod = period;
+
+            document.getElementById('currentDueWorkerDateTime').value = d.currentEmployee;
+            document.getElementById('currentDueManagerDateTime').value = d.currentSupervisor;
+            document.getElementById('retroDueWorkerDateTime').value = d.retroEmployee;
+            document.getElementById('retroDueManagerDateTime').value = d.retroSupervisor;
+            document.getElementById('retroEarlyCheck').checked = d.retroEarly;
+            document.getElementById('currentEarlyCheck').checked = d.currentEarly;
+            document.getElementById('earlyReason').value = (d.retroEarly || d.currentEarly) ? PaySchedule.earlyReason(period.special) : '';
+
+            // Corrections cover up to 6 pay periods before this one.
+            const prior = schedulePeriods.slice(Math.max(0, index - 6), index);
+            document.getElementById('retroPeriod').value = prior.length
+                ? `${formatDateRange(prior[0].periodFrom, prior[prior.length - 1].periodThru)} (up to 6 prior pay periods)`
+                : '';
+
+            currentPayPeriodEarly = d.retroEarly || d.currentEarly;
+            updatePayPeriodIndicator();
+            const early = currentPayPeriodEarly ? ' | early deadlines' : '';
+            statusSpan.textContent = `✅ FY${period.fiscalYear} PP ${period.payPeriod}: ${formatDateRange(period.periodFrom, period.periodThru)}${early}${prior.length < 6 ? ' | ⚠️ load the prior fiscal year for the full corrections range' : ''}`;
+            statusSpan.style.color = '#28a745';
+        }
+
+        const BCC_DISPLAY_LIMIT = 100;
 
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -466,8 +412,7 @@
                         document.getElementById('parametersSection').classList.remove('hidden');
                         switchParameterTab('manager');
 
-                        const today = new Date().toISOString().split('T')[0];
-                        document.getElementById('payDateInput').value = today;
+                        if (!schedulePeriods.length) loadSchedulesFromLinks();
 
                         document.getElementById('processBtn').disabled = false;
                         document.getElementById('generateBroadcastCurrentBtn').disabled = false;
@@ -502,19 +447,19 @@
             });
         }
 
-        let currentPayPeriodEstimated = null;
+        let currentPayPeriodEarly = null;
         
         function updatePayPeriodIndicator() {
             const indicator = document.getElementById('payPeriodIndicator');
             if (!indicator) return;
         
-            if (currentPayPeriodEstimated === null) {
+            if (currentPayPeriodEarly === null) {
                 indicator.textContent = '';
                 return;
             }
         
-            if (currentPayPeriodEstimated) {
-                indicator.textContent = 'Estimated Pay Period';
+            if (currentPayPeriodEarly) {
+                indicator.textContent = 'Early Deadline Pay Period';
                 indicator.style.color = '#dc3545';
             } else {
                 indicator.textContent = 'Regular Pay Period';
@@ -626,15 +571,6 @@
                 }
             });
             return Array.from(emails);
-        }
-
-        function parseDateTimeInput(datetimeValue) {
-            if (!datetimeValue) return { date: '', day: '', time: '' };
-            const dt = new Date(datetimeValue);
-            const dateStr = dt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-            const dayStr = dt.toLocaleDateString('en-US', { weekday: 'long' });
-            const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-            return { fullDate: dateStr, dayName: dayStr, time: timeStr };
         }
 
         function formatPayDate(dateString) {
@@ -967,22 +903,27 @@
             }
         }
 
-        function openInOutlook() {
+        // mailto: links can only carry plain text. For broadcast emails the formatted body is
+        // copied to the clipboard first and the email opens empty, ready to paste into.
+        async function openInOutlook() {
             const emails = currentViewMode === 'individual' ? generatedEmails : broadcastEmails;
             const email = emails[currentEmailIndex];
+            const isBroadcast = currentViewMode === 'broadcast';
+            if (isBroadcast) await copyEmailText();
 
             const subject = encodeURIComponent(email.subject);
-            const body = encodeURIComponent(email.textBody);
+            const body = isBroadcast ? '' : encodeURIComponent(email.textBody);
             const to = encodeURIComponent(email.to || '');
 
             let mailtoLink = `mailto:${to}?subject=${subject}&body=${body}`;
-            if (currentViewMode === 'broadcast') {
+            if (isBroadcast) {
                 if (email.bcc) {
                     mailtoLink += `&bcc=${encodeURIComponent(email.bcc)}`;
                 }
                 if (email.cc) {
                     mailtoLink += `&cc=${encodeURIComponent(email.cc)}`;
                 }
+                showStatus('Formatted email copied. Paste it into the body of the new email (Ctrl+V).', 'success');
             }
 
             window.location.href = mailtoLink;
@@ -1025,22 +966,68 @@
             return tmp.textContent || tmp.innerText || '';
         }
 
+        // Replaces every {name} in a template with params.name. Unknown names are left as-is.
         function fillTemplate(template, params) {
-            return template
-                .replace(/{currentPeriod}/g, params.currentPeriod)
-                .replace(/{currentDueWorker}/g, params.currentDueWorker)
-                .replace(/{currentDueWorkerDay}/g, params.currentDueWorkerDay)
-                .replace(/{currentDueManager}/g, params.currentDueManager)
-                .replace(/{currentDueManagerDay}/g, params.currentDueManagerDay)
-                .replace(/{currentDueManagerTime}/g, params.currentDueManagerTime)
-                .replace(/{retroPeriod}/g, params.retroPeriod)
-                .replace(/{retroDueWorker}/g, params.retroDueWorker)
-                .replace(/{retroDueWorkerDay}/g, params.retroDueWorkerDay)
-                .replace(/{retroDueManager}/g, params.retroDueManager)
-                .replace(/{retroDueManagerDay}/g, params.retroDueManagerDay)
-                .replace(/{HRManager}/g, params.hrManager)
-                .replace(/{payDate}/g, formatPayDate(params.payDate))
-                .replace(/{payScheduleLink}/g, params.payScheduleLink);
+            return template.replace(/\{(\w+)\}/g, (match, key) => (key in params ? params[key] : match));
+        }
+
+        function escapeHtml(text) {
+            return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        // 'YYYY-MM-DDTHH:MM' -> 'Thursday, November 19 at 5:00 PM'
+        function formatDeadline(value) {
+            const dt = new Date(value);
+            const date = dt.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+            const time = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            return `${date} at ${time}`;
+        }
+
+        // 'YYYY-MM-DDTHH:MM' -> 'Thu 11/19, 5 PM' (for subject lines)
+        function formatDeadlineShort(value) {
+            const dt = new Date(value);
+            const day = dt.toLocaleDateString('en-US', { weekday: 'short' });
+            const time = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: dt.getMinutes() ? '2-digit' : undefined, hour12: true });
+            return `${day} ${dt.getMonth() + 1}/${dt.getDate()}, ${time}`;
+        }
+
+        function formatShortDate(iso) {
+            return new Date(iso + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+        }
+
+        // Shared "pay cycle at a glance" block. The row for the email being read is highlighted.
+        function buildCycleTimeline(p, activeRow) {
+            const row = (key, label, employeeDue, supervisorDue, early) => {
+                const active = key === activeRow;
+                const bg = active ? '#fff6d6' : '#ffffff';
+                const tag = active ? '<br><span style="font-size: 11px; font-weight: bold; color: #500000;">&#9654; THIS EMAIL</span>' : '';
+                const earlyTag = early ? ' <span style="font-size: 11px; font-weight: bold; color: #a00000;">(EARLY)</span>' : '';
+                const cell = 'padding: 8px; border-top: 1px solid #c8c8c8; vertical-align: top;';
+                return `<tr style="background: ${bg};">
+                    <td style="${cell} font-weight: bold;">${label}${tag}</td>
+                    <td style="${cell}">${employeeDue}${earlyTag}</td>
+                    <td style="${cell}">${supervisorDue}${earlyTag}</td></tr>`;
+            };
+            const head = 'padding: 8px; text-align: left; font-size: 12px; color: #404040;';
+            return `<tr><td style="padding: 4px 20px 8px 20px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border: 1px solid #c8c8c8; font-size: 14px;">
+                    <tr><td colspan="3" style="background: #f3f0e6; padding: 8px; font-weight: bold;">This pay cycle at a glance: Pay Period ${p.payPeriodNumber} | Payday ${p.payDateLong}</td></tr>
+                    <tr><th style="${head}">Which hours</th><th style="${head}">Employees submit by</th><th style="${head}">Supervisors approve by</th></tr>
+                    ${row('retro', `Corrections: time from before ${p.periodStartShort}`, p.retroEmployeeDue, p.retroSupervisorDue, p.retroEarly)}
+                    ${row('current', `Current period: ${p.periodRange}`, p.currentEmployeeDue, p.currentSupervisorDue, p.currentEarly)}
+                </table>
+            </td></tr>`;
+        }
+
+        function buildEarlyBanner(p, includeNote) {
+            const note = includeNote && p.earlyNote ? `<br><br>${escapeHtml(p.earlyNote).replace(/\n/g, '<br>')}` : '';
+            return `<tr><td style="padding: 12px 20px 0 20px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse;">
+                    <tr><td style="background: #a00000; color: #ffffff; padding: 12px 14px;">
+                        <strong>&#9888; EARLY DEADLINE</strong><br>${escapeHtml(p.earlyReason)}${note}
+                    </td></tr>
+                </table>
+            </td></tr>`;
         }
 
         function dedupeEmails(emails) {
@@ -1056,12 +1043,26 @@
                 showStatus('Please select a file first!', 'error');
                 return;
             }
+            if (!selectedPeriod) {
+                showStatus('Load the pay schedules and choose a pay date first.', 'error');
+                return;
+            }
 
-            const payDate = document.getElementById('payDateInput').value;
             const hrManager = document.getElementById('hrManagerEmail').value;
-
-            if (!payDate || !hrManager) {
-                showStatus('Please fill in Pay Date and HR Manager Email!', 'error');
+            const field = id => document.getElementById(id).value;
+            const due = {
+                retroEmployee: field('retroDueWorkerDateTime'),
+                retroSupervisor: field('retroDueManagerDateTime'),
+                currentEmployee: field('currentDueWorkerDateTime'),
+                currentSupervisor: field('currentDueManagerDateTime')
+            };
+            if (!hrManager || Object.values(due).some(v => !v) || !field('retroPeriod')) {
+                showStatus('Please fill in the HR Manager email, the corrections range and all four deadlines.', 'error');
+                return;
+            }
+            // Catch impossible schedules before anything is sent.
+            if (due.retroEmployee > due.retroSupervisor || due.currentEmployee > due.currentSupervisor) {
+                showStatus('An employee deadline is later than the matching supervisor deadline. Fix the dates before generating.', 'error');
                 return;
             }
 
@@ -1079,104 +1080,69 @@
                 return;
             }
 
-            let params = {
-                payDate: formatPayDate(payDate),
+            const period = selectedPeriod;
+            const params = {
+                payPeriodNumber: period.payPeriod,
+                fiscalYear: period.fiscalYear,
+                periodRange: formatDateRange(period.periodFrom, period.periodThru),
+                periodStartShort: formatShortDate(period.periodFrom),
+                retroRange: field('retroPeriod'),
+                payDateLong: new Date(period.payDate + 'T00:00:00Z').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' }),
+                retroEmployeeDue: formatDeadline(due.retroEmployee),
+                retroSupervisorDue: formatDeadline(due.retroSupervisor),
+                currentEmployeeDue: formatDeadline(due.currentEmployee),
+                currentSupervisorDue: formatDeadline(due.currentSupervisor),
+                retroEarly: document.getElementById('retroEarlyCheck').checked,
+                currentEarly: document.getElementById('currentEarlyCheck').checked,
+                earlyReason: field('earlyReason') || PaySchedule.earlyReason(''),
+                earlyNote: field('earlyNote').trim(),
                 payScheduleLink: getPayScheduleLink()
+            };
+            const shortRange = `${formatShortDate(period.periodFrom)} - ${formatShortDate(period.periodThru)}`;
+            const early = mode === 'retro' ? params.retroEarly : params.currentEarly;
+            const earlyPrefix = early ? 'EARLY DEADLINE: ' : '';
+
+            const build = (template, row) => {
+                const html = fillTemplate(template, {
+                    ...params,
+                    earlyBanner: early ? buildEarlyBanner(params, mode === 'current') : '',
+                    cycleTimeline: buildCycleTimeline(params, row)
+                });
+                return { htmlBody: html, textBody: stripHtml(html) };
             };
 
             if (mode === 'current') {
-                const currentPeriod = document.getElementById('currentPeriod').value;
-                const currentWorkerDT = document.getElementById('currentDueWorkerDateTime').value;
-                const currentManagerDT = document.getElementById('currentDueManagerDateTime').value;
-
-                if (!currentPeriod || !currentWorkerDT || !currentManagerDT) {
-                    showStatus('Please fill in all Current broadcast parameters!', 'error');
-                    return;
-                }
-
-                const currentWorker = parseDateTimeInput(currentWorkerDT);
-                const currentManager = parseDateTimeInput(currentManagerDT);
-
-                params = {
-                    ...params,
-                    currentPeriod,
-                    currentDueWorker: currentWorker.fullDate,
-                    currentDueWorkerDay: currentWorker.dayName,
-                    currentDueManager: currentManager.fullDate,
-                    currentDueManagerDay: currentManager.dayName,
-                    currentDueManagerTime: currentManager.time
-                };
-
-                const [currentEmployeeTemplate, currentSupervisorTemplate] = await Promise.all([
+                const [employeeTemplate, supervisorTemplate] = await Promise.all([
                     loadTemplate('Current_LAW_employee_reminder.html'),
                     loadTemplate('Current_LAW_supervisor_reminder.html')
                 ]);
-
                 broadcastEmails = [
                     {
-                        label: 'Worker Current Reminder',
-                        to: '',
-                        bcc: workerEmails.join('; '),
-                        cc: hrManager,
-                        subject: `Timesheet submissions due by ${params.currentDueWorker}`,
-                        htmlBody: fillTemplate(currentEmployeeTemplate, params),
-                        textBody: stripHtml(fillTemplate(currentEmployeeTemplate, params))
+                        label: 'Worker Current Reminder', to: '', bcc: workerEmails.join('; '), cc: hrManager,
+                        subject: `${earlyPrefix}Submit your hours for ${shortRange} by ${formatDeadlineShort(due.currentEmployee)}`,
+                        ...build(employeeTemplate, 'current')
                     },
                     {
-                        label: 'Manager Current Reminder',
-                        to: '',
-                        bcc: managerEmails.join('; '),
-                        cc: hrManager,
-                        subject: `Timesheet approvals due by ${params.currentDueManagerDay}, ${params.currentDueManager} by 11 am`,
-                        htmlBody: fillTemplate(currentSupervisorTemplate, params),
-                        textBody: stripHtml(fillTemplate(currentSupervisorTemplate, params))
+                        label: 'Manager Current Reminder', to: '', bcc: managerEmails.join('; '), cc: hrManager,
+                        subject: `SUPERVISORS: ${earlyPrefix}Approve hours for ${shortRange} by ${formatDeadlineShort(due.currentSupervisor)}`,
+                        ...build(supervisorTemplate, 'current')
                     }
                 ];
             } else if (mode === 'retro') {
-                const retroPeriod = document.getElementById('retroPeriod').value;
-                const retroWorkerDT = document.getElementById('retroDueWorkerDateTime').value;
-                const retroManagerDT = document.getElementById('retroDueManagerDateTime').value;
-
-                if (!retroPeriod || !retroWorkerDT || !retroManagerDT) {
-                    showStatus('Please fill in all Retro broadcast parameters!', 'error');
-                    return;
-                }
-
-                const retroWorker = parseDateTimeInput(retroWorkerDT);
-                const retroManager = parseDateTimeInput(retroManagerDT);
-
-                params = {
-                    ...params,
-                    retroPeriod,
-                    retroDueWorker: retroWorker.fullDate,
-                    retroDueWorkerDay: retroWorker.dayName,
-                    retroDueManager: retroManager.fullDate,
-                    retroDueManagerDay: retroManager.dayName
-                };
-
-                const [retroEmployeeTemplate, retroSupervisorTemplate] = await Promise.all([
+                const [employeeTemplate, supervisorTemplate] = await Promise.all([
                     loadTemplate('LAW_Retro_employee_reminder.html'),
                     loadTemplate('LAW_Retro_supervisor_reminder.html')
                 ]);
-
                 broadcastEmails = [
                     {
-                        label: 'Worker Retro Reminder',
-                        to: '',
-                        bcc: workerEmails.join('; '),
-                        cc: hrManager,
-                        subject: `Timesheet corrections for prior pay periods due by ${params.retroDueWorker}`,
-                        htmlBody: fillTemplate(retroEmployeeTemplate, params),
-                        textBody: stripHtml(fillTemplate(retroEmployeeTemplate, params))
+                        label: 'Worker Retro Reminder', to: '', bcc: workerEmails.join('; '), cc: hrManager,
+                        subject: `${earlyPrefix}Fix missed or incorrect time from before ${params.periodStartShort} by ${formatDeadlineShort(due.retroEmployee)}`,
+                        ...build(employeeTemplate, 'retro')
                     },
                     {
-                        label: 'Manager Retro Reminder',
-                        to: '',
-                        bcc: managerEmails.join('; '),
-                        cc: hrManager,
-                        subject: `Timesheet approvals for prior pay periods due by ${params.retroDueManager}`,
-                        htmlBody: fillTemplate(retroSupervisorTemplate, params),
-                        textBody: stripHtml(fillTemplate(retroSupervisorTemplate, params))
+                        label: 'Manager Retro Reminder', to: '', bcc: managerEmails.join('; '), cc: hrManager,
+                        subject: `SUPERVISORS: ${earlyPrefix}Approve time corrections from before ${params.periodStartShort} by ${formatDeadlineShort(due.retroSupervisor)}`,
+                        ...build(supervisorTemplate, 'retro')
                     }
                 ];
             }

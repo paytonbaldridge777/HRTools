@@ -1,343 +1,103 @@
-<!-- Subject: EARLY DEADLINE - Time Sheet approvals are due Thursday, July 17 by 5 pm -->
-<!-- Subject: Timesheet approvals due by Tuesday, July 21 by 5 pm -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Reminder - Word Document Format</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background-color: #f5f5f5;
-            padding: 20px;
-            margin: 0;
-        }
-        
-        .word-doc {
-            max-width: 8.5in;
-            margin: 0 auto;
-            background: white;
-            padding: 1in;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            min-height: 11in;
-            page-break-inside: avoid;
-        }
-        
-        .header-section {
-            text-align: center;
-            margin-bottom: 20px;
-            padding: 20px;
-            background: #500000;
-            color: #FFFFFF;
-            border-radius: 8px;
-        }
-        
-        .header-section h1 {
-            font-size: 24pt;
-            font-weight: bold;
-            margin: 0 0 10px 0;
-            color: #FFFFFF;
-        }
-        
-        .header-section .subtitle {
-            font-size: 12pt;
-            margin: 0;
-            color: #FFFFFF;
-        }
-        
-        .urgent-banner {
-            background: #3C0000;
-            color: #FFFFFF;
-            padding: 15px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 14pt;
-            margin: 20px 0;
-            border-radius: 5px;
-        }
-        
-        .deadline-box {
-            background: #D6D3C4;
-            border: 3px solid #732F2F;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            text-align: center;
-        }
-        
-        .deadline-box h2 {
-            color: #500000;
-            font-size: 18pt;
-            margin: 0 0 10px 0;
-            font-weight: bold;
-        }
-        
-        .deadline-date {
-            font-size: 22pt;
-            font-weight: bold;
-            color: #3C0000;
-            margin: 10px 0;
-        }
-        
-        .section-header {
-            color: #500000;
-            font-size: 16pt;
-            font-weight: bold;
-            margin: 25px 0 15px 0;
-            border-bottom: 2px solid #500000;
-            padding-bottom: 5px;
-        }
-        
-        .important-notes {
-            background: #D1D1D1;
-            border-left: 4px solid #500000;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 0 8px 8px 0;
-        }
-        
-        .note-item {
-            margin: 15px 0;
-            padding-left: 20px;
-            position: relative;
-            color: #202020;
-        }
-        
-        .note-item::before {
-            content: '▶';
-            position: absolute;
-            left: 0;
-            color: #500000;
-            font-weight: bold;
-        }
-        
-        .resources-section {
-            background: #D6D3C4;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-        
-        .resource-item {
-            background: #FFFFFF;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 6px;
-            border-left: 4px solid #732F2F;
-        }
-        
-        .resource-item a {
-            color: #500000;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        
-        .help-section {
-            text-align: center;
-            margin: 30px 0;
-            padding: 20px;
-            background: #D1D1D1;
-            border-radius: 8px;
-        }
-        
-        .contact-section {
-            background: #D6D3C4;
-            padding: 20px;
-            margin: 30px 0;
-            border-radius: 8px;
-        }
-        
-        .contact-box {
-            background: #FFFFFF;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #707070;
-        }
-        
-        .contact-header {
-            color: #500000;
-            font-size: 14pt;
-            font-weight: bold;
-            margin: 0 0 15px 0;
-        }
-        
-        .contact-info {
-            margin: 8px 0;
-            color: #3E3E3E;
-        }
-        
-        .contact-info a {
-            color: #500000;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        
-        .university-branding {
-            text-align: center;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 2px solid #707070;
-        }
-        
-        .university-name {
-            color: #500000;
-            font-size: 18pt;
-            font-weight: bold;
-            margin: 0 0 5px 0;
-        }
-        
-        .university-tagline {
-            color: #3E3E3E;
-            font-style: italic;
-            font-size: 12pt;
-        }
-        
-        .copy-instructions {
-            background: #e3f2fd;
-            border: 1px solid #2196f3;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-        }
-        
-        .copy-instructions h3 {
-            color: #1976d2;
-            margin: 0 0 10px 0;
-            font-size: 14pt;
-        }
-        
-        .copy-instructions p {
-            margin: 5px 0;
-            color: #333;
-        }
-        
-        @media print {
-            body {
-                background: white;
-                padding: 0;
-            }
-            
-            .word-doc {
-                box-shadow: none;
-                padding: 0.5in;
-            }
-            
-            .copy-instructions {
-                display: none;
-            }
-        }
-    </style>
+    <title>Current Pay Period - Supervisor Reminder</title>
 </head>
-<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; margin: 0; padding: 0;">
-    <div class="word-doc">
-	<!-- Subject Section -->
-         <div class="help-section">
-            <p style="font-size: 12pt; color: #500000; margin: 0;">
-                <strong>Subject: Timesheet approvals due by {currentDueManagerDay}, {currentDueManager} by 11 am</strong><br>               
-            </p>
+<body style="margin: 0; padding: 0; background: #ffffff;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse;">
+<tr><td align="center" style="padding: 16px 8px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width: 600px; max-width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 15px; line-height: 1.5; color: #202020;">
+
+    <!-- Header -->
+    <tr><td style="background: #333333; color: #ffffff; padding: 14px 20px; font-size: 13px; border-bottom: 4px solid #500000;">
+        <strong style="font-size: 16px;">Texas A&amp;M University School of Law</strong><br>
+        Human Resources and Organizational Effectiveness
+    </td></tr>
+
+    <!-- Audience and title -->
+    <tr><td style="padding: 20px 20px 4px 20px;">
+        <span style="display: inline-block; background: #333333; color: #ffffff; font-size: 12px; font-weight: bold; letter-spacing: 1px; padding: 3px 8px;">FOR SUPERVISORS AND APPROVERS</span>
+        <h1 style="margin: 10px 0 0 0; font-size: 22px; line-height: 1.3; color: #500000;">Approve your team's hours for {periodRange}</h1>
+        <p style="margin: 6px 0 0 0; color: #404040;">Employees: no action is needed from this email.</p>
+    </td></tr>
+
+    {earlyBanner}
+
+    <!-- Deadline -->
+    <tr><td style="padding: 12px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border: 2px solid #333333;">
+            <tr><td style="padding: 14px; text-align: center;">
+                <div style="font-size: 14px; color: #404040;">Approve all timesheets by</div>
+                <div style="font-size: 22px; font-weight: bold; color: #500000;">{currentSupervisorDue}</div>
+                <div style="font-size: 14px; color: #404040;">so your team is paid on {payDateLong}</div>
+            </td></tr>
+        </table>
+    </td></tr>
+
+    <!-- Most important warning -->
+    <tr><td style="padding: 0 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse;">
+            <tr><td style="background: #fdf2f2; border-left: 4px solid #a00000; padding: 12px 14px;">
+                <strong>Don't rely on your Workday inbox.</strong> Your inbox only shows time employees have <em>submitted</em>. Run the <a href="https://apps.tamuds.tamu.edu/resources/download/4365054/review-time-report.pdf" style="color: #500000; font-weight: bold;">Review Time report</a> to find hours that were entered but not submitted.
+            </td></tr>
+        </table>
+    </td></tr>
+
+    {cycleTimeline}
+
+    <!-- Steps -->
+    <tr><td style="padding: 12px 20px 0 20px;">
+        <h2 style="margin: 0 0 6px 0; font-size: 17px; color: #500000;">What to do</h2>
+        <ol style="margin: 0; padding-left: 22px;">
+            <li style="margin-bottom: 6px;">Run the Review Time report for {periodRange}.</li>
+            <li style="margin-bottom: 6px;">Approve timesheets that are correct.</li>
+            <li style="margin-bottom: 6px;">If time is missing or wrong, send it back and contact the employee. Follow up to make sure it was fixed and resubmitted.</li>
+        </ol>
+        <p style="margin: 8px 0 0 0;">You are responsible for making sure your team's time is correct, including when an employee forgets to submit or submits incorrect time. Estimated time should never be entered.</p>
+    </td></tr>
+
+    <!-- Approve from the employee's profile -->
+    <tr><td style="padding: 14px 20px 0 20px;">
+        <h2 style="margin: 0 0 6px 0; font-size: 17px; color: #500000;">Another way to approve</h2>
+        <ol style="margin: 0; padding-left: 22px;">
+            <li style="margin-bottom: 4px;">Open the employee's Workday profile.</li>
+            <li style="margin-bottom: 4px;">Select <strong>Actions</strong>, then <strong>Time and Leave</strong>.</li>
+            <li style="margin-bottom: 4px;">Enter a date in {periodRange}.</li>
+            <li style="margin-bottom: 4px;">Review the hours, then click the blue <strong>Review</strong> button (bottom right) to approve.</li>
+        </ol>
+    </td></tr>
+
+    <!-- Out of office -->
+    <tr><td style="padding: 14px 20px 0 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse;">
+            <tr><td style="background: #f3f0e6; border-left: 4px solid #333333; padding: 12px 14px;">
+                <strong>Out of the office before {currentSupervisorDue}?</strong> Set up a <a href="https://it.tamus.edu/workdayservices/training/job_aid/delegate-and-complete-delegated-task/" style="color: #500000; font-weight: bold;">delegate</a> before you leave and confirm they have access to approve. Otherwise your employees may not be paid on time.
+            </td></tr>
+        </table>
+    </td></tr>
+
+    <!-- Resources -->
+    <tr><td style="padding: 14px 20px 0 20px;">
+        <h2 style="margin: 0 0 6px 0; font-size: 17px; color: #500000;">Resources</h2>
+        <ul style="margin: 0; padding-left: 22px;">
+            <li style="margin-bottom: 4px;"><a href="https://apps.tamuds.tamu.edu/resources/download/4365054/review-time-report.pdf" style="color: #500000; font-weight: bold;">How to run the Review Time report (PDF)</a></li>
+            <li style="margin-bottom: 4px;"><a href="https://it.tamus.edu/workdayservices/training/job_aid/delegate-and-complete-delegated-task/" style="color: #500000; font-weight: bold;">Delegation instructions</a></li>
+            <li style="margin-bottom: 4px;"><a href="{payScheduleLink}" style="color: #500000; font-weight: bold;">Biweekly Pay Schedule (FY{fiscalYear})</a></li>
+        </ul>
+    </td></tr>
+
+    <!-- Footer -->
+    <tr><td style="padding: 20px; font-size: 13px; color: #404040;">
+        <div style="border-top: 1px solid #c8c8c8; padding-top: 12px;">
+            <strong>Questions or need training?</strong> Payton Baldridge, HR Generalist II | TAMU School of Law HROE<br>
+            817.212.4132 | <a href="mailto:pbaldridge@tamu.edu" style="color: #500000;">pbaldridge@tamu.edu</a> | <a href="https://service.tamu.edu/TDClient/45/Portal/Home/" style="color: #500000;">tx.ag/servicehero</a> | <a href="http://employees.tamu.edu/" style="color: #500000;">employees.tamu.edu</a>
         </div>
-        <!-- Header Section -->
-        <div class="header-section">
-            <h1>Texas A&M University School of Law</h1>
-            <div class="subtitle">Division of Human Resources and Organizational Effectiveness</div>
-        </div>
-        
-        <!-- Urgent Banner Delete unused banner after copy/paste-->
-        <div class="urgent-banner">
-            ⚠️ EARLY DEADLINE - Time Sheet Approvals for Current Pay Period
-        </div>
-		<div class="urgent-banner">
-            Time Sheet Approvals for Current Pay Period
-        </div>
-        
-        <!-- Deadline Box -->
-        <div class="deadline-box">
-            <h2>Bi-weekly Timesheet Approval Deadline</h2>
-			<!-- UPDATE BELOW DEADLINE - ######################################################################################## -->
-            <div class="deadline-date">{currentDueManagerDay}, {currentDueManager} by 11:00 AM</div>
-            <p style="margin: 10px 0; font-weight: bold;">All timesheet approvals for the current pay period must be submitted and approved by this deadline.</p>
-        </div>
-        
-        <!-- Important Notes -->
-        <div class="important-notes">
-            <h3 class="section-header" style="margin-top: 0; color: #500000;">Important Notes</h3>
-            <div class="note-item">
-                <strong>Please do not rely on your inbox tasks for approving timesheets.</strong> Hours entered but not submitted by an employee will not show up in your inbox. If you're not familiar with how to run the Review Time report refer to this PDF: <a href="https://apps.tamuds.tamu.edu/resources/download/4365054/review-time-report.pdf">Review Time</a>, or contact HR Support for training. 
-            </div>
-            <div class="note-item">
-			<!-- UPDATE BELOW Date Range -####################################################################################### -->
-                <strong>Time Period Coverage:</strong> {currentPeriod}
-            </div>
-            <div class="note-item">
-                As a reminder, <strong>estimated time should never be entered.</strong>
-            </div>
-			 <div class="note-item">
-                It is your responsibility to make sure all submissions are correct; <strong>this includes if an employee neglects to submit time or submits incorrect time.</strong> If you see something that needs to be fixed, please reject it and contact your employee. Please be sure to follow up with employee to ensure correction has been made.   
-            </div>
-			<div class="note-item">
-                If you will be out of the office and unable to review timesheets by the approval due date, please contact your delegate directly and make sure they have access to approve and a record of your approval before you travel. Failing to do this could risk your employees not receiving their pay in a timely manner.  
-            </div>
-        </div>
-        
-        <!-- Resources Section -->
-        <div class="resources-section">
-            <h3 class="section-header" style="margin-top: 0; color: #500000;">Resources & Documentation</h3>
-            
-            <div class="resource-item">
-                📄 <a href="{payScheduleLink}">
-                    Bi-Weekly Pay Schedule (2026 Fiscal Year)
-                </a>
-            </div>      
-			<div class="resource-item">
-                📄 <a href="https://apps.tamuds.tamu.edu/resources/download/4365054/review-time-report.pdf">
-                    How to Review Employee Time
-                </a>
-            </div>  			
-            <div class="resource-item">
-                📄 <strong>You may also contact your HR Representative for training</strong>
-                </a>
-            </div>  
-			<div class="resource-item">
-                📄 <strong>Approving these hours can also be accomplished by navigating directly to an employee's time sheet: Locate the employee's Workday profile -> select actions -> click on time and leave -> enter date indicated below -> review the hours entered and use the blue "Review" button in bottom right corner to approve.  </strong>
-                </a>
-            </div> 
-			<div class="resource-item">
-                📄 <a href="https://it.tamus.edu/workdayservices/training/job_aid/delegate-and-complete-delegated-task/">
-                    Delegation Instructions
-                </a>
-            </div>
-        </div>
-        
-        <!-- Help Section -->
-        <div class="help-section">
-            <p style="font-size: 12pt; color: #666; margin: 0;">
-                <strong>Questions or need assistance?</strong><br>
-                Please reach out to the HR team using the contact information below.
-            </p>
-        </div>
-        
-        <!-- Contact Section -->
-        <div class="contact-section">
-            <div class="contact-box">
-                <h4 class="contact-header">Contact Information</h4>
-				<div class="contact-info"><strong>Payton Baldridge</strong> | HR Generalist II (Hub 3 - Integrity)</div>
-                <div class="contact-info">TAMU School of Law | HROE</div>
-                <div class="contact-info">Law & Education Building | 300 E 15th St 415M, Ft Worth, TX 76102</div>
-                <div class="contact-info">817.212.4132</strong></div>
-                <div class="contact-info"><a href="mailto:pbaldridge@tamu.edu">pbaldridge@tamu.edu</a></div>
-                <div class="contact-info"><a href="http://employees.tamu.edu/">employees.tamu.edu</a></div>
-                <div class="contact-info"><a href="https://service.tamu.edu/TDClient/45/Portal/Home/" style="color: #dc3545;">tx.ag/servicehero</a>
-            </div>
-            
-            <div class="university-branding">
-                <div class="university-name">Texas A&M UNIVERSITY</div>
-                <div class="university-tagline">Purpose Driven. People Focused.</div>
-            </div>
-        </div>
-    </div>
+    </td></tr>
+
+</table>
+</td></tr>
+</table>
 </body>
 </html>
