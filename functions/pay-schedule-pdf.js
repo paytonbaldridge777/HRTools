@@ -20,8 +20,11 @@ export async function onRequestGet({ request }) {
   }
 
   // employees.tamu.edu answers 404 to requests that don't look like a browser,
-  // so send the same headers a browser would.
-  const upstream = await fetch(target.toString(), {
+  // so send the same headers a browser would. Its CDN can also keep serving a
+  // cached 404 for a while, so a unique query string asks for a fresh copy.
+  const fresh = new URL(target);
+  fresh.searchParams.set('_', Date.now().toString());
+  const upstream = await fetch(fresh.toString(), {
     redirect: 'follow',
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36',
